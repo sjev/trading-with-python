@@ -10,6 +10,7 @@ from urllib import urlretrieve
 from urllib2 import urlopen
 from pandas import Index, DataFrame
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 sDate = (2011,1,1)
 eDate = (2011,10,1)
@@ -50,5 +51,9 @@ data = dict(zip(['open','high','low','close','volume','adj_close'],data))
 df = DataFrame(data,index=idx).sort()
 
 
-
+plt.plot(df.index,df['adj_close'].values)
+f = plt.gcf()
+plt.grid(True)
+f.autofmt_xdate()
+plt.show()
 

@@ -39,8 +39,8 @@ def getHistoricData(symbol, sDate=(2010,1,1),eDate=date.today().timetuple()[0:3]
     data = [[] for i in range(len(header))] # init data list
 
     for line in fh:
-        line = line.rstrip()
-        fields = line.strip('"').split(',')
+        
+        fields = line.rstrip().strip('"').split(',')
         for i,val in enumerate(fields):
             try:
                 d = float(val)

@@ -8,9 +8,8 @@ Created on Sun Oct 16 18:37:23 2011
 
 from urllib import urlretrieve
 from urllib2 import urlopen
-import time
-import pandas
-import numpy as np
+from pandas import Index, DataFrame
+from datetime import datetime
 
 sDate = (2011,1,1)
 eDate = (2011,10,1)
@@ -40,14 +39,16 @@ data = [[] for i in range(6)]
 # header : Date,Open,High,Low,Close,Volume,Adj Close
 for line in lines[1:]:
     fields = line.rstrip().split(',')
-    dates.append(fields[0])
+    dates.append(datetime.strptime( fields[0],'%Y-%m-%d'))
     for i,field in enumerate(fields[1:]):
         data[i].append(float(field))
    
+idx = Index(dates)
+data = dict(zip(['open','high','low','close','volume','adj_close'],data))
 
-# create a pandas dataframe structure
-header = ['Open','High','Low','Close','Volume','Adj Close']
-df = pandas.DataFrame(np.array(data).transpose(),index=dates,columns=header).sort()
+# create a pandas dataframe structure   
+df = DataFrame(data,index=idx).sort()
+
 
 
 

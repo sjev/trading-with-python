@@ -10,6 +10,9 @@ from time import sleep
 def watcher(msg):
     print msg
 
+def dummyHandler(msg):
+    pass
+
 # show Bid and Ask quotes
 def my_BidAsk(msg):
     print 'bid_ask'
@@ -24,8 +27,11 @@ def my_BidAsk(msg):
 def my_BidAsk2(msg):
     print 'Handler 2'
     print msg
+   
     
-  
+def portfolioHandler(msg):
+    print msg
+    print msg.contract.m_symbol
 
 def makeStkContract(contractTuple):
     newContract = Contract()
@@ -65,27 +71,25 @@ def testExecutions():
     
     sleep(2)
 
+def testAccountUpdates():
+    con.reqAccountUpdates(True,'')
+
 if __name__ == '__main__':
     
     
     con = ibConnection()
-    con.registerAll(watcher)
-    showBidAskOnly = False  # set False to see the raw messages
-    if showBidAskOnly:
-        con.unregister(watcher, message.TickSize, message.TickPrice,
-                       message.TickString, message.TickOptionComputation)
-        con.register(my_BidAsk, message.TickPrice)
-        con.register(my_BidAsk2, message.TickPrice)
+    con.registerAll(dummyHandler)
+    con.register(portfolioHandler,message.UpdatePortfolio)
+   
     con.connect()
     
     
     
     sleep(1)
     #testMarketData()
-    testExecutions()
-
+    #testExecutions()
+    testAccountUpdates()
  
     con.disconnect()
-    sleep(1)
-    
+    sleep(2)
     print 'All done!'

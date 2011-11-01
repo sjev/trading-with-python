@@ -29,7 +29,8 @@ def getHistoricData(symbol, sDate=(2010,1,1),eDate=date.today().timetuple()[0:3]
     except Exception, e:
         s = "Failed to download:\n{0}".format(e);
         print s
-
+		
+		
     dates = []
     data = [[] for i in range(6)]
     #high

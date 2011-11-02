@@ -12,7 +12,7 @@ import urllib2
 from pandas import DataFrame, Index
 import numpy as np
 
-def getHistoricData(symbol, sDate=(2010,1,1),eDate=date.today().timetuple()[0:3]):
+def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]):
     """ get data from Yahoo finance and return pandas dataframe
 
     symbol: Yahoo finanance symbol

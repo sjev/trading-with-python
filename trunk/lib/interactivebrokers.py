@@ -5,12 +5,12 @@ Distributed under the terms of the GNU General Public License v2
 Interface to interactive brokers together with gui widgets
 
 '''
-#import sys
+import sys
 #import os
 from time import sleep
-#from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex, SIGNAL,SLOT,QString)
-#from PyQt4.QtGui import (QApplication,QMessageBox,QDialog,QVBoxLayout,QHBoxLayout,QDialogButtonBox,
-#                         QTableView, QPushButton,QWidget,QLabel,QLineEdit,QGridLayout)
+from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex, SIGNAL,SLOT,QString)
+from PyQt4.QtGui import (QApplication,QMessageBox,QDialog,QVBoxLayout,QHBoxLayout,QDialogButtonBox,
+                         QTableView, QPushButton,QWidget,QLabel,QLineEdit,QGridLayout)
 
 from ib.ext.Contract import Contract
 from ib.opt import ibConnection, message
@@ -32,13 +32,16 @@ def createContract(symbol, secType='STK', exchange='SMART',currency='USD'):
     
     return contract
 
-class Subscriptions(object):
+class Subscriptions(QAbstractTableModel):
     ''' a data table containing price & subscription data '''
     def __init__(self):
         
-        self.data = DataFrame() # this property holds the data in a table format
+        super(Subscriptions,self).__init__()
+        self._data = DataFrame() # this property holds the data in a table format
         self._nextId = 1
         self._id2symbol = {} # id-> symbol lookup dict
+        self._header = ['id','bid','ask','last'] # columns of the _data table
+        
         
     def add(self,symbol, subId = None):
         ''' 
@@ -57,39 +60,86 @@ class Subscriptions(object):
         if subId is None:
             subId = self._nextId
         
-        header = ['id','bid','ask','last']
-        data = dict(zip(header,[subId,np.nan,np.nan,np.nan]))
+        data = dict(zip(self._header,[subId,np.nan,np.nan,np.nan]))
         row = DataFrame(data, index = Index([symbol]))
  
-        self.data = self.data.append(row[header])
+        self._data = self._data.append(row[self._header]) # append data and set correct column order
         
         self._nextId = subId+1        
         self._rebuildIndex()
+        
+        self.emit(SIGNAL("layoutChanged()"))
         return subId
     
     def priceHandler(self,msg):
         ''' handler function for price updates. register this with ibConnection class '''
-        try:
-            self.data[priceTicks[msg.field]][self._id2symbol[msg.tickerId]]=msg.price
-        except KeyError:
+        
+        if priceTicks[msg.field] not in self._header: # do nothing for ticks that are not in _data table
             return
-            
-        print self
         
+        self._data[priceTicks[msg.field]][self._id2symbol[msg.tickerId]]=msg.price
         
+        #notify viewer
+        col = self._header.index(priceTicks[msg.field])
+        row = self._data.index.tolist().index(self._id2symbol[msg.tickerId])
+        
+        idx = self.createIndex(row,col)
+        self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),idx, idx)
+        print 'updating {0},{1}'.format(row,col)
         
     
     def _rebuildIndex(self):
         ''' udate lookup dictionary id-> symbol '''
-        symbols = self.data.index.tolist()
-        ids = self.data['id'].values.tolist()
+        symbols = self._data.index.tolist()
+        ids = self._data['id'].values.tolist()
         self._id2symbol = dict(zip(ids,symbols))
         
     
     def __repr__(self):
-        return str(self.data)
+        return str(self._data)
     
-
+    #------------- table display functions -----------------     
+    def headerData(self,section,orientation,role=Qt.DisplayRole):
+        if role != Qt.DisplayRole:
+            return QVariant()
+        
+        
+        if orientation == Qt.Horizontal:
+            
+            try:
+                return (self._header)[section]
+            except (IndexError, ):
+                return QVariant()
+        elif orientation == Qt.Vertical:
+            try:
+                #return self._data.index.tolist()
+                return self._data.index.tolist()[section]
+            except (IndexError, ):
+                return QVariant()
+            
+    def data(self, index, role=Qt.DisplayRole):
+        if role != Qt.DisplayRole:
+            return QVariant()
+        
+        if (not index.isValid() or not (0 <= index.row() < len(self._data))):
+            return QVariant()
+        
+        print 'data? {0},{1}'.format(index.row(), index.column())
+        
+        #return QVariant(0)
+#        symbol = self.row2symbol[index.row()]
+#        
+#        v = self.id2data[self.symbol2id[symbol]].data
+#       
+        return QVariant(str(self._data.ix[index.row(),index.column()]))
+        
+    
+    def rowCount(self, index=QModelIndex()):
+        return self._data.shape[0]
+    
+    def columnCount(self, index=QModelIndex()):
+        return self._data.shape[1]
+    
 
 class Broker(object):
     ''' 
@@ -130,17 +180,17 @@ class Broker(object):
         c.m_exchange = exchange
         c.m_currency = currency
         
-        id = self.data.add(symbol)
+        subId = self.data.add(symbol)
         
-        self.tws.reqMktData(id,c,'',False)
+        self.tws.reqMktData(subId,c,'',False)
         
-        return id
+        return subId
     
     def unsubscribeStk(self,symbol):
-        id = self.data.symbol2id[symbol]
-        print 'Unsubscribing {0}({1})'.format(symbol,id)
+        subId = self.data.symbol2id[symbol]
+        print 'Unsubscribing {0}({1})'.format(symbol,subId)
         sleep(0.5)
-        self.tws.cancelMktData(id)
+        self.tws.cancelMktData(subId)
         self.data.removeSubscription(symbol)
     
     def getContract(self,symbol):
@@ -205,15 +255,125 @@ def testBroker():
     sleep(3)
     return b
         
+#---------------------GUI stuff--------------------------------------------
+class AddSubscriptionDlg(QDialog):
+    def __init__(self,parent=None):
+        super(AddSubscriptionDlg,self).__init__(parent)
+        symbolLabel = QLabel('Symbol')
+        self.symbolEdit = QLineEdit()
+        secTypeLabel = QLabel('secType')
+        self.secTypeEdit = QLineEdit('STK')
+        exchangeLabel = QLabel('exchange')
+        self.exchangeEdit = QLineEdit('SMART')
+        currencyLabel = QLabel('currency')
+        self.currencyEdit = QLineEdit('USD')
+        
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
+                                     QDialogButtonBox.Cancel)
+        
+        
+        lay = QGridLayout()
+        lay.addWidget(symbolLabel,0,0)
+        lay.addWidget(self.symbolEdit,0,1)
+        lay.addWidget(secTypeLabel,1,0)
+        lay.addWidget(self.secTypeEdit,1,1)
+        lay.addWidget(exchangeLabel,2,0)
+        lay.addWidget(self.exchangeEdit,2,1)
+        lay.addWidget(currencyLabel,3,0)
+        lay.addWidget(self.currencyEdit,3,1)
+        
+        
+        
+        lay.addWidget(buttonBox,4,0,1,2)
+        self.setLayout(lay)
 
+        self.connect(buttonBox, SIGNAL("accepted()"),
+                     self, SLOT("accept()"))
+        self.connect(buttonBox, SIGNAL("rejected()"),
+                     self, SLOT("reject()"))
+        self.setWindowTitle("Add subscription")
+
+class BrokerWidget(QWidget):
+    def __init__(self,broker,parent = None ):
+        super(BrokerWidget,self).__init__()
+        
+        self.broker = broker
+        
+        self.dataTable = QTableView()
+        self.dataTable.setModel(self.broker.data)
+        dataLabel = QLabel('Price Data')
+        dataLabel.setBuddy(self.dataTable)
+        
+        dataLayout = QVBoxLayout()
+        
+        dataLayout.addWidget(dataLabel)
+        dataLayout.addWidget(self.dataTable)
+        
+        
+        addButton = QPushButton("&Add")
+        deleteButton = QPushButton("&Delete")
+        
+        buttonLayout = QVBoxLayout()
+        buttonLayout.addWidget(addButton)
+        #buttonLayout.addWidget(deleteButton)
+        buttonLayout.addStretch()
+        
+        layout = QHBoxLayout()
+        layout.addLayout(dataLayout)
+        layout.addLayout(buttonLayout)
+        self.setLayout(layout)
+        
+        self.connect(addButton,SIGNAL('clicked()'),self.addSubscription)
+        self.connect(deleteButton,SIGNAL('clicked()'),self.deleteSubscription)
+        
+    def addSubscription(self):
+        dialog = AddSubscriptionDlg(self)
+        if dialog.exec_():
+            self.broker.subscribeStk(str(dialog.symbolEdit.text()),str( dialog.secTypeEdit.text()),
+                                     str(dialog.exchangeEdit.text()),str(dialog.currencyEdit.text()))
+        
+    def deleteSubscription(self):
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+class Form(QDialog):
+    def __init__(self, parent=None):
+        super(Form, self).__init__(parent)
+        self.resize(640,480)
+        self.setWindowTitle('Broker test')
+        
+        self.broker = Broker()
+       
+        self.broker.subscribeStk('SPY')
+        #self.broker.subscribeStk('QQQ')
+        brokerWidget = BrokerWidget(self.broker,self)
+        lay = QVBoxLayout()
+        lay.addWidget(brokerWidget)
+        self.setLayout(lay)
+
+def startGui():
+    app = QApplication(sys.argv)
+    form = Form()
+    form.show()
+    app.exec_()
 
 if __name__ == "__main__":
     
     #testConnection()
-    testBroker()
-    
+    #testBroker()
     #testSubscriptions()
-
+    
+    startGui()
     print 'All done'
     
     

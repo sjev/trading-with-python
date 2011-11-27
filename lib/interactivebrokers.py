@@ -145,7 +145,7 @@ class Broker(object):
                 
         
         
-        #self.tws.registerAll(self.defaultHandler) 
+        self.tws.registerAll(self.defaultHandler) 
         self.tws.register(self.data.priceHandler,message.TickPrice)
         self.tws.register(self.nextValidIdHandler,message.NextValidId)
         self.log.debug('Connecting to tws')
@@ -203,7 +203,9 @@ class Broker(object):
 
     def defaultHandler(self,msg):
         ''' default message handler '''
-        self.log.debug(msg)
+        #print msg.typeName
+        if msg.typeName == 'Error':
+            self.log.error(msg)
         
 
     def nextValidIdHandler(self,msg):

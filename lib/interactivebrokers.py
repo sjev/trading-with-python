@@ -5,12 +5,12 @@ Distributed under the terms of the GNU General Public License v2
 Interface to interactive brokers together with gui widgets
 
 '''
-import sys
-import os
+#import sys
+#import os
 from time import sleep
-from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex, SIGNAL,SLOT,QString)
-from PyQt4.QtGui import (QApplication,QMessageBox,QDialog,QVBoxLayout,QHBoxLayout,QDialogButtonBox,
-                         QTableView, QPushButton,QWidget,QLabel,QLineEdit,QGridLayout)
+#from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex, SIGNAL,SLOT,QString)
+#from PyQt4.QtGui import (QApplication,QMessageBox,QDialog,QVBoxLayout,QHBoxLayout,QDialogButtonBox,
+#                         QTableView, QPushButton,QWidget,QLabel,QLineEdit,QGridLayout)
 
 from ib.ext.Contract import Contract
 from ib.opt import ibConnection, message
@@ -20,15 +20,40 @@ import numpy as np
 
 from pandas import DataFrame, Index
 
+priceTicks = {1:'bid',2:'ask',4:'last',6:'high',7:'low',9:'close', 14:'open'} 
+
+def createContract(symbol, secType='STK', exchange='SMART',currency='USD'):
+    ''' contract factory function '''
+    contract = Contract()
+    contract.m_symbol = symbol
+    contract.m_secType = secType
+    contract.m_exchange = exchange
+    contract.m_currency = currency
+    
+    return contract
+
 class Subscriptions(object):
     ''' a data table containing price & subscription data '''
     def __init__(self):
+        
         self.data = DataFrame() # this property holds the data in a table format
         self._nextId = 1
         self._id2symbol = {} # id-> symbol lookup dict
         
-    def addSymbol(self,symbol, subId = None):
-       
+    def add(self,symbol, subId = None):
+        ''' 
+        Add subscription to data table 
+        
+        Parameters
+        ------------
+        symbol    :    stock symbol, 'SPY' for example
+        subId    :    (optional) force subscription id 
+        
+        Returns
+        -----------
+        id :        subscription id to be used with data request from IB
+        
+        '''
         if subId is None:
             subId = self._nextId
         
@@ -41,6 +66,18 @@ class Subscriptions(object):
         self._nextId = subId+1        
         self._rebuildIndex()
         return subId
+    
+    def priceHandler(self,msg):
+        ''' handler function for price updates. register this with ibConnection class '''
+        try:
+            self.data[priceTicks[msg.field]][self._id2symbol[msg.tickerId]]=msg.price
+        except KeyError:
+            return
+            
+        print self
+        
+        
+        
     
     def _rebuildIndex(self):
         ''' udate lookup dictionary id-> symbol '''
@@ -58,7 +95,7 @@ class Broker(object):
     ''' 
     Broker class acts as a wrapper around ibConnection
     from ibPy. It tracks current subscriptions and provides
-    data models to viewiers.
+    data models to viewiers .
     '''
     def __init__(self, name='broker'):
         ''' initialize broker class
@@ -74,16 +111,13 @@ class Broker(object):
         
         
         self.tws.registerAll(self.defaultHandler) 
-        #self.tws.register(self.data.priceHandler,message.TickPrice)
+        self.tws.register(self.data.priceHandler,message.TickPrice)
         self.tws.register(self.nextValidIdHandler,message.NextValidId)
         self.log.debug('Connecting to tws')
         self.tws.connect()  
         
     def subscribeStk(self,symbol, secType='STK', exchange='SMART',currency='USD'):
-        ''' 
-        subscribe to stock data 
-        @return: subscription id
-        '''
+        '''  subscribe to stock data '''
         self.log.debug('Subscribing to '+symbol)        
 #        if symbol in self.data.symbols:
 #            print 'Already subscribed to {0}'.format(symbol)
@@ -96,7 +130,7 @@ class Broker(object):
         c.m_exchange = exchange
         c.m_currency = currency
         
-        #id = self.data.addSubscripion(c)
+        id = self.data.add(symbol)
         
         self.tws.reqMktData(id,c,'',False)
         
@@ -141,19 +175,45 @@ class Broker(object):
         self.nextValidOrderId = msg.orderId
         self.log.debug( 'Next valid order id:{0}'.format(self.nextValidOrderId))
 
+#---------------test functions-----------------
 
+def dummyHandler(msg):
+    print msg
+
+def testConnection():
+    ''' a simple test to check working of streaming prices etc '''
+    tws = ibConnection()
+    tws.registerAll(dummyHandler)
+
+    tws.connect()
+    
+    c = createContract('SPY')
+    tws.reqMktData(1,c,'',False)
+    sleep(3)
+    
+    print 'testConnection done.'
+
+def testSubscriptions():
+    s = Subscriptions()
+    s.add('AAA')
+    s.add('BBB')
+    print s
+
+def testBroker():
+    b = Broker()
+    b.subscribeStk('SPY')
+    sleep(3)
+    return b
+        
 
 
 if __name__ == "__main__":
-    s = Subscriptions()   
-    s.addSymbol('A')
-    s.addSymbol('B')
-    s.addSymbol('XYZ',20)
-    s.addSymbol('C')
-    #b = Broker()
-    #b.subscribeStk('SPY')
-    #sleep(3)
-    #b.disconnect()
+    
+    #testConnection()
+    testBroker()
+    
+    #testSubscriptions()
+
     print 'All done'
     
     

@@ -38,6 +38,7 @@ class Subscriptions(QAbstractTableModel):
         
         super(Subscriptions,self).__init__()
         self._data = DataFrame() # this property holds the data in a table format
+      
         self._nextId = 1
         self._id2symbol = {} # id-> symbol lookup dict
         self._header = ['id','bid','ask','last'] # columns of the _data table
@@ -45,16 +46,8 @@ class Subscriptions(QAbstractTableModel):
         
     def add(self,symbol, subId = None):
         ''' 
-        Add subscription to data table 
-        
-        Parameters
-        ------------
-        symbol    :    stock symbol, 'SPY' for example
-        subId    :    (optional) force subscription id 
-        
-        Returns
-        -----------
-        id :        subscription id to be used with data request from IB
+        Add  a subscription to data table
+        return : subscription id 
         
         '''
         if subId is None:
@@ -69,6 +62,7 @@ class Subscriptions(QAbstractTableModel):
         self._rebuildIndex()
         
         self.emit(SIGNAL("layoutChanged()"))
+         
         return subId
     
     def priceHandler(self,msg):
@@ -85,8 +79,7 @@ class Subscriptions(QAbstractTableModel):
         
         idx = self.createIndex(row,col)
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),idx, idx)
-        print 'updating {0},{1}'.format(row,col)
-        
+       
     
     def _rebuildIndex(self):
         ''' udate lookup dictionary id-> symbol '''
@@ -124,16 +117,8 @@ class Subscriptions(QAbstractTableModel):
         if (not index.isValid() or not (0 <= index.row() < len(self._data))):
             return QVariant()
         
-        print 'data? {0},{1}'.format(index.row(), index.column())
-        
-        #return QVariant(0)
-#        symbol = self.row2symbol[index.row()]
-#        
-#        v = self.id2data[self.symbol2id[symbol]].data
-#       
         return QVariant(str(self._data.ix[index.row(),index.column()]))
-        
-    
+      
     def rowCount(self, index=QModelIndex()):
         return self._data.shape[0]
     
@@ -160,7 +145,7 @@ class Broker(object):
                 
         
         
-        self.tws.registerAll(self.defaultHandler) 
+        #self.tws.registerAll(self.defaultHandler) 
         self.tws.register(self.data.priceHandler,message.TickPrice)
         self.tws.register(self.nextValidIdHandler,message.NextValidId)
         self.log.debug('Connecting to tws')
@@ -243,15 +228,20 @@ def testConnection():
     
     print 'testConnection done.'
 
+
+
 def testSubscriptions():
     s = Subscriptions()
-    s.add('AAA')
-    s.add('BBB')
+    s.add('SPY')
+    #s.add('XLE')
+    
     print s
 
 def testBroker():
     b = Broker()
     b.subscribeStk('SPY')
+    b.subscribeStk('XLE')
+    b.subscribeStk('QQQ')
     sleep(3)
     return b
         
@@ -271,7 +261,6 @@ class AddSubscriptionDlg(QDialog):
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
                                      QDialogButtonBox.Cancel)
         
-        
         lay = QGridLayout()
         lay.addWidget(symbolLabel,0,0)
         lay.addWidget(self.symbolEdit,0,1)
@@ -281,8 +270,6 @@ class AddSubscriptionDlg(QDialog):
         lay.addWidget(self.exchangeEdit,2,1)
         lay.addWidget(currencyLabel,3,0)
         lay.addWidget(self.currencyEdit,3,1)
-        
-        
         
         lay.addWidget(buttonBox,4,0,1,2)
         self.setLayout(lay)
@@ -336,16 +323,6 @@ class BrokerWidget(QWidget):
         pass
 
 
-
-
-
-
-
-
-
-
-
-
 class Form(QDialog):
     def __init__(self, parent=None):
         super(Form, self).__init__(parent)
@@ -355,7 +332,9 @@ class Form(QDialog):
         self.broker = Broker()
        
         self.broker.subscribeStk('SPY')
-        #self.broker.subscribeStk('QQQ')
+        self.broker.subscribeStk('XLE')
+        self.broker.subscribeStk('QQQ')
+        
         brokerWidget = BrokerWidget(self.broker,self)
         lay = QVBoxLayout()
         lay.addWidget(brokerWidget)

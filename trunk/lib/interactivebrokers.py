@@ -34,15 +34,21 @@ def createContract(symbol, secType='STK', exchange='SMART',currency='USD'):
 
 class Subscriptions(QAbstractTableModel):
     ''' a data table containing price & subscription data '''
-    def __init__(self):
+    def __init__(self, tws=None):
         
         super(Subscriptions,self).__init__()
-        self._data = DataFrame() # this property holds the data in a table format
+        self.df = DataFrame() # this property holds the data in a table format
       
         self._nextId = 1
         self._id2symbol = {} # id-> symbol lookup dict
-        self._header = ['id','bid','ask','last'] # columns of the _data table
+        self._header = ['id','position','bid','ask','last'] # columns of the _data table
         
+        # register callbacks
+        if tws is not None:
+            tws.register(self.priceHandler,'TickPrice')
+            tws.register(self.accountHandler,'UpdatePortfolio')
+            
+            
         
     def add(self,symbol, subId = None):
         ''' 
@@ -53,10 +59,10 @@ class Subscriptions(QAbstractTableModel):
         if subId is None:
             subId = self._nextId
         
-        data = dict(zip(self._header,[subId,np.nan,np.nan,np.nan]))
+        data = dict(zip(self._header,[subId,0,np.nan,np.nan,np.nan]))
         row = DataFrame(data, index = Index([symbol]))
  
-        self._data = self._data.append(row[self._header]) # append data and set correct column order
+        self.df = self.df.append(row[self._header]) # append data and set correct column order
         
         self._nextId = subId+1        
         self._rebuildIndex()
@@ -71,25 +77,28 @@ class Subscriptions(QAbstractTableModel):
         if priceTicks[msg.field] not in self._header: # do nothing for ticks that are not in _data table
             return
         
-        self._data[priceTicks[msg.field]][self._id2symbol[msg.tickerId]]=msg.price
+        self.df[priceTicks[msg.field]][self._id2symbol[msg.tickerId]]=msg.price
         
         #notify viewer
         col = self._header.index(priceTicks[msg.field])
-        row = self._data.index.tolist().index(self._id2symbol[msg.tickerId])
+        row = self.df.index.tolist().index(self._id2symbol[msg.tickerId])
         
         idx = self.createIndex(row,col)
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),idx, idx)
-       
+    
+    def accountHandler(self,msg):
+        if msg.contract.m_symbol in self.df.index.tolist():
+            self.df['position'][msg.contract.m_symbol]=msg.position
     
     def _rebuildIndex(self):
         ''' udate lookup dictionary id-> symbol '''
-        symbols = self._data.index.tolist()
-        ids = self._data['id'].values.tolist()
+        symbols = self.df.index.tolist()
+        ids = self.df['id'].values.tolist()
         self._id2symbol = dict(zip(ids,symbols))
         
     
     def __repr__(self):
-        return str(self._data)
+        return str(self.df)
     
     #------------- table display functions -----------------     
     def headerData(self,section,orientation,role=Qt.DisplayRole):
@@ -105,8 +114,8 @@ class Subscriptions(QAbstractTableModel):
                 return QVariant()
         elif orientation == Qt.Vertical:
             try:
-                #return self._data.index.tolist()
-                return self._data.index.tolist()[section]
+                #return self.df.index.tolist()
+                return self.df.index.tolist()[section]
             except (IndexError, ):
                 return QVariant()
             
@@ -114,16 +123,16 @@ class Subscriptions(QAbstractTableModel):
         if role != Qt.DisplayRole:
             return QVariant()
         
-        if (not index.isValid() or not (0 <= index.row() < len(self._data))):
+        if (not index.isValid() or not (0 <= index.row() < len(self.df))):
             return QVariant()
         
-        return QVariant(str(self._data.ix[index.row(),index.column()]))
+        return QVariant(str(self.df.ix[index.row(),index.column()]))
       
     def rowCount(self, index=QModelIndex()):
-        return self._data.shape[0]
+        return self.df.shape[0]
     
     def columnCount(self, index=QModelIndex()):
-        return self._data.shape[1]
+        return self.df.shape[1]
     
 
 class Broker(object):
@@ -139,17 +148,19 @@ class Broker(object):
         self.name = name
         self.log = logger.getLogger(self.name)        
         
-        self.data = Subscriptions() # data container
+        
         self.tws =  ibConnection() # tws interface
         self.nextValidOrderId = None
                 
-        
+        self.dataModel = Subscriptions(self.tws) # data container
         
         self.tws.registerAll(self.defaultHandler) 
-        self.tws.register(self.data.priceHandler,message.TickPrice)
-        self.tws.register(self.nextValidIdHandler,message.NextValidId)
+        #self.tws.register(self.data.priceHandler,message.TickPrice)
+        #self.tws.register(self.nextValidIdHandler,message.NextValidId)
         self.log.debug('Connecting to tws')
         self.tws.connect()  
+        
+        self.tws.reqAccountUpdates(True,'')
         
     def subscribeStk(self,symbol, secType='STK', exchange='SMART',currency='USD'):
         '''  subscribe to stock data '''
@@ -158,18 +169,21 @@ class Broker(object):
 #            print 'Already subscribed to {0}'.format(symbol)
 #            return
         
-        
         c = Contract()
         c.m_symbol = symbol
         c.m_secType = secType
         c.m_exchange = exchange
         c.m_currency = currency
         
-        subId = self.data.add(symbol)
+        subId = self.dataModel.add(symbol)
         
         self.tws.reqMktData(subId,c,'',False)
         
         return subId
+    
+    @property
+    def data(self):
+        return self.dataModel.df
     
     def unsubscribeStk(self,symbol):
         subId = self.data.symbol2id[symbol]
@@ -243,7 +257,7 @@ def testBroker():
     b = Broker()
     b.subscribeStk('SPY')
     b.subscribeStk('XLE')
-    b.subscribeStk('QQQ')
+    b.subscribeStk('GOOG')
     sleep(3)
     return b
         
@@ -289,7 +303,7 @@ class BrokerWidget(QWidget):
         self.broker = broker
         
         self.dataTable = QTableView()
-        self.dataTable.setModel(self.broker.data)
+        self.dataTable.setModel(self.broker.dataModel)
         dataLabel = QLabel('Price Data')
         dataLabel.setBuddy(self.dataTable)
         
@@ -335,7 +349,7 @@ class Form(QDialog):
        
         self.broker.subscribeStk('SPY')
         self.broker.subscribeStk('XLE')
-        self.broker.subscribeStk('QQQ')
+        self.broker.subscribeStk('GOOG')
         
         brokerWidget = BrokerWidget(self.broker,self)
         lay = QVBoxLayout()

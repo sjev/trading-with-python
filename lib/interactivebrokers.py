@@ -298,12 +298,13 @@ class AddSubscriptionDlg(QDialog):
 
 class BrokerWidget(QWidget):
     def __init__(self,broker,parent = None ):
-        super(BrokerWidget,self).__init__()
+        super(BrokerWidget,self).__init__(parent)
         
         self.broker = broker
         
         self.dataTable = QTableView()
         self.dataTable.setModel(self.broker.dataModel)
+        self.dataTable.resizeColumnsToContents()
         dataLabel = QLabel('Price Data')
         dataLabel.setBuddy(self.dataTable)
         

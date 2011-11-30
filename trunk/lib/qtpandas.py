@@ -46,6 +46,10 @@ class DataFrameModel(QAbstractTableModel):
         if not index.isValid():
             return QVariant()
         
+        col = self.df.ix[:,index.column()] # get a column slice first to get the right data type
+        
+        return QVariant(str(col.ix[index.row()]))
+        
         return QVariant(str(self.df.ix[index.row(),index.column()]))
       
     def rowCount(self, index=QModelIndex()):

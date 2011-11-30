@@ -16,6 +16,7 @@ from ib.ext.Contract import Contract
 from ib.opt import ibConnection
 
 import tradingWithPython.lib.logger as logger
+from tradingWithPython.lib.qtpandas import DataFrameModel
 import numpy as np
 
 from pandas import DataFrame, Index
@@ -126,7 +127,10 @@ class Subscriptions(QAbstractTableModel):
         if (not index.isValid() or not (0 <= index.row() < len(self.df))):
             return QVariant()
         
-        return QVariant(str(self.df.ix[index.row(),index.column()]))
+        col = self.df.ix[:,index.column()]
+        element = col.ix[index.row()]
+        
+        return QVariant(str(element))
       
     def rowCount(self, index=QModelIndex()):
         return self.df.shape[0]

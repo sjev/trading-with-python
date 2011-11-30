@@ -8,12 +8,12 @@ Interface to interactive brokers together with gui widgets
 import sys
 #import os
 from time import sleep
-from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex, SIGNAL,SLOT,QString)
-from PyQt4.QtGui import (QApplication,QMessageBox,QDialog,QVBoxLayout,QHBoxLayout,QDialogButtonBox,
+from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex, SIGNAL,SLOT)
+from PyQt4.QtGui import (QApplication,QFileDialog,QDialog,QVBoxLayout,QHBoxLayout,QDialogButtonBox,
                          QTableView, QPushButton,QWidget,QLabel,QLineEdit,QGridLayout)
 
 from ib.ext.Contract import Contract
-from ib.opt import ibConnection, message
+from ib.opt import ibConnection
 
 import tradingWithPython.lib.logger as logger
 import numpy as np
@@ -225,6 +225,11 @@ class Broker(object):
     def nextValidIdHandler(self,msg):
         self.nextValidOrderId = msg.orderId
         self.log.debug( 'Next valid order id:{0}'.format(self.nextValidOrderId))
+    
+    def saveData(self, fname):
+        ''' save current dataframe to csv '''
+        self.log.debug("Saving data to {0}".format(fname))
+        self.dataModel.df.to_csv(fname)
 
 #---------------test functions-----------------
 
@@ -314,12 +319,13 @@ class BrokerWidget(QWidget):
         dataLayout.addWidget(self.dataTable)
         
         
-        addButton = QPushButton("&Add")
-        deleteButton = QPushButton("&Delete")
+        addButton = QPushButton("&Add Symbol")
+        saveDataButton = QPushButton("&Save Data")
+        #deleteButton = QPushButton("&Delete")
         
         buttonLayout = QVBoxLayout()
         buttonLayout.addWidget(addButton)
-        #buttonLayout.addWidget(deleteButton)
+        buttonLayout.addWidget(saveDataButton)
         buttonLayout.addStretch()
         
         layout = QHBoxLayout()
@@ -328,16 +334,24 @@ class BrokerWidget(QWidget):
         self.setLayout(layout)
         
         self.connect(addButton,SIGNAL('clicked()'),self.addSubscription)
-        self.connect(deleteButton,SIGNAL('clicked()'),self.deleteSubscription)
+        self.connect(saveDataButton,SIGNAL('clicked()'),self.saveData)
+        #self.connect(deleteButton,SIGNAL('clicked()'),self.deleteSubscription)
         
     def addSubscription(self):
         dialog = AddSubscriptionDlg(self)
         if dialog.exec_():
             self.broker.subscribeStk(str(dialog.symbolEdit.text()),str( dialog.secTypeEdit.text()),
                                      str(dialog.exchangeEdit.text()),str(dialog.currencyEdit.text()))
+    
+    def saveData(self):
+        ''' save data to a .csv file '''
+        fname =unicode(QFileDialog.getSaveFileName( self, caption="Save data to csv",filter = '*.csv'))
+        if fname:
+            self.broker.saveData(fname)
         
-    def deleteSubscription(self):
-        pass
+        
+#    def deleteSubscription(self):
+#        pass
 
 
 class Form(QDialog):

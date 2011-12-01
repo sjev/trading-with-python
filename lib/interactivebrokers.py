@@ -14,6 +14,7 @@ from PyQt4.QtGui import (QApplication,QFileDialog,QDialog,QVBoxLayout,QHBoxLayou
 
 from ib.ext.Contract import Contract
 from ib.opt import ibConnection
+from ib.ext.Order import Order
 
 import tradingWithPython.lib.logger as logger
 from tradingWithPython.lib.qtpandas import DataFrameModel
@@ -33,7 +34,7 @@ def createContract(symbol, secType='STK', exchange='SMART',currency='USD'):
     
     return contract
 
-class Subscriptions(QAbstractTableModel):
+class Subscriptions(DataFrameModel):
     ''' a data table containing price & subscription data '''
     def __init__(self, tws=None):
         
@@ -100,43 +101,7 @@ class Subscriptions(QAbstractTableModel):
     
     def __repr__(self):
         return str(self.df)
-    
-    #------------- table display functions -----------------     
-    def headerData(self,section,orientation,role=Qt.DisplayRole):
-        if role != Qt.DisplayRole:
-            return QVariant()
-        
-        
-        if orientation == Qt.Horizontal:
-            
-            try:
-                return (self._header)[section]
-            except (IndexError, ):
-                return QVariant()
-        elif orientation == Qt.Vertical:
-            try:
-                #return self.df.index.tolist()
-                return self.df.index.tolist()[section]
-            except (IndexError, ):
-                return QVariant()
-            
-    def data(self, index, role=Qt.DisplayRole):
-        if role != Qt.DisplayRole:
-            return QVariant()
-        
-        if (not index.isValid() or not (0 <= index.row() < len(self.df))):
-            return QVariant()
-        
-        col = self.df.ix[:,index.column()]
-        element = col.ix[index.row()]
-        
-        return QVariant(str(element))
-      
-    def rowCount(self, index=QModelIndex()):
-        return self.df.shape[0]
-    
-    def columnCount(self, index=QModelIndex()):
-        return self.df.shape[1]
+ 
     
 
 class Broker(object):
@@ -152,6 +117,7 @@ class Broker(object):
         self.name = name
         self.log = logger.getLogger(self.name)        
         
+        self.contracts = {} # a dict to keep track of subscribed contracts
         
         self.tws =  ibConnection() # tws interface
         self.nextValidOrderId = None
@@ -160,7 +126,7 @@ class Broker(object):
         
         self.tws.registerAll(self.defaultHandler) 
         #self.tws.register(self.data.priceHandler,message.TickPrice)
-        #self.tws.register(self.nextValidIdHandler,message.NextValidId)
+        self.tws.register(self.nextValidIdHandler,'NextValidId')
         self.log.debug('Connecting to tws')
         self.tws.connect()  
         
@@ -180,8 +146,9 @@ class Broker(object):
         c.m_currency = currency
         
         subId = self.dataModel.add(symbol)
-        
         self.tws.reqMktData(subId,c,'',False)
+        
+        self.contracts[symbol]=c
         
         return subId
     
@@ -189,30 +156,42 @@ class Broker(object):
     def data(self):
         return self.dataModel.df
     
+    
+    def placeOrder(self,symbol,shares,limit=None, transmit=0):
+        ''' place an order on already subscribed contract '''
+        
+        
+        if symbol not in self.contracts.keys():
+            self.log.error("Can't place order, not subscribed to %s" % symbol)
+            return
+        
+        action = {-1:'SELL',1:'BUY'}
+        
+        o= Order()
+        o.m_orderId = self.getOrderId()
+        o.m_action = action[cmp(shares,0)]
+        o.m_totalQuantity = abs(shares)
+        o.m_transmit = transmit
+        
+        if limit is not None:
+            o.m_orderType = 'LMT'
+            o.m_lmtPrice = limit
+        
+        self.log.debug('Placing %s order for %i %s (id=%i)' % (o.m_action,o.m_totalQuantity,symbol,o.m_orderId))
+            
+        self.tws.placeOrder(o.m_orderId,self.contracts[symbol],o)   
+            
+            
+            
+    def getOrderId(self):
+        self.nextValidOrderId+=1
+        return self.nextValidOrderId-1        
+    
     def unsubscribeStk(self,symbol):
-        subId = self.data.symbol2id[symbol]
-        print 'Unsubscribing {0}({1})'.format(symbol,subId)
-        sleep(0.5)
-        self.tws.cancelMktData(subId)
-        self.data.removeSubscription(symbol)
+        self.log.debug('Function not implemented')
     
-    def getContract(self,symbol):
-        return self.data.getContract(symbol)
-    
-    def symbolId(self,symbol):
-        ''' reverse symbol lookup
-        @param symbol: contract symbol
-        @return: symbol id
-        '''
-        return self.data.symbol2id[symbol]
-   
-    
-    def __getattr__(self, name):
-        """ x.__getattr__('name') <==> x.name
-        an easy way to call ibConnection methods
-        @return named attribute from instance tws
-        """
-        return getattr(self.tws, name)
+    def disconnect(self):
+        self.tws.disconnect()
        
     def __del__(self):
         '''destructor, clean up '''
@@ -234,6 +213,13 @@ class Broker(object):
         ''' save current dataframe to csv '''
         self.log.debug("Saving data to {0}".format(fname))
         self.dataModel.df.to_csv(fname)
+
+#    def __getattr__(self, name):
+#        """ x.__getattr__('name') <==> x.name
+#        an easy way to call ibConnection methods
+#        @return named attribute from instance tws
+#        """
+#        return getattr(self.tws, name)
 
 #---------------test functions-----------------
 
@@ -264,9 +250,12 @@ def testSubscriptions():
 
 def testBroker():
     b = Broker()
+    sleep(2)
     b.subscribeStk('SPY')
     b.subscribeStk('XLE')
     b.subscribeStk('GOOG')
+    
+    b.placeOrder('ABC', 125, 55.1)
     sleep(3)
     return b
         
@@ -313,7 +302,7 @@ class BrokerWidget(QWidget):
         
         self.dataTable = QTableView()
         self.dataTable.setModel(self.broker.dataModel)
-        self.dataTable.resizeColumnsToContents()
+        #self.dataTable.resizeColumnsToContents()
         dataLabel = QLabel('Price Data')
         dataLabel.setBuddy(self.dataTable)
         
@@ -384,10 +373,10 @@ def startGui():
 if __name__ == "__main__":
     
     #testConnection()
-    #testBroker()
+    testBroker()
     #testSubscriptions()
     
-    startGui()
+    #startGui()
     print 'All done'
     
     

@@ -14,6 +14,7 @@ class DataFrameModel(QAbstractTableModel):
     ''' data model for a DataFrame class '''
     def __init__(self):
         super(DataFrameModel,self).__init__()
+        self.df = DataFrame()
          
     def setData(self,dataFrame):
         self.df = dataFrame
@@ -47,10 +48,8 @@ class DataFrameModel(QAbstractTableModel):
             return QVariant()
         
         col = self.df.ix[:,index.column()] # get a column slice first to get the right data type
-        
         return QVariant(str(col.ix[index.row()]))
         
-        return QVariant(str(self.df.ix[index.row(),index.column()]))
       
     def rowCount(self, index=QModelIndex()):
         return self.df.shape[0]

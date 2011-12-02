@@ -157,7 +157,7 @@ class Broker(object):
         return self.dataModel.df
     
     
-    def placeOrder(self,symbol,shares,limit=None, transmit=0):
+    def placeOrder(self,symbol,shares,limit=None,exchange='SMART', transmit=0):
         ''' place an order on already subscribed contract '''
         
         
@@ -178,6 +178,8 @@ class Broker(object):
             o.m_lmtPrice = limit
         
         self.log.debug('Placing %s order for %i %s (id=%i)' % (o.m_action,o.m_totalQuantity,symbol,o.m_orderId))
+        
+        c = self.contracts[symbol].m_exchange = exchange
             
         self.tws.placeOrder(o.m_orderId,self.contracts[symbol],o)   
             

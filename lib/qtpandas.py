@@ -16,12 +16,12 @@ class DataFrameModel(QAbstractTableModel):
         super(DataFrameModel,self).__init__()
         self.df = DataFrame()
          
-    def setData(self,dataFrame):
+    def setDataFrame(self,dataFrame):
         self.df = dataFrame
     
     def signalUpdate(self):
         ''' tell viewers to update their data (this is full update, not efficient)'''
-        self.emit(SIGNAL('layoutChanged()'))   
+        self.layoutChanged.emit()
               
     #------------- table display functions -----------------     
     def headerData(self,section,orientation,role=Qt.DisplayRole):
@@ -64,14 +64,17 @@ class DataFrameWidget(QWidget):
         super(DataFrameWidget,self).__init__(parent)
         
         self.dataModel = DataFrameModel()
-        self.dataModel.setData(dataFrame)
+        self.dataModel.setDataFrame(dataFrame)
         
         self.dataTable = QTableView()
         self.dataTable.setModel(self.dataModel)
+        self.dataModel.signalUpdate()
         
         layout = QVBoxLayout()
         layout.addWidget(self.dataTable)
         self.setLayout(layout)
+        
+        
     
     def resizeColumnsToContents(self):
         self.dataTable.resizeColumnsToContents()    

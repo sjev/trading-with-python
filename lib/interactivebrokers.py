@@ -8,7 +8,7 @@ Interface to interactive brokers together with gui widgets
 import sys
 #import os
 from time import sleep
-from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex, SIGNAL,SLOT)
+from PyQt4.QtCore import (SIGNAL,SLOT)
 from PyQt4.QtGui import (QApplication,QFileDialog,QDialog,QVBoxLayout,QHBoxLayout,QDialogButtonBox,
                          QTableView, QPushButton,QWidget,QLabel,QLineEdit,QGridLayout)
 
@@ -20,6 +20,7 @@ import tradingWithPython.lib.logger as logger
 from tradingWithPython.lib.qtpandas import DataFrameModel
 import numpy as np
 
+import pandas
 from pandas import DataFrame, Index
 
 priceTicks = {1:'bid',2:'ask',4:'last',6:'high',7:'low',9:'close', 14:'open'} 
@@ -117,6 +118,7 @@ class Broker(object):
         self.name = name
         self.log = logger.getLogger(self.name)        
         
+        self.log.debug('Initializing broker. Pandas version={0}'.format(pandas.__version__))
         self.contracts = {} # a dict to keep track of subscribed contracts
         
         self.tws =  ibConnection() # tws interface

@@ -4,9 +4,10 @@ Easy integration of DataFrame into pyqt framework
 @author: Jev Kuznetsov
 '''
 from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex, SIGNAL)
-from PyQt4.QtGui import (QApplication,QDialog,QVBoxLayout, QTableView, QWidget)
+from PyQt4.QtGui import (QApplication,QDialog,QVBoxLayout, QTableView, QWidget, QHeaderView)
 
 from pandas import DataFrame, Index
+from scipy.spatial import qhull
 
 
 
@@ -67,6 +68,7 @@ class DataFrameWidget(QWidget):
         self.dataModel.setDataFrame(dataFrame)
         
         self.dataTable = QTableView()
+        self.dataTable.horizontalHeader().setResizeMode(QHeaderView.Stretch)
         self.dataTable.setModel(self.dataModel)
         self.dataModel.signalUpdate()
         

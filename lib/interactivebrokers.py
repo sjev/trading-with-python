@@ -10,7 +10,7 @@ import sys
 from time import sleep
 from PyQt4.QtCore import (SIGNAL,SLOT)
 from PyQt4.QtGui import (QApplication,QFileDialog,QDialog,QVBoxLayout,QHBoxLayout,QDialogButtonBox,
-                         QTableView, QPushButton,QWidget,QLabel,QLineEdit,QGridLayout)
+                         QTableView, QPushButton,QWidget,QLabel,QLineEdit,QGridLayout,QHeaderView)
 
 from ib.ext.Contract import Contract
 from ib.opt import ibConnection
@@ -306,6 +306,7 @@ class BrokerWidget(QWidget):
         
         self.dataTable = QTableView()
         self.dataTable.setModel(self.broker.dataModel)
+        self.dataTable.horizontalHeader().setResizeMode(QHeaderView.Stretch)
         #self.dataTable.resizeColumnsToContents()
         dataLabel = QLabel('Price Data')
         dataLabel.setBuddy(self.dataTable)

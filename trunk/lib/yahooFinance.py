@@ -10,7 +10,42 @@ Licence: GPL v2
 from datetime import datetime, date
 import urllib2
 from pandas import DataFrame, Index
-import numpy as np
+#import numpy as np
+
+
+class Data(object):
+    ''' a class for working with yahoo finance data '''
+    def __init__(self):
+       
+        self.df = DataFrame()
+        self.symbols = []
+        self.startDate = (1990,1,1)
+            
+            
+    def downloadData(self,symbols,startDate = (1990,1,1),column='adj_close'):
+        ''' get data from yahoo  '''
+        data = {}        
+        
+        for symbol in symbols:
+            print 'Downloading %s' % symbol
+            data[symbol]=(getHistoricData(symbol,startDate)[column] )
+           
+        self.df = DataFrame(data)
+        return self.df
+    
+           
+    def to_csv(self,fName):
+        self.df.to_csv(fName)
+    
+    def from_csv(self,fName):
+        self.df=DataFrame.from_csv(fName)
+    
+    def __repr__(self):
+        return str(self.df)
+
+
+
+
 
 def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]):
     """ get data from Yahoo finance and return pandas dataframe
@@ -29,8 +64,7 @@ def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]
     except Exception, e:
         s = "Failed to download:\n{0}".format(e);
         print s
-		
-		
+
     dates = []
     data = [[] for i in range(6)]
     #high

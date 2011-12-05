@@ -31,7 +31,7 @@ def estimateBeta(priceX,priceY):
     X = DataFrame({'x':priceX,'y':priceY})
     ret = (X/X.shift(1)-1).dropna().values
     
-    print len(ret)
+    #print len(ret)
     
     x = ret[:,0]
     y = ret[:,1]
@@ -46,7 +46,7 @@ def estimateBeta(priceX,priceY):
         idxOutlier = abs(err) > 3*np.std(err)
         nrOutliers =sum(idxOutlier)
         beta = a
-        print 'Iteration: %i beta: %.2f outliers: %i' % (iteration,beta, nrOutliers)
+        #print 'Iteration: %i beta: %.2f outliers: %i' % (iteration,beta, nrOutliers)
         x = x[~idxOutlier]
         y = y[~idxOutlier]
         iteration += 1

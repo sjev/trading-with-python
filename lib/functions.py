@@ -53,6 +53,10 @@ def estimateBeta(priceX,priceY):
         
     return beta    
 
+def returns(df):
+    return (df/df.shift(1)-1)
+
+
 def renameTs(series, name=None):
     ''' 
     return a renamed copy of time series

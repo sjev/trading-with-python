@@ -9,9 +9,9 @@ Licence: GPL v2
 import os
 import tradingWithPython.lib.logger as logger
 from tradingWithPython.lib.yahooFinance import getHistoricData
-from tradingWithPython.lib.functions import estimateBeta
+from tradingWithPython.lib.functions import estimateBeta, returns
 from datetime import date
-from pandas import DataFrame
+from pandas import DataFrame, Series
 import numpy as np
 
 class Symbol(object):
@@ -71,26 +71,24 @@ class Spread(object):
         
         '''
         self.df = df # price data frame
-        self._params = {} # normal properties
-        self._params['samples'] = len(self.df)
+        self.stats = None
+        
         
         self._params2 = DataFrame(columns=df.columns) # properties for a matrix
         self._calculate(capital,bet)
        
     def __repr__(self):
         
-        items =  str.join("\n",['%s:%.2f' % item for item in self._params.items()])
-        
-        return '-'*30+'\n'+items+'\n'+str(self._params2.T)
+        header = '-'*10+str.join("_",self.df.columns)+'-'*10
+        return header+'\n'+str(self.stats)+'\n'+str(self._params2.T)
          
     def _calculate(self,capital,bet):
         ''' internal data calculation, update self._params2 ''' 
         
         res = DataFrame(index= self.symbols)
         res['last close'] = self.df.ix[-1,:]
-        res['beta'] = 1. 
-             
-#        cap = DataFrame(dict(zip(cols,)))
+        res['beta'] = np.nan 
+
         # set capital ratios
         if capital is None:
             beta = estimateBeta(self.df.ix[:,0],self.df.ix[:,1])
@@ -99,12 +97,29 @@ class Spread(object):
             res.ix[1,'beta'] = beta
         else:
             res['capital'] = capital
+            res['gain'] = res['capital']/res.ix[0,'capital']
         
         
         res['shares'] = res['capital']/res['last close']
         
         self._params2 = res
+        
+        self.returns = (returns(self.df)*self._params2['gain']).sum(axis=1)    
+   
+    def calculateStatistics(self,other=None):
+        ''' calculate spread statistics, save internally '''
+        res = {}
+        res['std'] = self.returns.std()
+        res['75%'] = self.spread.quantile(.75)
+        res['25%'] = self.spread.quantile(.25)
+        res['last'] = self.spread[-1:]
+        res['samples'] = len(self.df)
+        if other is not None:
+            res['corr'] = self.returns.corr(returns(other))
+        
+        self.stats = Series(res)
     
+      
     @property
     def spread(self):
         return (self.df*self._params2['shares']).sum(axis=1)
@@ -115,17 +130,8 @@ class Spread(object):
         return self.df.columns.tolist()
     
     
-    @property 
-    def returns(self):
-        return (self.df/self.df.shift(1)-1)
-    
-    @property 
-    def spreadReturns(self):
-        '''
-        Daily returns of the spread
-        '''
-        return (self.returns*self._params2['gain']).sum(axis=1)     
-    
+       
+   
    
         
         

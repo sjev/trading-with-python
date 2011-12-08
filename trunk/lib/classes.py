@@ -13,6 +13,7 @@ from tradingWithPython.lib.functions import estimateBeta, returns
 from datetime import date
 from pandas import DataFrame, Series
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Symbol(object):
     ''' 
@@ -73,13 +74,17 @@ class Spread(object):
         self.df = df # price data frame
         self.stats = None
         
+        if name is None:
+            self.name = str.join("_",self.df.columns)
+        else:
+            self.name = name
         
         self._params2 = DataFrame(columns=df.columns) # properties for a matrix
         self._calculate(capital,bet)
        
     def __repr__(self):
         
-        header = '-'*10+str.join("_",self.df.columns)+'-'*10
+        header = '-'*10+self.name+'-'*10
         return header+'\n'+str(self.stats)+'\n'+str(self._params2.T)
          
     def _calculate(self,capital,bet):
@@ -129,9 +134,29 @@ class Spread(object):
     def symbols(self):
         return self.df.columns.tolist()
     
-    
-       
-   
+    #-----------plotting functions-------------------
+    def plot(self, figure=None, chart='rebalanced'):
+        
+        if figure is None:
+            figure = plt.gcf()
+      
+        figure.clear()
+        
+        ax1 = plt.subplot(2,1,1)
+        if chart=='rebalanced':
+            (self.returns*100).cumsum().plot(ax=ax1, style = 'o-')
+            plt.ylabel('% change')
+            plt.title('Cum returns '+self.name) 
+        elif chart=='spread':
+            self.spread.plot(ax=ax1, style = 'o-')
+            plt.title('Spread '+self.name)
+                
+        
+        ax2 = plt.subplot(2,1,2,sharex = ax1)
+        (self.returns*100).plot(ax=ax2, style= 'o-')
+        plt.title('returns')
+        plt.ylabel('% change')
+        
    
         
         

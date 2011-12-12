@@ -9,14 +9,11 @@ import sys, os
 __version__ = "0.0.1"
 
 from PyQt4.QtCore import (Qt, SIGNAL)
-from PyQt4.QtGui import (QWidget, QAction, QActionGroup, QApplication,
-        QDockWidget, QFileDialog, QFrame, QIcon, QImage, QImageReader,
-        QImageWriter, QInputDialog, QKeySequence, QLabel, QListWidget,
-        QMainWindow, QMessageBox, QPainter, QPixmap, QPrintDialog,
-        QPrinter, QSpinBox,QVBoxLayout,QTextEdit)
+from PyQt4.QtGui import *
 
 import widgets.ui_symbolChooser
 from tradingWithPython.lib.yahooFinance import getScreenerSymbols
+import qrc_resources
 
 class SymbolChooser(QWidget,widgets.ui_symbolChooser.Ui_Form):
     def __init__(self,parent=None):
@@ -42,15 +39,20 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(QTextEdit())
         
         #create actions
-        self.actions['loadScreener'] = self.createAction("Load symbols",self.loadScreenerSymbols)
+        self.actions['loadScreener'] = self.createAction("Load symbols",self.loadScreenerSymbols,icon="fileopen")
         
         #set app menu
         self.createMenu()
+        self.createToolbars()
         
     def createMenu(self):
         menu = self.menuBar()
         menu.addMenu("File").addAction(self.actions['loadScreener'])
-        
+    
+    def createToolbars(self):
+        t = self.addToolBar("File")
+        t.setObjectName("FileToolBar")  
+        t.addAction(self.actions['loadScreener']) 
         
     def loadScreenerSymbols(self):
         ' load symbols from screener csv'

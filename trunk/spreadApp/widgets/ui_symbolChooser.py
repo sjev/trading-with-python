@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '.\symbolChooser.ui'
 #
-# Created: Mon Dec 12 22:04:15 2011
+# Created: Mon Dec 12 22:53:46 2011
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -39,7 +39,7 @@ class Ui_Form(object):
         self.horizontalLayout.addWidget(self.txtReference)
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.label_2 = QtGui.QLabel(Form)
-        self.label_2.setText(QtGui.QApplication.translate("Form", "Symbols", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(QtGui.QApplication.translate("Form", "Basket", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setObjectName(_fromUtf8("label_2"))
         self.verticalLayout.addWidget(self.label_2)
         self.listSymbols = QtGui.QListWidget(Form)

@@ -50,7 +50,7 @@
    <item>
     <widget class="QLabel" name="label_2">
      <property name="text">
-      <string>Symbols</string>
+      <string>Basket</string>
      </property>
      <property name="buddy">
       <cstring>listSymbols</cstring>

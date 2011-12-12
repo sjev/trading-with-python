@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Dec 09 18:41:08 2011
 
-@author: jev
 """
 
 

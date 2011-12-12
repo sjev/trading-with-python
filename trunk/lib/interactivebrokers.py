@@ -1,6 +1,6 @@
 '''
-Copyright 2011  Jev Kuznetsov
-Distributed under the terms of the GNU General Public License v2
+Copyright: Jev Kuznetsov
+Licence: BSD
 
 Interface to interactive brokers together with gui widgets
 

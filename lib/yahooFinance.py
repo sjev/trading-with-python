@@ -2,14 +2,14 @@
 """
 toolset working with yahoo finance data
 
-@author: Jev Kuznetsov
-Licence: GPL v2
+Copyright: Jev Kuznetsov
+Licence: BSD
+
 """
 
 
 from datetime import datetime, date
 import urllib2
-import urllib
 from pandas import DataFrame, Index
 import numpy as np
 

@@ -1,13 +1,15 @@
 '''
 Easy integration of DataFrame into pyqt framework
 
-@author: Jev Kuznetsov
+Copyright: Jev Kuznetsov
+Licence: BSD
+
 '''
-from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex, SIGNAL)
+from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex)
 from PyQt4.QtGui import (QApplication,QDialog,QVBoxLayout, QTableView, QWidget, QHeaderView)
 
 from pandas import DataFrame, Index
-from scipy.spatial import qhull
+
 
 
 

@@ -19,7 +19,7 @@ startDate = (2010,1,1)
 y = yahooFinance.HistData()
 
 dataFile = 'spreadCalc.csv'               
-symbols = ['XLB','SPY']
+symbols = ['INTC','AMD']
 
 #os.remove(dataFile)
    

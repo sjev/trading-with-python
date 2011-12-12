@@ -124,6 +124,19 @@ def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]
     return df
 
 
+def getScreenerSymbols(fileName):
+    ''' read symbols from a .csv saved by yahoo stock screener '''
+    
+    with open(fileName,'r') as fid:
+        lines = fid.readlines()
+
+    symbols = []   
+    for line in lines[3:]:
+        fields = line.strip().split(',')
+        field = fields[0].strip()
+        if len(field) > 0:
+            symbols.append(field) 
+    return symbols
 
 if __name__=='__main__':
     print 'Testing twp toolset'

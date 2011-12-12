@@ -181,7 +181,6 @@ class Broker(object):
         
         self.log.debug('Placing %s order for %i %s (id=%i)' % (o.m_action,o.m_totalQuantity,symbol,o.m_orderId))
         
-        c = self.contracts[symbol].m_exchange = exchange
             
         self.tws.placeOrder(o.m_orderId,self.contracts[symbol],o)   
             
@@ -378,10 +377,10 @@ def startGui():
 if __name__ == "__main__":
     
     #testConnection()
-    testBroker()
+    #testBroker()
     #testSubscriptions()
     
-    #startGui()
+    startGui()
     print 'All done'
     
     

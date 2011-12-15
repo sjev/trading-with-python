@@ -19,28 +19,38 @@ startDate = (2010,1,1)
 y = yahooFinance.HistData()
 
 dataFile = 'spreadCalc.csv'               
-symbols = ['INTC','AMD']
+
+ref = ['SPY']
+symbols = ['GLD','GDX','IWM','XLE','VXX']
 
 #os.remove(dataFile)
    
 try:    
     print 'reading data file '
     y.from_csv(dataFile)
-    df = y.df[symbols].dropna().tail(1500)
+    df = y.df[ref+symbols]
 except Exception as e:
     print e, 'Downloading'
-    y.downloadData(symbols)
+    y.downloadData(ref+symbols)
     y.to_csv(dataFile)
-    df = y.df[symbols].dropna().tail(1500)
+    df = y.df[ref+symbols] 
 
+#---build spreads
+lookback = 500
+spreads = []
+for symbol in symbols:
+    spread = Spread(df[ref+[symbol]].tail(lookback)) 
+    spread.calculateStatistics(returns(df[ref[0]]))
+    spreads.append(spread)
 
-s = Spread(df)
+spread.plot(rebalanced=True)
+#s = Spread(df)
 #s.calculateStatistics(df[symbols[0]])
 
-print s
-print '-'*30
+#print s
+#print '-'*30
 #print yahooFinance.getQuote(symbols)
 #(s.spreadReturns).cumsum().plot()
 
-f = plt.figure(1)
-s.plot(f)
+#f = plt.figure(1)
+#s.plot(f)

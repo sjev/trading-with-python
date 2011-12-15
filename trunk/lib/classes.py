@@ -135,7 +135,7 @@ class Spread(object):
         return self.df.columns.tolist()
     
     #-----------plotting functions-------------------
-    def plot(self, figure=None, chart='rebalanced'):
+    def plot(self, figure=None, rebalanced=True):
         
         if figure is None:
             figure = plt.gcf()
@@ -143,13 +143,16 @@ class Spread(object):
         figure.clear()
         
         ax1 = plt.subplot(2,1,1)
-        if chart=='rebalanced':
-            (self.returns*100).cumsum().plot(ax=ax1, style = 'o-')
+        if rebalanced:
+            ret = returns(self.df)
+            ret['spread'] = self.returns
+            (ret).cumsum().plot(ax=ax1)
             plt.ylabel('% change')
             plt.title('Cum returns '+self.name) 
-        elif chart=='spread':
+        else:
             self.spread.plot(ax=ax1, style = 'o-')
-            plt.title('Spread '+self.name)
+            p = self._params2.T
+            plt.title('Spread %.2f %s vs %.2f %s' %(p.ix['shares',0], p.columns[0], p.ix['shares',1],p.columns[1] ))
                 
         
         ax2 = plt.subplot(2,1,2,sharex = ax1)

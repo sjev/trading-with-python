@@ -30,6 +30,7 @@ class MainForm(QDialog):
         
     def testFcn(self):
         x = np.linspace(0, 100, 1000)
+       
         y = (np.random.rand(len(x))-0.5).cumsum()
     
         curve = make.curve(x, y, "ab", "b")

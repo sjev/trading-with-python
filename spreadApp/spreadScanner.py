@@ -45,6 +45,8 @@ class MainWindow(QMainWindow):
         self.createMenu()
         self.createToolbars()
         
+        self._testFcn()
+        
     def createMenu(self):
         menu = self.menuBar()
         menu.addMenu("File").addAction(self.actions['loadScreener'])
@@ -54,15 +56,16 @@ class MainWindow(QMainWindow):
         t.setObjectName("FileToolBar")  
         t.addAction(self.actions['loadScreener']) 
         
-    def loadScreenerSymbols(self):
+    def loadScreenerSymbols(self, fName = None):
         ' load symbols from screener csv'
         
-        formats = ['*.csv']
-        path = (os.path.dirname(self.filename)
-               if self.filename is not None else ".")
-        
-        fName = unicode(QFileDialog.getOpenFileName(self,"Open yahoo screener file",path,
-                                                    "CSV files ({0})".format(" ".join(formats))))
+        if fName is None:
+            formats = ['*.csv']
+            path = (os.path.dirname(self.filename)
+                   if self.filename is not None else ".")
+            
+            fName = unicode(QFileDialog.getOpenFileName(self,"Open yahoo screener file",path,
+                                                        "CSV files ({0})".format(" ".join(formats))))
         
         if fName:
             symbols = getScreenerSymbols(fName)
@@ -86,7 +89,10 @@ class MainWindow(QMainWindow):
         if checkable:
             action.setCheckable(True)
         return action
-
+    
+    def _testFcn(self):
+        self.loadScreenerSymbols('gold_stocks.csv')
+        
     
 def main():
     app = QApplication(sys.argv)

@@ -53,6 +53,11 @@ def estimateBeta(priceX,priceY):
         
     return beta    
 
+def rank(current,past):
+    ''' calculate a relative rank 0..1 for a value against series '''
+    return (current>past).sum()/float(past.count())
+
+
 def returns(df):
     return (df/df.shift(1)-1)
 

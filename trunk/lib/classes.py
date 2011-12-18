@@ -9,7 +9,7 @@ Licence: GPL v2
 import os
 import tradingWithPython.lib.logger as logger
 from tradingWithPython.lib.yahooFinance import getHistoricData
-from tradingWithPython.lib.functions import estimateBeta, returns
+from tradingWithPython.lib.functions import estimateBeta, returns, rank
 from datetime import date
 from pandas import DataFrame, Series
 import numpy as np
@@ -102,7 +102,7 @@ class Spread(object):
             res.ix[1,'beta'] = beta
         else:
             res['capital'] = capital
-            res['gain'] = res['capital']/res.ix[0,'capital']
+            res['gain'] = res['capital']/bet
         
         
         res['shares'] = res['capital']/res['last close']
@@ -114,17 +114,17 @@ class Spread(object):
     def calculateStatistics(self,other=None):
         ''' calculate spread statistics, save internally '''
         res = {}
-        res['std'] = self.returns.std()
-        res['75%'] = self.spread.quantile(.75)
-        res['25%'] = self.spread.quantile(.25)
-        res['last'] = self.spread[-1:]
+        res['micro'] = rank(self.returns[-1],self.returns)
+        res['macro'] = rank(self.spread[-1], self.spread)
+
+        #res['75%'] = self.spread.quantile(.75)
+        #res['25%'] = self.spread.quantile(.25)
+        res['last'] = self.spread[-1]
         res['samples'] = len(self.df)
         if other is not None:
             res['corr'] = self.returns.corr(returns(other))
         
-        self.stats = Series(res)
-    
-      
+        return   Series(res,name=self.name)    
     @property
     def spread(self):
         return (self.df*self._params2['shares']).sum(axis=1)

@@ -4,12 +4,13 @@ Created on 28 okt 2011
 @author: jev
 ''' 
 
-from tradingWithPython import estimateBeta, Spread, returns
+from tradingWithPython import estimateBeta, Spread, returns, Portfolio
 from tradingWithPython.lib import yahooFinance
 from pandas import DataFrame
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+
 
 startDate = (2010,1,1)
 # create two timeseries. data for SPY goes much further back
@@ -20,30 +21,18 @@ y = yahooFinance.HistData()
 
 dataFile = 'spreadCalc.csv'               
 
-ref = ['SPY']
-symbols = ['GLD','GDX','IWM','XLE','VXX']
+symbols = ['GLD','GDX']
 
-#os.remove(dataFile)
-   
-try:    
-    print 'reading data file '
-    y.from_csv(dataFile)
-    df = y.df[ref+symbols]
-except Exception as e:
-    print e, 'Downloading'
-    y.downloadData(ref+symbols)
-    y.to_csv(dataFile)
-    df = y.df[ref+symbols] 
 
-#---build spreads
-lookback = 500
-spreads = []
-for symbol in symbols:
-    spread = Spread(df[ref+[symbol]].tail(lookback)) 
-    spread.calculateStatistics(returns(df[ref[0]]))
-    spreads.append(spread)
+y.loadSymbols(dataFile,symbols)
+df =y.df.tail(500)
 
-spread.plot(rebalanced=True)
+
+p = Portfolio(df, name='test spread')
+print p
+#
+
+
 #s = Spread(df)
 #s.calculateStatistics(df[symbols[0]])
 

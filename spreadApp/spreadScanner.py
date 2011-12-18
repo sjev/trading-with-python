@@ -6,7 +6,7 @@ License: BSD
 
 import sys, os
 
-__version__ = "0.0.1"
+__version__ = "0.0.5"
 
 from PyQt4.QtCore import (Qt, SIGNAL)
 from PyQt4.QtGui import *
@@ -18,7 +18,9 @@ from tradingWithPython.lib.qtpandas import DataFrameWidget
 from tradingWithPython.lib.yahooFinance import HistData
 import matplotlib.pyplot as plt
 from tradingWithPython.lib.widgets import PlotWindow
-
+from tradingWithPython.lib.classes import Spread
+from tradingWithPython.lib.functions import returns
+from pandas import DataFrame
 
 #---------globals
 dataFile = 'yahooData.csv'
@@ -43,12 +45,30 @@ class DataTable(DataFrameWidget):
         super(DataTable,self).__init__(parent)
         self.histData = HistData()
         self.histData.startDate = dataStartDate
+        self.symbols = []
+        self.reference = 'SPY'
+        self.fitColumns()
+        
+    def setSymbols(self,symbols,reference='SPY'):
+        self.symbols = symbols
+        self.reference = reference
+        self.getData(self.symbols+[self.reference])
+        
+        df = DataFrame(index=['last','micro','macro','corr'])
+        for symbol in self.symbols:
+            sp = Spread(self.histData.df[[symbol,self.reference]],capital=[100,-100])
+            
+            df[sp.name] = sp.calculateStatistics(self.histData.df[self.reference])
+            
+        self.df = df.T
+        
+        self.setDataFrame(self.df)   
         
     def getData(self,symbols ):
         ''' process spreads, update data if needed '''
         self.histData.loadSymbols(dataFile, symbols)
             
-        self.setDataFrame(self.histData.df)    
+         
     
 
 class MainWindow(QMainWindow):
@@ -85,7 +105,8 @@ class MainWindow(QMainWindow):
        
    
     def _quickInit(self):
-        self.loadScreenerSymbols('gold_stocks.csv')
+        self.loadScreenerSymbols('test_set.csv')
+        self.dataTable.setSymbols(self.symbolChooser.symbols())
         #self.dataTable.getData()
         
     def createMenu(self):

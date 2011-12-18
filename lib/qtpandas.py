@@ -71,13 +71,16 @@ class DataFrameWidget(QWidget):
         self.dataModel.setDataFrame(DataFrame())
         
         self.dataTable = QTableView()
-        self.dataTable.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+        
         self.dataTable.setModel(self.dataModel)
         self.dataModel.signalUpdate()
         
         layout = QVBoxLayout()
         layout.addWidget(self.dataTable)
         self.setLayout(layout)
+    
+    def fitColumns(self):
+        self.dataTable.horizontalHeader().setResizeMode(QHeaderView.Stretch)
         
     def setDataFrame(self,df):
         self.dataModel.setDataFrame(df)

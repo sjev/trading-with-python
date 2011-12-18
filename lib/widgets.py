@@ -38,8 +38,9 @@ class MatplotlibWidget(QWidget):
         #self.initFigure()
         
         layout = QVBoxLayout()
-        layout.addWidget(self.canvas)        
         layout.addWidget(self.toolbar)
+        layout.addWidget(self.canvas)        
+        
         self.setLayout(layout)        
     
     def onPick(self,event):

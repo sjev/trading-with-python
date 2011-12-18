@@ -21,6 +21,7 @@ class DataFrameModel(QAbstractTableModel):
          
     def setDataFrame(self,dataFrame):
         self.df = dataFrame
+        self.signalUpdate()
     
     def signalUpdate(self):
         ''' tell viewers to update their data (this is full update, not efficient)'''
@@ -39,7 +40,7 @@ class DataFrameModel(QAbstractTableModel):
         elif orientation == Qt.Vertical:
             try:
                 #return self.df.index.tolist()
-                return self.df.index.tolist()[section]
+                return str(self.df.index.tolist()[section])
             except (IndexError, ):
                 return QVariant()
             
@@ -63,11 +64,11 @@ class DataFrameModel(QAbstractTableModel):
 
 class DataFrameWidget(QWidget):
     ''' a simple widget for using DataFrames in a gui '''
-    def __init__(self,dataFrame, parent=None):
+    def __init__(self, parent=None):
         super(DataFrameWidget,self).__init__(parent)
         
         self.dataModel = DataFrameModel()
-        self.dataModel.setDataFrame(dataFrame)
+        self.dataModel.setDataFrame(DataFrame())
         
         self.dataTable = QTableView()
         self.dataTable.horizontalHeader().setResizeMode(QHeaderView.Stretch)
@@ -78,7 +79,9 @@ class DataFrameWidget(QWidget):
         layout.addWidget(self.dataTable)
         self.setLayout(layout)
         
-        
+    def setDataFrame(self,df):
+        self.dataModel.setDataFrame(df)
+            
     
     def resizeColumnsToContents(self):
         self.dataTable.resizeColumnsToContents()    
@@ -96,7 +99,8 @@ class Form(QDialog):
         super(Form,self).__init__(parent)
          
         df = testDf() # make up some data
-        widget = DataFrameWidget(df)
+        widget = DataFrameWidget()
+        widget.setDataFrame(df)
         widget.resizeColumnsToContents()
                      
         layout = QVBoxLayout()

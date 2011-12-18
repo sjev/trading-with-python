@@ -146,7 +146,7 @@ class Spread(object):
         if rebalanced:
             ret = returns(self.df)
             ret['spread'] = self.returns
-            (ret).cumsum().plot(ax=ax1)
+            (100*ret).cumsum().plot(ax=ax1)
             plt.ylabel('% change')
             plt.title('Cum returns '+self.name) 
         else:

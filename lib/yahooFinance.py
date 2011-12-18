@@ -21,7 +21,7 @@ class HistData(object):
         self.df = DataFrame()
         self.symbols = []
         self.startDate = (1990,1,1)
-            
+        
             
     def downloadData(self,symbols,startDate = (1990,1,1),column='adj_close'):
         ''' get data from yahoo  '''
@@ -34,6 +34,17 @@ class HistData(object):
         self.df = DataFrame(data)
         return self.df
     
+    def loadSymbols(self,fName,symbols): 
+        ''' load file from csv, update if needed '''
+        try:    
+            print 'reading data file '
+            self.df=DataFrame.from_csv(fName)[symbols]
+        except Exception as e:
+            print e, 'Downloading' 
+            self.downloadData(symbols,startDate =self.startDate)
+            print ('Saving.')
+            self.to_csv(fName)
+            
            
     def to_csv(self,fName):
         self.df.to_csv(fName)

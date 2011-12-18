@@ -2,7 +2,8 @@
 """
 A collection of widgets for gui building
 
-@author: jev
+Copyright: Jev Kuznetsov
+License: BSD
 """
 
 from __future__ import division
@@ -34,7 +35,7 @@ class MatplotlibWidget(QWidget):
         self.toolbar = NavigationToolbar(self.canvas,self)
         
               
-        self.initFigure()
+        #self.initFigure()
         
         layout = QVBoxLayout()
         layout.addWidget(self.canvas)        
@@ -62,6 +63,21 @@ class MatplotlibWidget(QWidget):
         y = x**2
         self.axes.plot(x,y,'o-')
 
+
+class PlotWindow(QMainWindow):
+    ''' a stand-alone window with embedded matplotlib widget '''
+    def __init__(self,parent=None):
+        super(PlotWindow,self).__init__(parent)
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.mplWidget = MatplotlibWidget()
+        self.setCentralWidget(self.mplWidget)
+    
+    def plot(self,dataFrame):
+        ''' plot dataframe '''
+        dataFrame.plot(ax=self.mplWidget.axes)
+    
+
+
 class MainForm(QMainWindow):
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
@@ -75,7 +91,8 @@ class MainForm(QMainWindow):
         
         
 #---------------------
-app = QApplication(sys.argv)
-form = MainForm()
-form.show()
-app.exec_()
+if __name__=='__main__':
+    app = QApplication(sys.argv)
+    form = MainForm()
+    form.show()
+    app.exec_()

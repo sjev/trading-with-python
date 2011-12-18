@@ -29,6 +29,11 @@ df =y.df.tail(500)
 
 
 p = Portfolio(df, name='test spread')
+
+p.setShares([30,-50])
+print p
+
+p.setCapital([1000,-5000])
 print p
 #
 

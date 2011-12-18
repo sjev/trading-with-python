@@ -79,18 +79,22 @@ class Portfolio(object):
         self.histPrice = histPrice
     
     def setShares(self,shares):
-        """ set number of shares. shares: Series({symbol:shares}) """
+        """ set number of shares, adjust capital
+        shares: list, np array or Series
+        """
         
         if len(shares) != self.histPrice.shape[1]:
             raise AttributeError('Wrong size of shares vector.')
         self.params['shares'] = shares
-        
+        self.params['capital'] = self.params['shares']*self.params['last']
     
     def setCapital(self,capital):
+        """ Set target captial, adjust number of shares """
         if len(capital) != self.histPrice.shape[1]:
             raise AttributeError('Wrong size of shares vector.')
         self.params['capital'] = capital
-    
+        self.params['shares'] = self.params['capital']/self.params['last']
+        
    
     def returns(self):
         pass

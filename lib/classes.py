@@ -5,6 +5,7 @@ worker classes
 Licence: GPL v2
 """
 
+__docformat__ = 'restructuredtext'
 
 import os
 import tradingWithPython.lib.logger as logger
@@ -55,6 +56,56 @@ class Symbol(object):
         ''' close-close returns '''
         return (self.ohlc['adj_close']/self.ohlc['adj_close'].shift(1)-1)
         #return DataFrame(s.values,s.index,[self.name])
+
+class Portfolio(object):
+    def __init__(self,histPrice,name=''):
+        """
+        Constructor
+        
+        Parameters
+        ----------
+        histPrice : historic price
+        
+        """
+        self.histPrice = histPrice
+        self.params = DataFrame(index=self.symbols)
+        self.params['capital'] = 100*np.ones(self.histPrice.shape[1],dtype=np.float)
+        self.params['last'] = self.histPrice.tail(1).T.ix[:,0]
+        self.params['shares'] = self.params['capital']/self.params['last']
+        self.name= name
+        
+        
+    def setHistPrice(self,histPrice):
+        self.histPrice = histPrice
+    
+    def setShares(self,shares):
+        """ set number of shares. shares: Series({symbol:shares}) """
+        
+        if len(shares) != self.histPrice.shape[1]:
+            raise AttributeError('Wrong size of shares vector.')
+        self.params['shares'] = shares
+        
+    
+    def setCapital(self,capital):
+        if len(capital) != self.histPrice.shape[1]:
+            raise AttributeError('Wrong size of shares vector.')
+        self.params['capital'] = capital
+    
+   
+    def returns(self):
+        pass
+    
+    @property
+    def symbols(self):
+        return self.histPrice.columns.tolist()
+    
+    def __repr__(self):
+        return ("Spread %s \n" % self.name ) + str(self.params)
+        #return ('Spread %s :' % self.name ) + str.join(',',
+        #        ['%s*%.2f' % t  for t in zip(self.symbols,self.capital)])
+        
+        
+    
 
 
 class Spread(object):

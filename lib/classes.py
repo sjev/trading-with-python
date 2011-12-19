@@ -94,17 +94,35 @@ class Portfolio(object):
             raise AttributeError('Wrong size of shares vector.')
         self.params['capital'] = capital
         self.params['shares'] = self.params['capital']/self.params['last']
-        
-   
-    def returns(self):
-        pass
     
+    
+    def calculateStatistics(self,other=None):
+        ''' calculate spread statistics, save internally '''
+        res = {}
+        res['micro'] = rank(self.returns[-1],self.returns)
+        res['macro'] = rank(self.value[-1], self.value)
+
+        res['last'] = self.value[-1]
+        
+        if other is not None:
+            res['corr'] = self.returns.corr(returns(other))
+        
+        return   Series(res,name=self.name)    
+        
     @property
     def symbols(self):
-        return self.histPrice.columns.tolist()
+        return self.histPrice.columns.tolist() 
+    
+    @property   
+    def returns(self):
+        return (returns(self.histPrice)*self.params['capital']).sum(axis=1)
+     
+    @property
+    def value(self):
+        return (self.histPrice*self.params['shares']).sum(axis=1)
     
     def __repr__(self):
-        return ("Spread %s \n" % self.name ) + str(self.params)
+        return ("Portfolio %s \n" % self.name ) + str(self.params)
         #return ('Spread %s :' % self.name ) + str.join(',',
         #        ['%s*%.2f' % t  for t in zip(self.symbols,self.capital)])
         

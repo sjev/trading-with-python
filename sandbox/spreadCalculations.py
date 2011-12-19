@@ -12,39 +12,45 @@ import matplotlib.pyplot as plt
 import os
 
 
-startDate = (2010,1,1)
+ 
 # create two timeseries. data for SPY goes much further back
 # than data of VXX
 
 
 y = yahooFinance.HistData()
+y.startDate = (2006,12,1)
 
 dataFile = 'spreadCalc.csv'               
 
-symbols = ['GLD','GDX']
+#symbols = ['SPY','XLE']
+symbols = ['IBM','GWW']
 
 
 y.loadSymbols(dataFile,symbols)
-df =y.df.tail(500)
-
+df =y.df[symbols]
 
 p = Portfolio(df, name='test spread')
 
 p.setShares([30,-50])
 print p
 
-p.setCapital([1000,-5000])
+p.setCapital([1.,-0.86])
 print p
+
+p.value.plot()
+
+stat = p.calculateStatistics()
+print stat
+
 #
+#ret = returns(df).dropna().values
+#plot(ret[:,0],ret[:,1],'x')
 
+# check log beta
+x = log(df.ix[:,0])
+y = log(df.ix[:,1])
+plot(x,y)
 
-#s = Spread(df)
-#s.calculateStatistics(df[symbols[0]])
-
-#print s
-#print '-'*30
-#print yahooFinance.getQuote(symbols)
-#(s.spreadReturns).cumsum().plot()
-
-#f = plt.figure(1)
-#s.plot(f)
+(a,b) = polyfit(x,y,1)
+yf = polyval([a,b],x)
+plot(x,y,'x',x,yf,'r-')

@@ -56,7 +56,7 @@ class DataTable(DataFrameWidget):
         
         df = DataFrame(index=['last','micro','macro','corr'])
         for symbol in self.symbols:
-            sp = Spread(self.histData.df[[symbol,self.reference]],capital=[100,-100])
+            sp = Spread(self.histData.df[[symbol,self.reference]])
             
             df[sp.name] = sp.calculateStatistics(self.histData.df[self.reference])
             

@@ -243,6 +243,6 @@ if __name__=='__main__':
     iwm = Symbol('IWM')
     iwm.downloadHistData()
     
-    s = Spread(spy,iwm, capitalX = 10e3)
+    s = Spread(spy,iwm, bet = 10e3)
     
         

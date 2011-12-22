@@ -51,8 +51,15 @@ class DataFrameModel(QAbstractTableModel):
         if not index.isValid():
             return QVariant()
         
-        col = self.df.ix[:,index.column()] # get a column slice first to get the right data type
-        return QVariant(str(col.ix[index.row()]))
+        # col = self.df.ix[:,index.column()] # get a column slice first to get the right data type
+        
+        elm = self.df.ix[index.row(),index.column()]
+        
+        #return QVariant(str(col.ix[index.row()]))
+        if isinstance(elm,float):
+            return QVariant("%.3f" % elm )
+        else:
+            return QVariant(str(elm))
         
       
     def rowCount(self, index=QModelIndex()):
@@ -93,7 +100,7 @@ class DataFrameWidget(QWidget):
 
 def testDf():
     ''' creates test dataframe '''
-    data = {'int':[1,2,3],'float':[1.5,2.5,3.5],'string':['a','b','c'],'nan':[np.nan,np.nan,np.nan]}
+    data = {'int':[1,2,3],'float':[1./3,2.5,3.5],'string':['a','b','c'],'nan':[np.nan,np.nan,np.nan]}
     return DataFrame(data, index=Index(['AAA','BBB','CCC']))[['int','float','string','nan']]
 
 

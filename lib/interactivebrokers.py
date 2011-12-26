@@ -17,7 +17,7 @@ from ib.opt import ibConnection
 from ib.ext.Order import Order
 
 import tradingWithPython.lib.logger as logger
-from tradingWithPython.lib.qtpandas import DataFrameModel
+from tradingWithPython.lib.qtpandas import DataFrameModel, TableView
 from tradingWithPython.lib.eventSystem import Sender
 import numpy as np
 
@@ -304,7 +304,7 @@ class BrokerWidget(QWidget):
         
         self.broker = broker
         
-        self.dataTable = QTableView()
+        self.dataTable = TableView()
         self.dataTable.setModel(self.broker.dataModel)
         self.dataTable.horizontalHeader().setResizeMode(QHeaderView.Stretch)
         #self.dataTable.resizeColumnsToContents()

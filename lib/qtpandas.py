@@ -6,7 +6,8 @@ Licence: BSD
 
 '''
 from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex)
-from PyQt4.QtGui import (QApplication,QDialog,QVBoxLayout, QTableView, QWidget, QHeaderView)
+from PyQt4.QtGui import (QApplication,QDialog,QVBoxLayout, QTableView, 
+                         QWidget,QTableWidget, QHeaderView, QFont,QMenu,QAbstractItemView)
 
 from pandas import DataFrame, Index
 
@@ -69,22 +70,50 @@ class DataFrameModel(QAbstractTableModel):
         return self.df.shape[1] 
 
 
+class TableView(QTableView):
+    """ extended table view """
+    def __init__(self,name='TableView1', parent=None):
+        super(TableView,self).__init__(parent)
+        self.name = name
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        
+    def contextMenuEvent(self, event):
+        menu = QMenu(self)
+
+        Action = menu.addAction("print selected rows")
+        Action.triggered.connect(self.printName)
+
+        menu.exec_(event.globalPos())
+
+    def printName(self):
+        print "Action triggered from " + self.name
+        
+        print 'Selected rows:'
+        for idx in self.selectionModel().selectedRows():
+            print idx.row()
+
+
 class DataFrameWidget(QWidget):
     ''' a simple widget for using DataFrames in a gui '''
-    def __init__(self, parent=None):
+    def __init__(self,name='DataFrameTable1', parent=None):
         super(DataFrameWidget,self).__init__(parent)
+        self.name = name
         
         self.dataModel = DataFrameModel()
         self.dataModel.setDataFrame(DataFrame())
         
-        self.dataTable = QTableView()
+        self.dataTable = TableView()
         
         self.dataTable.setModel(self.dataModel)
         self.dataModel.signalUpdate()
         
+        #self.dataTable.setFont(QFont("Courier New", 8)) 
+                
         layout = QVBoxLayout()
         layout.addWidget(self.dataTable)
         self.setLayout(layout)
+    
+    
     
     def setFormat(self,colName,fmt):
         """ set non-default string formatting for a column """
@@ -113,12 +142,11 @@ class Form(QDialog):
         super(Form,self).__init__(parent)
          
         df = testDf() # make up some data
-        widget = DataFrameWidget()
+        widget = DataFrameWidget(parent=self)
         widget.setDataFrame(df)
         #widget.resizeColumnsToContents()
         widget.fitColumns()
-        widget.setFormat('float', '%.5f')
-        widget.setFormat('int', '%.1f')
+        widget.setFormat('float', '%.2f')
         
                      
         layout = QVBoxLayout()

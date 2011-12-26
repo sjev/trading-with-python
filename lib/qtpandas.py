@@ -18,6 +18,7 @@ class DataFrameModel(QAbstractTableModel):
     def __init__(self):
         super(DataFrameModel,self).__init__()
         self.df = DataFrame()
+        self.columnFormat = {} # format columns 
          
     def setDataFrame(self,dataFrame):
         self.df = dataFrame
@@ -51,16 +52,15 @@ class DataFrameModel(QAbstractTableModel):
         if not index.isValid():
             return QVariant()
         
-        # col = self.df.ix[:,index.column()] # get a column slice first to get the right data type
+        col = self.df.ix[:,index.column()] # get a column slice first to get the right data type
+        elm = col[index.row()]
+        #elm = self.df.ix[index.row(),index.column()]
         
-        elm = self.df.ix[index.row(),index.column()]
-        
-        #return QVariant(str(col.ix[index.row()]))
-        if isinstance(elm,float):
-            return QVariant("%.3f" % elm )
+        if self.df.columns[index.column()] in self.columnFormat.keys():
+            return QVariant(self.columnFormat[self.df.columns[index.column()]] % elm )
         else:
             return QVariant(str(elm))
-        
+       
       
     def rowCount(self, index=QModelIndex()):
         return self.df.shape[0]
@@ -85,6 +85,10 @@ class DataFrameWidget(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.dataTable)
         self.setLayout(layout)
+    
+    def setFormat(self,colName,fmt):
+        """ set non-default string formatting for a column """
+        self.dataModel.columnFormat[colName]=fmt
     
     def fitColumns(self):
         self.dataTable.horizontalHeader().setResizeMode(QHeaderView.Stretch)
@@ -111,7 +115,11 @@ class Form(QDialog):
         df = testDf() # make up some data
         widget = DataFrameWidget()
         widget.setDataFrame(df)
-        widget.resizeColumnsToContents()
+        #widget.resizeColumnsToContents()
+        widget.fitColumns()
+        widget.setFormat('float', '%.5f')
+        widget.setFormat('int', '%.1f')
+        
                      
         layout = QVBoxLayout()
         layout.addWidget(widget)

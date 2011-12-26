@@ -18,6 +18,7 @@ from ib.ext.Order import Order
 
 import tradingWithPython.lib.logger as logger
 from tradingWithPython.lib.qtpandas import DataFrameModel
+from tradingWithPython.lib.eventSystem import Sender
 import numpy as np
 
 import pandas
@@ -35,7 +36,7 @@ def createContract(symbol, secType='STK', exchange='SMART',currency='USD'):
     
     return contract
 
-class Subscriptions(DataFrameModel):
+class Subscriptions(DataFrameModel, Sender):
     ''' a data table containing price & subscription data '''
     def __init__(self, tws=None):
         

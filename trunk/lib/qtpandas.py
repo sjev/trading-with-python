@@ -28,6 +28,9 @@ class DataFrameModel(QAbstractTableModel):
     def signalUpdate(self):
         ''' tell viewers to update their data (this is full update, not efficient)'''
         self.layoutChanged.emit()
+    
+    def __repr__(self):
+        return str(self.df) 
               
     #------------- table display functions -----------------     
     def headerData(self,section,orientation,role=Qt.DisplayRole):

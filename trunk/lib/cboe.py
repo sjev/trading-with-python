@@ -21,6 +21,8 @@ def getHistoricData(symbol):
     urls = {'VIX':'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/vixcurrent.csv', \
             'VXV':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/vxvdailyprices.csv' }
     
+    startLine = {'VIX':1,'VXV':2}    
+    
     urlStr = urls[symbol]
     
     try:
@@ -33,7 +35,7 @@ def getHistoricData(symbol):
     dates = []
     data = [[] for i in range(len(header))]
      
-    for line in lines[1:]:
+    for line in lines[startLine[symbol]:]:
         fields = line.rstrip().split(',')
         dates.append(datetime.strptime( fields[0],'%m/%d/%Y'))
         for i,field in enumerate(fields[1:]):

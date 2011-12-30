@@ -134,55 +134,47 @@ class Spread(object):
     ''' 
     Spread class, used to build a spread out of two symbols.    
     '''
-    def __init__(self,df,capital=None, name=None, bet = 100):
-        '''
-        Init Spread class, with two Symbol objects 
+    def __init__(self,symbols, bet = 100, histClose=None):
+        """ symbols : ['XYZ','SPY'] . first one is primary , second one is hedge """
+        self.symbols = symbols
+        self.histClose =  histClose
+        self.params = DataFrame(index=self.symbols)
+        beta =self._estimateBeta()
         
-        Parameters
-        ----------
-        df         : input data frame. First symbol is x, second y
-        capital    : amount of capital on each leg 
-        
-        '''
-        self.df = df # price data frame
-        self.stats = None
-        
-        if name is None:
-            self.name = str.join("_",self.df.columns)
-        else:
-            self.name = name
-        
-        self._params2 = DataFrame(columns=df.columns) # properties for a matrix
-        self._calculate(capital,bet)
+        self.params['targetCapital'] = Series({symbols[0]:bet, symbols[1]:-bet*beta})
+        self.params['lastClose'] = self.histClose.tail(1).T.ix[:,0]
+        self.params['last'] = self.params['lastClose']
+        self.params['targetShares'] = (self.params['targetCapital']/self.params['last']) 
+    
+    def getYahooData(self, startDate=(2007,1,1)):
+        """ fetch historic data """
+        data = {}        
+        for symbol in self.symbols:
+            print 'Downloading %s' % symbol
+            data[symbol]=(getHistoricData(symbol,startDate)['adj_close'] )
+           
+        self.histClose = DataFrame(data).dropna()
        
+    
+    def _estimateBeta(self):
+        if self.histClose is None:
+            self.getYahooData()
+        
+        return estimateBeta(self.histClose[self.symbols[0]],self.histClose[self.symbols[1]])
+        
     def __repr__(self):
         
-        header = '-'*10+self.name+'-'*10
-        return header+'\n'+str(self.stats)+'\n'+str(self._params2.T)
-         
-    def _calculate(self,capital,bet):
-        ''' internal data calculation, update self._params2 ''' 
-        
-        res = DataFrame(index= self.symbols)
-        res['last close'] = self.df.ix[-1,:]
-        res['beta'] = np.nan 
-
-        # set capital ratios
-        if capital is None:
-            beta = estimateBeta(self.df.ix[:,0],self.df.ix[:,1])
-            res['gain'] = [1, -1/beta]
-            res['capital'] = res['gain']*bet
-            res.ix[1,'beta'] = beta
-        else:
-            res['capital'] = capital
-            res['gain'] = res['capital']/bet
-        
-        
-        res['shares'] = res['capital']/res['last close']
-        
-        self._params2 = res
-        
-        self.returns = (returns(self.df)*self._params2['gain']).sum(axis=1)    
+        header = '-'*10+str.join('_',self.symbols)+'-'*10
+        return header+'\n'+str(self.params)+'\n'
+    
+    @property   
+    def returns(self):
+        return (returns(self.histClose)*self.params['targetCapital']).sum(axis=1)
+    
+    @property     
+    def value(self):
+        """ historic market value of the spread """
+        return (self.histClose*self.params['targetShares']).sum(axis=1)
    
     def calculateStatistics(self,other=None):
         ''' calculate spread statistics, save internally '''
@@ -198,14 +190,9 @@ class Spread(object):
             res['corr'] = self.returns.corr(returns(other))
         
         return   Series(res,name=self.name)    
-    @property
-    def spread(self):
-        return (self.df*self._params2['shares']).sum(axis=1)
-   
     
-    @property
-    def symbols(self):
-        return self.df.columns.tolist()
+    
+  
     
     #-----------plotting functions-------------------
     def plot(self, figure=None, rebalanced=True):

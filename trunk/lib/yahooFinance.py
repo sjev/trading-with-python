@@ -16,41 +16,59 @@ import numpy as np
 
 class HistData(object):
     ''' a class for working with yahoo finance data '''
-    def __init__(self):
+    def __init__(self, dataFile):
        
-        self.df = DataFrame()
-        self.symbols = []
+        self.dataFile = dataFile
         self.startDate = (1990,1,1)
-        
+        self.loadCsv()
             
-    def downloadData(self,symbols,startDate = (1990,1,1),column='adj_close'):
-        ''' get data from yahoo  '''
-        data = {}        
+    def downloadData(self,symbols,startDate = (2010,1,1),column='adj_close'):
+        ''' get data from yahoo, save to csv  '''
         
         for symbol in symbols:
             print 'Downloading %s' % symbol
-            data[symbol]=(getHistoricData(symbol,startDate)[column] )
-           
-        self.df = DataFrame(data)
-        return self.df
-    
-    def loadSymbols(self,fName,symbols): 
+            s=(getHistoricData(symbol,startDate)[column] )
+            s.name = symbol
+            self.df = self.df.join(s,how='outer')
+            print self.df
+       
+        print ('Saving to %s' % self.dataFile)
+        self.to_csv(self.dataFile)
+        
+    def loadSymbols(self,symbols, forceDownload = False): 
         ''' load file from csv, update if needed '''
-        try:    
-            print 'reading data file '
-            self.df=DataFrame.from_csv(fName)[symbols]
-        except Exception as e:
-            print e, 'Downloading' 
-            self.downloadData(symbols,startDate =self.startDate)
-            print ('Saving.')
-            self.to_csv(fName)
+        
+        if forceDownload:
+            self.df = DataFrame()
+        
+        # check symbols
+        missing = []
+        for symbol in symbols:
+            if symbol not in self.symbols:
+                missing.append(symbol)
+        if len(missing)>0:
+            print "Missing: {0}".format(missing)
+            self.downloadData(missing)
+
+        return self.df[symbols]
+                    
+      
             
+    
+    @property
+    def symbols(self):
+        return self.df.columns.tolist()        
            
     def to_csv(self,fName):
         self.df.to_csv(fName)
     
-    def from_csv(self,fName):
-        self.df=DataFrame.from_csv(fName)
+    def loadCsv(self):
+        try:
+            self.df=DataFrame.from_csv(self.dataFile)
+        except Exception:
+            print "Could not load %s" % self.dataFile
+            self.df = DataFrame()
+                
     
     def __repr__(self):
         return str(self.df)
@@ -149,10 +167,20 @@ def getScreenerSymbols(fileName):
             symbols.append(field) 
     return symbols
 
+#-------------------test functioins
+def testHistData():
+   
+    h = HistData('C:/temp/histData.csv')
+    symbols = ['SPY','USO']
+    
+    df = h.loadSymbols(symbols,forceDownload = True)
+    print df.tail()
+
+
 if __name__=='__main__':
     print 'Testing twp toolset'
     #data = getHistoricData('SPY')
     #print data
-    
+    testHistData()
    
-    print getQuote(['SPY','VXX','GOOG','AAPL'])
+    #print getQuote(['SPY','VXX','GOOG','AAPL'])

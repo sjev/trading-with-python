@@ -16,11 +16,11 @@ from tradingWithPython.lib.yahooFinance import getScreenerSymbols
 import qrc_resources
 from tradingWithPython import readBiggerScreener
 from tradingWithPython.lib.qtpandas import DataFrameWidget, DataFrameModel
-from tradingWithPython.lib.yahooFinance import HistData
 from tradingWithPython.lib.widgets import PlotWindow
 from tradingWithPython.lib.classes import Spread
 from tradingWithPython.lib.functions import returns
 
+import numpy as np
 import matplotlib.pyplot as plt
 from pandas import DataFrame,Index
 
@@ -41,39 +41,7 @@ class SymbolChooser(QWidget,widgets.ui_symbolChooser.Ui_Form):
             symbols.append(str(self.listSymbols.item(i).text()))
         return symbols
 
-class DataTable(DataFrameWidget):
-    ''' main data table '''
-    def __init__(self,parent=None):
-        super(DataTable,self).__init__(parent)
-        self.histData = HistData(dataFile)
-        self.histData.startDate = dataStartDate
-        self.symbols = []
-        self.reference = 'SPY'
-        self.fitColumns()
-        self.dataModel.setFormat({'last':'%.2f','micro':'%.2f','macro':'%.2f','corr':'%.2f'})
-        
-    def setSymbols(self,symbols,reference='SPY'):
-        self.symbols = symbols
-        self.reference = reference
-        self.getData(self.symbols+[self.reference])
-        
-        df = DataFrame(index=['last','micro','macro'])
-        for symbol in self.symbols:
-            sp = Spread(symbols =[symbol,self.reference], histClose=self.histData.df[[symbol,self.reference]])
-            
-            df[sp.name] = sp.calculateStatistics()
-            
-        self.df = df.T
-        
-        self.setDataFrame(self.df)   
-        
-    def getData(self,symbols ):
-        ''' process spreads, update data if needed '''
-        self.histData.loadSymbols(symbols)
-    
-    def testFcn(self):
-        self.df = readBiggerScreener('CointPairs.csv')
-        self.setDataFrame(self.df)
+
        
 
 class SpreadViewModel(DataFrameModel):
@@ -111,22 +79,30 @@ class SpreadView(QTableView):
         super(SpreadView,self).__init__(parent)
         self.name = name
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        
+    
+          
     def contextMenuEvent(self, event):
         menu = QMenu(self)
-
-        Action = menu.addAction("print selected rows")
-        Action.triggered.connect(self.printName)
+       
+        Action = menu.addAction("Show spread")
+        Action.triggered.connect(self.showSpread)
 
         menu.exec_(event.globalPos())
 
-    def printName(self):
-        print "Action triggered from " + self.name
-        
-        print 'Selected rows:'
+    def showSpread(self):
+        """ open a spread window """
         for idx in self.selectionModel().selectedRows():
             print idx.row()
+            print self.selectionModel().model().df.ix[idx.row(),:]
 
+            p = PlotWindow(self)
+            p.show()
+            spread = Spread(['SPY','IWM'])
+            #p.plot(spread.value)
+            spread.plot(p.getAxes())
+            #p.update()
+            
+            #p.mplWidget.plot(np.random.rand(10),'x-')
 
 
 class BiggerSpreads(QWidget):
@@ -173,7 +149,6 @@ class MainWindow(QMainWindow):
 #        self.addDockWidget(Qt.LeftDockWidgetArea, dock)
 #       
         #fill central area
-        #self.dataTable = DataTable()
         self.dataTable = BiggerSpreads()
         self.setCentralWidget(self.dataTable)
         
@@ -181,26 +156,17 @@ class MainWindow(QMainWindow):
         self.actions['loadScreener'] = self.createAction("Load symbols",self.loadScreenerSymbols,icon="fileopen")
         self.actions['plotHistData'] = self.createAction("Plot price",self.plotHistData)
         self.actions['test'] = self.createAction("Test",self._testFcn)
-
         
         #set app menu
         self.createMenu()
         self.createToolbars()
         
-        
         #quick init
         self._quickInit()
-       
         self.resize(800,600)
    
     def _quickInit(self):
-        #self.loadScreenerSymbols('test_set.csv')
-        
-        #symbols = ['IWM','XLE','XLF']
-        #self.dataTable.setSymbols(symbols)
-        
-        self.dataTable.loadSpreads('CointPairs.csv')
-        #self.dataTable.testFcn()
+        self.dataTable.loadSpreads('CointPairs_test.csv')
         
     def createMenu(self):
         menu = self.menuBar()

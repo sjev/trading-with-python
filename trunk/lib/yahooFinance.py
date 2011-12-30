@@ -19,18 +19,20 @@ class HistData(object):
     def __init__(self, dataFile):
        
         self.dataFile = dataFile
-        self.startDate = (1990,1,1)
+        self.startDate = (2010,1,1)
+        self.dataColumn = 'adj_close'
         self.loadCsv()
+        
             
-    def downloadData(self,symbols,startDate = (2010,1,1),column='adj_close'):
+    def downloadData(self,symbols):
         ''' get data from yahoo, save to csv  '''
         
         for symbol in symbols:
             print 'Downloading %s' % symbol
-            s=(getHistoricData(symbol,startDate)[column] )
+            s=(getHistoricData(symbol,self.startDate)[self.dataColumn] )
             s.name = symbol
             self.df = self.df.join(s,how='outer')
-            print self.df
+            #print self.df
        
         print ('Saving to %s' % self.dataFile)
         self.to_csv(self.dataFile)

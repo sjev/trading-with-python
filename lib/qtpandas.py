@@ -5,7 +5,7 @@ Copyright: Jev Kuznetsov
 Licence: BSD
 
 '''
-from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex)
+from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex,SIGNAL)
 from PyQt4.QtGui import (QApplication,QDialog,QVBoxLayout, QTableView, 
                          QWidget,QTableWidget, QHeaderView, QFont,QMenu,QAbstractItemView)
 
@@ -16,10 +16,18 @@ from pandas import DataFrame, Index
 
 class DataFrameModel(QAbstractTableModel):
     ''' data model for a DataFrame class '''
-    def __init__(self):
-        super(DataFrameModel,self).__init__()
+    def __init__(self,parent=None):
+        super(DataFrameModel,self).__init__(parent)
         self.df = DataFrame()
         self.columnFormat = {} # format columns 
+    
+    def setFormat(self,fmt):
+        """ 
+        set string formatting for the output 
+        example : format = {'close':"%.2f"}
+        """
+        
+        self.columnFormat = fmt
          
     def setDataFrame(self,dataFrame):
         self.df = dataFrame
@@ -31,7 +39,7 @@ class DataFrameModel(QAbstractTableModel):
     
     def __repr__(self):
         return str(self.df) 
-              
+  
     #------------- table display functions -----------------     
     def headerData(self,section,orientation,role=Qt.DisplayRole):
         if role != Qt.DisplayRole:
@@ -64,6 +72,17 @@ class DataFrameModel(QAbstractTableModel):
             return QVariant(self.columnFormat[self.df.columns[index.column()]] % elm )
         else:
             return QVariant(str(elm))
+    
+    def sort(self,nCol,order):  
+        
+        self.layoutAboutToBeChanged.emit()
+        if order == Qt.AscendingOrder:
+            self.df = self.df.sort(column=self.df.columns[nCol], ascending=True)
+        elif order == Qt.DescendingOrder:
+            self.df = self.df.sort(column=self.df.columns[nCol], ascending=False)          
+          
+        self.layoutChanged.emit()
+        
        
       
     def rowCount(self, index=QModelIndex()):
@@ -106,6 +125,7 @@ class DataFrameWidget(QWidget):
         self.dataModel.setDataFrame(DataFrame())
         
         self.dataTable = TableView()
+        self.dataTable.setSortingEnabled(True)
         
         self.dataTable.setModel(self.dataModel)
         self.dataModel.signalUpdate()

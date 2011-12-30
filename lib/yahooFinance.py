@@ -41,6 +41,7 @@ class HistData(object):
         ''' load file from csv, update if needed '''
         
         if forceDownload:
+            print 'Download forced, clearing data'
             self.df = DataFrame()
         
         # check symbols

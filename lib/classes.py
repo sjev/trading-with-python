@@ -134,19 +134,42 @@ class Spread(object):
     ''' 
     Spread class, used to build a spread out of two symbols.    
     '''
-    def __init__(self,symbols, bet = 100, histClose=None):
+    def __init__(self,symbols, bet = 100, histClose=None, estimateBeta = True):
         """ symbols : ['XYZ','SPY'] . first one is primary , second one is hedge """
         self.symbols = symbols
         self.histClose =  histClose
-        self.params = DataFrame(index=self.symbols)
-        beta =self._estimateBeta()
+        if self.histClose is None:
+            self._getYahooData()
         
-        self.params['targetCapital'] = Series({symbols[0]:bet, symbols[1]:-bet*beta})
+        self.params = DataFrame(index=self.symbols)
+        if estimateBeta:
+            self.beta =self._estimateBeta()
+        else:
+            self.beta = 1
+        
+        self.params['capital'] = Series({symbols[0]:bet, symbols[1]:-bet*self.beta})
         self.params['lastClose'] = self.histClose.tail(1).T.ix[:,0]
         self.params['last'] = self.params['lastClose']
-        self.params['targetShares'] = (self.params['targetCapital']/self.params['last']) 
+        self.params['shares'] = (self.params['capital']/self.params['last']) 
+        
     
-    def getYahooData(self, startDate=(2007,1,1)):
+        self._calculate()
+    def _calculate(self):
+        """ internal calculations """
+        self.params['change'] = (self.params['last']-self.params['lastClose'])*self.params['shares']
+        self.params['mktValue'] = self.params['shares']*self.params['last']
+        
+    def setLast(self,last):
+        """ set current price, perform internal recalculation """
+        self.params['last'] = last
+        self._calculate()
+    
+    def setShares(self,shares):
+        """ set target shares, adjust capital """
+        self.params['shares'] = shares
+        self.params['capital'] = self.params['last']*self.params['shares']
+    
+    def _getYahooData(self, startDate=(2007,1,1)):
         """ fetch historic data """
         data = {}        
         for symbol in self.symbols:
@@ -157,45 +180,40 @@ class Spread(object):
        
     
     def _estimateBeta(self):
-        if self.histClose is None:
-            self.getYahooData()
-        
         return estimateBeta(self.histClose[self.symbols[0]],self.histClose[self.symbols[1]])
         
     def __repr__(self):
         
-        header = '-'*10+str.join('_',self.symbols)+'-'*10
+        header = '-'*10+self.name+'-'*10
         return header+'\n'+str(self.params)+'\n'
     
     @property   
-    def returns(self):
-        return (returns(self.histClose)*self.params['targetCapital']).sum(axis=1)
+    def change(self):
+        return (returns(self.histClose)*self.params['capital']).sum(axis=1)
     
     @property     
     def value(self):
         """ historic market value of the spread """
-        return (self.histClose*self.params['targetShares']).sum(axis=1)
+        return (self.histClose*self.params['shares']).sum(axis=1)
    
-    def calculateStatistics(self,other=None):
-        ''' calculate spread statistics, save internally '''
+    @property
+    def name(self):
+        return str.join('_',self.symbols)
+   
+    def calculateStatistics(self):
+        ''' calculate spread statistics '''
         res = {}
-        res['micro'] = rank(self.returns[-1],self.returns)
-        res['macro'] = rank(self.spread[-1], self.spread)
-
-        #res['75%'] = self.spread.quantile(.75)
-        #res['25%'] = self.spread.quantile(.25)
-        res['last'] = self.spread[-1]
-        res['samples'] = len(self.df)
-        if other is not None:
-            res['corr'] = self.returns.corr(returns(other))
-        
+        res['micro'] = rank(self.params['change'].sum(),self.change)
+        res['macro'] = rank(self.params['mktValue'].sum(), self.value)
+        res['last'] = self.params['mktValue'].sum()
+             
         return   Series(res,name=self.name)    
     
     
   
     
     #-----------plotting functions-------------------
-    def plot(self, figure=None, rebalanced=True):
+    def plot(self, figure=None):
         
         if figure is None:
             figure = plt.gcf()
@@ -203,24 +221,21 @@ class Spread(object):
         figure.clear()
         
         ax1 = plt.subplot(2,1,1)
-        if rebalanced:
-            ret = returns(self.df)
-            ret['spread'] = self.returns
-            (100*ret).cumsum().plot(ax=ax1)
-            plt.ylabel('% change')
-            plt.title('Cum returns '+self.name) 
-        else:
-            self.spread.plot(ax=ax1, style = 'o-')
-            p = self._params2.T
-            plt.title('Spread %.2f %s vs %.2f %s' %(p.ix['shares',0], p.columns[0], p.ix['shares',1],p.columns[1] ))
+        self.value.plot(ax=ax1, style = 'o-')
+        p = self.params.T
+        plt.title('Spread %.2f (\$ %.2f) %s vs %.2f (\$%.2f) %s ' %(p.ix['shares',0],p.ix['capital',0], p.columns[0], 
+                                                            p.ix['shares',1],p.ix['capital',1],p.columns[1]))
                 
         
         ax2 = plt.subplot(2,1,2,sharex = ax1)
-        (self.returns*100).plot(ax=ax2, style= 'o-')
-        plt.title('returns')
-        plt.ylabel('% change')
+        (self.change).plot(ax=ax2, style= 'o-')
+        plt.title('daily change')
+        plt.ylabel('$ change')
         
-   
+#        ax3 = plt.subplot(3,1,3,sharex = ax1)
+#        self.histClose.plot(ax=ax3)
+#        plt.title('Price movements')
+#        plt.ylabel('$')
         
         
 if __name__=='__main__':

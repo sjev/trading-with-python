@@ -6,48 +6,54 @@ Created on 28 okt 2011
 
 from tradingWithPython import estimateBeta, Spread, returns, Portfolio, readBiggerScreener
 from tradingWithPython.lib import yahooFinance
-from pandas import DataFrame
+from pandas import DataFrame, Series
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 
 
  
-# create two timeseries. data for SPY goes much further back
-# than data of VXX
+symbols = ['SPY','IWM']
+y = yahooFinance.HistData('temp.csv')
+y.startDate = (2007,1,1)
 
-spreads = readBiggerScreener('CointPairs.csv') 
+df = y.loadSymbols(symbols,forceDownload=False)
+#df = y.downloadData(symbols)
 
-y = yahooFinance.HistData()
-y.startDate = (2006,12,1)
+res = readBiggerScreener('CointPairs.csv')
 
-           
-
-#symbols = ['SPY','XLE']
-symbols = [spreads.ix[0,'symbolA'],spreads.ix[0,'symbolB']]
-
-
-y.loadSymbols(dataFile,symbols)
-df =y.df[symbols]
-
-p = Portfolio(df, name='test spread')
-
-beta = estimateBeta(df[symbols[0]],df[symbols[1]])
-
-
-p.setShares([30,-50])
-print p
-
-p.setCapital([100.,-beta*100])
-print p
-
-p.value.plot()
-
-stat = p.calculateStatistics()
-print stat
-
+#---check with spread scanner
+#sp = DataFrame(index=symbols)
 #
-#ret = returns(df).dropna().values
-#plot(ret[:,0],ret[:,1],'x')
+#sp['last'] = df.ix[-1,:]
+#sp['targetCapital'] = Series({'SPY':100,'IWM':-100})
+#sp['targetShares'] = sp['targetCapital']/sp['last']
+#print sp
 
-# check log beta
+#The dollar-neutral ratio is about 1 * IWM - 1.7 * IWM. You will get the spread = zero (or probably very near zero)
+
+
+#s = Spread(symbols, histClose = df)
+#print s
+
+#s.value.plot()
+
+#print 'beta (returns)', estimateBeta(df[symbols[0]],df[symbols[1]],algo='returns')
+#print 'beta (log)', estimateBeta(df[symbols[0]],df[symbols[1]],algo='log')
+#print 'beta (standard)', estimateBeta(df[symbols[0]],df[symbols[1]],algo='standard')
+
+#p = Portfolio(df)
+#p.setShares([1, -1.7])
+#p.value.plot()
+
+
+quote = yahooFinance.getQuote(symbols)
+print quote
+
+
+s = Spread(symbols,histClose=df, estimateBeta = False)
+s.setLast(quote['last'])
+#s.setShares(Series({'SPY':1,'IWM':-1.7}))
+print s
+#s.value.plot()
+#s.plot()

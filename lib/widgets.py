@@ -77,7 +77,14 @@ class PlotWindow(QMainWindow):
         ''' plot dataframe '''
         dataFrame.plot(ax=self.mplWidget.axes)
     
+    def getAxes(self):
+        return self.mplWidget.axes
+    
+    def getFigure(self):
+        return self.mplWidget.fig
 
+    def update(self):
+        self.mplWidget.update()
 
 class MainForm(QMainWindow):
     def __init__(self, parent=None):

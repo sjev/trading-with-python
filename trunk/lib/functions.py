@@ -84,15 +84,16 @@ def readBiggerScreener(fName):
         reader = csv.reader(f)
         rows = [row for row in reader]
 
-    symbolA = []
-    symbolB = []
-    priceRatio = []
+    header = rows[0]
+    data = [[] for i in range(len(header))]
+    
     for row in rows[1:]:
-        symbolA.append(row[0])
-        symbolB.append(row[1])
-        priceRatio.append(row[2])
-        
+        for i,elm in enumerate(row):
+            try:
+                data[i].append(float(elm))
+            except Exception:
+                data[i].append(str(elm))
+            
     
-    data = {'symbolA':symbolA,'symbolB':symbolB,'priceRatio':priceRatio}
     
-    return DataFrame(data)
+    return DataFrame(dict(zip(header,data)),index=Index(range(len(data[0]))))[header]

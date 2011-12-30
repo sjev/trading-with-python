@@ -12,15 +12,15 @@ from pandas import DataFrame, Index
 import numpy as np
 import csv
 
-def estimateBeta(priceX,priceY,algo = 'log'):
+def estimateBeta(priceY,priceX,algo = 'standard'):
     '''
     estimate stock Y vs stock X beta using iterative linear
     regression. Outliers outside 3 sigma boundary are filtered out
     
     Parameters
     --------
-    priceX : price series of x
-    priceY : price series of y
+    priceX : price series of x (usually market)
+    priceY : price series of y (estimate beta of this price)
     
     Returns
     --------
@@ -56,10 +56,16 @@ def estimateBeta(priceX,priceY,algo = 'log'):
         x = np.log(X['x'])
         y = np.log(X['y'])
         (a,b) = polyfit(x,y,1)
-        beta = 1/a
+        beta = a
     
+    elif algo=='standard':
+        ret =np.log(X).diff().dropna()
+        beta = ret['x'].cov(ret['y'])/ret['x'].var()  
+        
+        
+        
     else:
-        raise TypeError("unknown algorithm type, use 'log' or 'returns'")
+        raise TypeError("unknown algorithm type, use 'standard', 'log' or 'returns'")
         
     return beta    
 

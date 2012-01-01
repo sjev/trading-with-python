@@ -20,6 +20,8 @@ from tradingWithPython.lib.widgets import PlotWindow
 from tradingWithPython.lib.classes import Spread
 from tradingWithPython.lib.functions import returns
 
+from widgets.spread import SpreadWidget
+
 import numpy as np
 import matplotlib.pyplot as plt
 from pandas import DataFrame,Index
@@ -94,16 +96,30 @@ class SpreadView(QTableView):
         for idx in self.selectionModel().selectedRows():
             print idx.row()
             print self.selectionModel().model().df.ix[idx.row(),:]
-
-            p = PlotWindow(self)
-            p.show()
+           
             spread = Spread(['SPY','IWM'])
-            #p.plot(spread.value)
-            spread.plot(p.getAxes())
-            #p.update()
+            spreadWindow = SpreadWindow(self)
+            spreadWindow.setSpread(spread)
             
-            #p.mplWidget.plot(np.random.rand(10),'x-')
+            spreadWindow.show()
+            
 
+class SpreadWindow(QMainWindow):
+    def __init__(self,parent=None):
+        super(SpreadWindow,self).__init__(parent)
+        self.resize(640,600)
+        self.setWindowTitle('Spread test')
+        
+        self.widget = SpreadWidget(self)
+        self.setCentralWidget(self.widget)
+        
+        self.spread = None
+        
+    def setSpread(self,spread):
+        
+        self.spread = spread
+        self.setWindowTitle(spread.name)
+        self.widget.setSpread(self.spread)
 
 class BiggerSpreads(QWidget):
     """ class for working with spreads from screener """
@@ -141,13 +157,6 @@ class MainWindow(QMainWindow):
         self.filename = None
         self.actions = {} # actions list
         
-        # build symbols dock
-#        dock = QDockWidget("Symbols",self)
-#        dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
-#        self.symbolChooser =SymbolChooser()
-#        dock.setWidget(self.symbolChooser)
-#        self.addDockWidget(Qt.LeftDockWidgetArea, dock)
-#       
         #fill central area
         self.dataTable = BiggerSpreads()
         self.setCentralWidget(self.dataTable)

@@ -17,6 +17,7 @@ import numpy as np
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 
 
 class MatplotlibWidget(QWidget):
@@ -31,7 +32,10 @@ class MatplotlibWidget(QWidget):
         self.canvas.setParent(self)      
         self.canvas.mpl_connect('button_press_event', self.onPick) # bind pick event  
         
-        self.axes = self.fig.add_subplot(111)
+        
+        #self.axes = self.fig.add_subplot(111)
+        margins = [0.05,0.1,0.9,0.8]
+        self.axes = self.fig.add_axes(margins)
         self.toolbar = NavigationToolbar(self.canvas,self)
         
               

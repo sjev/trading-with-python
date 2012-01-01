@@ -124,7 +124,8 @@ class DataFrameWidget(QWidget):
         self.dataModel = DataFrameModel()
         self.dataModel.setDataFrame(DataFrame())
         
-        self.dataTable = TableView()
+        self.dataTable = QTableView()
+        self.dataTable.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.dataTable.setSortingEnabled(True)
         
         self.dataTable.setModel(self.dataModel)
@@ -138,9 +139,10 @@ class DataFrameWidget(QWidget):
     
     
     
-    def setFormat(self,colName,fmt):
+    def setFormat(self,fmt):
         """ set non-default string formatting for a column """
-        self.dataModel.columnFormat[colName]=fmt
+        for colName, f in fmt.iteritems():
+            self.dataModel.columnFormat[colName]=f
     
     def fitColumns(self):
         self.dataTable.horizontalHeader().setResizeMode(QHeaderView.Stretch)
@@ -169,7 +171,7 @@ class Form(QDialog):
         widget.setDataFrame(df)
         #widget.resizeColumnsToContents()
         widget.fitColumns()
-        widget.setFormat('float', '%.2f')
+        widget.setFormat({'float': '%.2f'})
         
                      
         layout = QVBoxLayout()

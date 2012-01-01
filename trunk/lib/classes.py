@@ -239,12 +239,8 @@ class Spread(object):
         
         
 if __name__=='__main__':
-    spy = Symbol('SPY')
-    spy.downloadHistData()
     
-    iwm = Symbol('IWM')
-    iwm.downloadHistData()
     
-    s = Spread(spy,iwm, bet = 10e3)
+    s = Spread(['SPY','IWM'])
     
         

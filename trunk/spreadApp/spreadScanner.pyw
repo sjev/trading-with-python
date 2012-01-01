@@ -6,10 +6,11 @@ License: BSD
 
 import sys, os
 
-__version__ = "0.0.5"
+__version__ = "0.1.0"
 
 from PyQt4.QtCore import (Qt, SIGNAL)
 from PyQt4.QtGui import *
+import platform
 
 import widgets.ui_symbolChooser
 from tradingWithPython.lib.yahooFinance import getScreenerSymbols
@@ -153,6 +154,8 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         
+        self.setWindowTitle('Spread Detective [alpha]')
+        
         # general vars
         self.filename = None
         self.actions = {} # actions list
@@ -163,8 +166,8 @@ class MainWindow(QMainWindow):
         
         #create actions
         self.actions['loadScreener'] = self.createAction("Load symbols",self.loadScreenerSymbols,icon="fileopen")
-        self.actions['plotHistData'] = self.createAction("Plot price",self.plotHistData)
-        self.actions['test'] = self.createAction("Test",self._testFcn)
+        self.actions['helpAbout'] = self.createAction("About",self.helpAbout)
+        #self.actions['test'] = self.createAction("Test",self._testFcn)
         
         #set app menu
         self.createMenu()
@@ -175,18 +178,19 @@ class MainWindow(QMainWindow):
         self.resize(800,600)
    
     def _quickInit(self):
-        self.dataTable.loadSpreads('CointPairs_test.csv')
+        testFile = 'CointPairs_test.csv'
+        if os.path.exists(testFile):
+            self.dataTable.loadSpreads(testFile)
         
     def createMenu(self):
         menu = self.menuBar()
         menu.addMenu("File").addAction(self.actions['loadScreener'])
+        menu.addMenu("Help").addAction(self.actions['helpAbout'])
     
     def createToolbars(self):
         t = self.addToolBar("File")
         t.setObjectName("FileToolBar")  
         t.addAction(self.actions['loadScreener']) 
-        t.addAction(self.actions['plotHistData'])
-        t.addAction(self.actions['test'])
         
     def loadScreenerSymbols(self, fName = None):
         ' load symbols from yahoo screener csv'
@@ -196,14 +200,11 @@ class MainWindow(QMainWindow):
             path = (os.path.dirname(self.filename)
                    if self.filename is not None else ".")
             
-            fName = unicode(QFileDialog.getOpenFileName(self,"Open yahoo screener file",path,
+            fName = unicode(QFileDialog.getOpenFileName(self,"Open screener results",path,
                                                         "CSV files ({0})".format(" ".join(formats))))
         
         if fName:
-            symbols = getScreenerSymbols(fName)
-            self.symbolChooser.listSymbols.clear()
-            self.symbolChooser.listSymbols.addItems(symbols)
-            self.filename = fName
+            self.dataTable.loadSpreads(fName)
     
     def plotHistData(self):
         ''' plot internal historic data '''
@@ -226,6 +227,36 @@ class MainWindow(QMainWindow):
         if checkable:
             action.setCheckable(True)
         return action
+    
+    
+    def helpAbout(self):
+        QMessageBox.about(self, "Spread Detective - About",
+                """<b>Spread Detective</b> v {0}
+                <p>Copyright &copy; 2011 Jev Kuznetsov. 
+                All rights reserved.
+                <p>
+                Copyright &copy; 2008-2011 AQR Capital Management, LLC All rights reserved.
+                <p>
+                Copyright &copy; 2011 Wes McKinney and pandas developers All rights reserved.
+                
+                <p>
+                
+                THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS
+                "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+                LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+                A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+                OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+                SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+                LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+                DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+                THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+                (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+                OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+                
+                
+                <p>Python {1} """.format(__version__, platform.python_version()))
+
+    
     
     def _testFcn(self):
         print 'test function'

@@ -36,10 +36,11 @@ class SpreadWidget(QWidget):
         x = np.asarray(self.spread.value.index)
         y = self.spread.value
         
-        self.spreadPlot.plot(x,y,'o-')
+        self.spreadPlot.plot(x,y,'r-')
         self.spreadPlot.fig.autofmt_xdate()
         self.spreadPlot.update()
-
+        
+        
         #fill table
         cols =self.spread.params.columns
         fmt = dict(zip(cols,['%.2f']*len(cols)))

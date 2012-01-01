@@ -53,7 +53,12 @@ print quote
 
 s = Spread(symbols,histClose=df, estimateBeta = False)
 s.setLast(quote['last'])
-#s.setShares(Series({'SPY':1,'IWM':-1.7}))
+
+s.setShares(Series({'SPY':1,'IWM':-1.7}))
 print s
 #s.value.plot()
 #s.plot()
+fig = figure(2)
+s.plot()
+
+

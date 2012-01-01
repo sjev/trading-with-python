@@ -24,7 +24,7 @@ from widgets.spread import SpreadWidget
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pandas import DataFrame,Index
+from pandas import DataFrame,Index,Series
 
 #---------globals
 dataFile = 'yahooData.csv'
@@ -94,10 +94,10 @@ class SpreadView(QTableView):
     def showSpread(self):
         """ open a spread window """
         for idx in self.selectionModel().selectedRows():
-            print idx.row()
-            print self.selectionModel().model().df.ix[idx.row(),:]
-           
-            spread = Spread(['SPY','IWM'])
+            row = self.selectionModel().model().df.ix[idx.row(),:]
+            symbols = [row['StockA'],row['StockB']]
+            spread = Spread(symbols)
+            spread.setShares(Series({row['StockA']:1,row['StockB']:-row['Price Ratio']}))
             spreadWindow = SpreadWindow(self)
             spreadWindow.setSpread(spread)
             

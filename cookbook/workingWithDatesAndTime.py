@@ -30,3 +30,7 @@ print 'Delta :', delta
 delta = datetime.timedelta(days=20)
 print 'Today-delta=', today-delta
 
+
+t = datetime.datetime(*time.strptime('3/30/2004',"%m/%d/%Y")[0:5])
+# the '*' operator unpacks the tuple, producing the argument list.
+print t

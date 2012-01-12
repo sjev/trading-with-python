@@ -31,9 +31,10 @@ import matplotlib
 
 
 opts = {
-				'py2exe': {"bundle_files" : 3,
-
-               "includes" : ["sip",
+				'py2exe': {
+				"compressed": 1,
+				"bundle_files" : 3,
+				"includes" : ["sip",
 							"matplotlib.backends",
                             "matplotlib.backends.backend_qt4agg",
                             "pylab", "numpy",

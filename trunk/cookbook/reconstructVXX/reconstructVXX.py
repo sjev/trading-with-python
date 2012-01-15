@@ -9,6 +9,7 @@ License : BSD
 from __future__ import division
 from pandas import *
 import numpy as np
+import os
 
 class Future(object):
     """ vix future class, used to keep data structures simple """
@@ -43,7 +44,8 @@ def recounstructVXX():
     calculate VXX returns 
     needs a previously preprocessed file vix_futures.csv     
     """
-    X = DataFrame.from_csv('vix_futures.csv') # raw data table
+    dataDir = os.path.expanduser('~')+'/twpData'
+    X = DataFrame.from_csv(dataDir+'/vix_futures.csv') # raw data table
     
     # build end dates list & futures classes
     futures = []

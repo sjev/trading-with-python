@@ -20,9 +20,11 @@ import numpy as np
 m_codes = ['F','G','H','J','K','M','N','Q','U','V','X','Z'] #month codes of the futures
 codes = dict(zip(m_codes,range(1,len(m_codes)+1)))
 
-dataDir = os.path.dirname(__file__)+'/data'
+#dataDir = os.path.dirname(__file__)+'/data'
 
 
+dataDir = os.path.expanduser('~')+'/twpData/vixFutures'
+print 'Data directory: ', dataDir
 
    
 
@@ -80,8 +82,9 @@ def buildDataTable(dataDir):
     full = full.ix[idx,:]
     
     #full.plot(ax=gca())
-    print 'Saving vix_futures.csv'
-    full.to_csv('vix_futures.csv')
+    fName = os.path.expanduser('~')+'/twpData/vix_futures.csv'
+    print 'Saving to ', fName
+    full.to_csv(fName)
 
 
 if __name__ == '__main__':

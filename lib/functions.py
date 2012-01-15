@@ -77,6 +77,11 @@ def rank(current,past):
 def returns(df):
     return (df/df.shift(1)-1)
 
+def logReturns(df):
+    t = np.log(df)
+    return t-t.shift(1)
+    
+
 
 def readBiggerScreener(fName):
     ''' import data from Bigger Capital screener '''

@@ -3,15 +3,49 @@
 toolset working with cboe data
 
 @author: Jev Kuznetsov
-Licence: GPL v2
+Licence: BSD
 """
 
 from datetime import datetime, date
 import urllib2
 from pandas import DataFrame, Index
+from pandas.core import datetools 
 import numpy as np
 
 
+def monthCode(month):
+    """ 
+    perform month->code and back conversion
+    
+    Input: either month nr (int) or month code (str)
+    Returns: code or month nr
+    
+    """
+    codes = ('F','G','H','J','K','M','N','Q','U','V','X','Z')
+    
+    if isinstance(month,int):
+        return codes[month-1]
+    elif isinstance(month,str):
+        return codes.index(month)+1
+    else:
+        raise ValueError('Function accepts int or str')
+    
+    
+def vixExpiration(year,month):
+    """
+    expriration date of a VX future
+    """
+    t = date(year,month,1)+datetools.relativedelta(months=1)
+    
+    
+    offset = datetools.Week(weekday=4)
+    if t.weekday()<>4:
+        t_new = t+3*offset
+    else:
+        t_new = t+2*offset    
+    
+    t_exp = t_new-datetools.relativedelta(days=30)
+    return t_exp
 
 def getHistoricData(symbol):
     ''' get historic data from CBOE
@@ -44,9 +78,43 @@ def getHistoricData(symbol):
     
     
     return DataFrame(dict(zip(header,data)),index=Index(dates)).sort()
+
+
+#---------------------classes--------------------------------------------
+class VixFuture(object):
+    """
+    Class for easy handling of futures data.
+    """    
     
-if __name__ == '__main__':
+    def __init__(self,year,month):
+        self.year = year
+        self.month = month
+        
+    def expirationDate(self):
+        return vixExpiration(self.year,self.month)
+    
+    def __repr__(self):
+        return 'VX future [%i-%i %s] Exprires: %s' % (self.year,self.month,monthCode(self.month),
+                                                        self.expirationDate())
+#-------------------test functions---------------------------------------
+def testDownload():
     vix = getHistoricData('VIX')
     vxv = getHistoricData('VXV')
     vix.plot()
-    vxv.plot()
+    vxv.plot()       
+
+def testExpiration():
+    for month in xrange(1,13):
+        d = vixExpiration(2011,month)
+        print d.strftime("%B, %d %Y (%A)")    
+
+
+
+if __name__ == '__main__':
+    
+    #testExpiration()
+    v = VixFuture(2011,11)
+    print v
+    
+        
+    

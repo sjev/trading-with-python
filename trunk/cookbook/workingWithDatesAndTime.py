@@ -10,6 +10,10 @@ import datetime as dt
 from pandas import *
 from pandas.core import datetools 
 
+
+
+
+
 # basic functions
 print 'Epoch start: %s' % time.asctime(time.gmtime(0))
 print 'Seconds from epoch: %.2f' % time.time()
@@ -19,7 +23,8 @@ print type(today)
 print 'Today is %s' % today.strftime('%Y.%m.%d')
 
 
-# create from string
+
+
 
 
 # time deltas
@@ -39,14 +44,16 @@ print t
 
 # print every 3d wednesday of the month
 for month in xrange(1,13):
-    t = dt.date(2010,month,1)
-    offset = datetools.Week(weekday=2)
-   
-    if t.weekday()<>2:
+    t = dt.date(2012,month,1)+datetools.relativedelta(months=1)
+    
+    
+    offset = datetools.Week(weekday=4)
+    if t.weekday()<>4:
         t_new = t+3*offset
     else:
         t_new = t+2*offset    
     
+    t_new = t_new-datetools.relativedelta(days=30)
     print t_new.strftime("%B, %d %Y (%A)")
 
 #rng = DateRange(t, t+datetools.YearEnd())

@@ -5,10 +5,10 @@ toolset working with cboe data
 @author: Jev Kuznetsov
 Licence: BSD
 """
-
+import datetime
 from datetime import datetime, date
 import urllib2
-from pandas import DataFrame, Index
+from pandas import DataFrame, Index, DateRange
 from pandas.core import datetools 
 import numpy as np
 
@@ -35,7 +35,7 @@ def vixExpiration(year,month):
     """
     expriration date of a VX future
     """
-    t = date(year,month,1)+datetools.relativedelta(months=1)
+    t = datetime(year,month,1)+datetools.relativedelta(months=1)
     
     
     offset = datetools.Week(weekday=4)
@@ -93,6 +93,11 @@ class VixFuture(object):
     def expirationDate(self):
         return vixExpiration(self.year,self.month)
     
+    def daysLeft(self,date):
+        """ business days to expiration date """
+        r = DateRange(date,self.expirationDate())
+        return len(r)
+    
     def __repr__(self):
         return 'VX future [%i-%i %s] Exprires: %s' % (self.year,self.month,monthCode(self.month),
                                                         self.expirationDate())
@@ -116,5 +121,6 @@ if __name__ == '__main__':
     v = VixFuture(2011,11)
     print v
     
+    print v.daysLeft(datetime(2011,11,10))
         
     

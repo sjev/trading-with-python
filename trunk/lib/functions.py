@@ -12,6 +12,23 @@ from pandas import DataFrame, Index
 import numpy as np
 import csv
 
+
+def pos2pnl(price,position):
+    """
+    calculate pnl based on price and position
+    Returns a portfolio DataFrame
+    """
+    delta=position.diff()
+
+    port = DataFrame(index=price.index)
+    port['cash'] = (-delta*price).sum(axis=1).cumsum()
+    port['stock'] = (position*price).sum(axis=1)
+    port['total'] = port['stock']+port['cash']
+
+    return port
+
+
+
 def estimateBeta(priceY,priceX,algo = 'standard'):
     '''
     estimate stock Y vs stock X beta using iterative linear

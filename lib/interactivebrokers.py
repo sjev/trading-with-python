@@ -23,6 +23,7 @@ import numpy as np
 
 import pandas
 from pandas import DataFrame, Index
+from datetime import datetime
 
 priceTicks = {1:'bid',2:'ask',4:'last',6:'high',7:'low',9:'close', 14:'open'} 
 
@@ -35,6 +36,45 @@ def createContract(symbol, secType='STK', exchange='SMART',currency='USD'):
     contract.m_currency = currency
     
     return contract
+
+def _str2datetime(s):
+    """ convert string to datetime """
+    return datetime.strptime( s,'%Y%m%d')
+
+
+def readActivityFlex(fName):
+    """
+    parse trade log in a csv file produced by IB 'Activity Flex Query'
+    the file should contain these columns:
+    ['Symbol','TradeDate','Quantity','TradePrice','IBCommission']    
+    
+    Returns:
+        A DataFrame with parsed trade data
+    
+    """
+    import csv    
+    
+    rows = []
+    
+    with open(fName,'rb') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            rows.append(row)
+            
+    header = ['TradeDate','Symbol','Quantity','TradePrice','IBCommission']
+    
+    types =dict(zip(header,[ _str2datetime,str , int, float, float]))
+    idx = dict(zip(header,[rows[0].index(h) for h in header ] ))
+    data = dict(zip(header,[[] for h in header]))
+    
+    for row in rows[1:]:
+        for col in header:
+            val = types[col](row[idx[col]])
+            data[col].append(val)
+            
+    return DataFrame(data)[header].sort(column = 'TradeDate')
+
+
 
 class Subscriptions(DataFrameModel, Sender):
     ''' a data table containing price & subscription data '''
@@ -224,6 +264,10 @@ class Broker(object):
 #        @return named attribute from instance tws
 #        """
 #        return getattr(self.tws, name)
+
+
+
+
 
 #---------------test functions-----------------
 

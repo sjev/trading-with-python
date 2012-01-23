@@ -19,7 +19,7 @@ class HistData(object):
     def __init__(self, dataFile):
        
         self.dataFile = dataFile
-        self.startDate = (2010,1,1)
+        self.startDate = (2008,1,1)
         self.dataColumn = 'adj_close'
         self.loadCsv()
         

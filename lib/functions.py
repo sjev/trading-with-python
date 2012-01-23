@@ -13,7 +13,7 @@ import numpy as np
 import csv
 
 
-def pos2pnl(price,position):
+def pos2pnl(price,position ):
     """
     calculate pnl based on price and position
     Returns a portfolio DataFrame
@@ -119,3 +119,6 @@ def readBiggerScreener(fName):
     
     
     return DataFrame(dict(zip(header,data)),index=Index(range(len(data[0]))))[header]
+
+def sharpe(pnl):
+    return  np.sqrt(250)*pnl.mean()/pnl.std()

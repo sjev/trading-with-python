@@ -75,7 +75,7 @@ def recounstructVXX():
     # for VXX calculation see http://www.ipathetn.com/static/pdf/vix-prospectus.pdf
     # page PS-20
     for date in idx:
-        i =nonzero(endDates>=date)[0][0] # find first not exprired future
+        i =np.nonzero(endDates>=date)[0][0] # find first not exprired future
         first = futures[i] # first month futures class
         second = futures[i+1] # second month futures class
         

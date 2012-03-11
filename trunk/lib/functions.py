@@ -8,7 +8,7 @@ Licence: GPL v2
 
 from scipy  import  polyfit, polyval
 from datetime import datetime, date
-from pandas import DataFrame, Index
+from pandas import DataFrame, Index, Series
 import numpy as np
 import csv
 
@@ -122,3 +122,31 @@ def readBiggerScreener(fName):
 
 def sharpe(pnl):
     return  np.sqrt(250)*pnl.mean()/pnl.std()
+    
+
+def drawdown(pnl):
+    """
+    calculate max drawdown and duration  
+
+    Input:
+        pnl, in $
+    Returns:
+        drawdown : vector of drawdwon values
+        duration : vector of drawdown duration
+      
+    
+    """
+    cumret = pnl.cumsum()
+
+    highwatermark = [0]
+
+    idx = pnl.index
+    drawdown = Series(index = idx)
+    drawdowndur = Series(index = idx)
+    
+    for t in range(1, len(idx)) :
+        highwatermark.append(max(highwatermark[t-1], cumret[t]))
+        drawdown[t]= (highwatermark[t]-cumret[t])
+        drawdowndur[t]= (0 if drawdown[t] == 0 else drawdowndur[t-1]+1)
+    
+    return drawdown, drawdowndur

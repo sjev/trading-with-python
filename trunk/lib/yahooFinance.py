@@ -10,40 +10,57 @@ Licence: BSD
 
 from datetime import datetime, date
 import urllib2
-from pandas import DataFrame, Index
+from pandas import DataFrame, Index, HDFStore, WidePanel
 import numpy as np
 
 
 class HistData(object):
     ''' a class for working with yahoo finance data '''
-    def __init__(self, dataFile):
+    def __init__(self, dataFile,autoAdjust=True):
        
         self.dataFile = dataFile
         self.startDate = (2008,1,1)
-        self.dataColumn = 'adj_close'
-        self.loadCsv()
+        self.autoAdjust=autoAdjust
+        self._load()
         
+    def _load(self):
+        """load data from HDF"""
+        store = HDFStore(self.dataFile)
+        symbols = store.keys()    
+        data = dict(zip(symbols,[store[symbol] for symbol in symbols]))
+        self.wp = WidePanel(data)
+        store.close()
+        
+    def save(self):
+        """ save data to HDF"""
+        print 'Saving data to', self.dataFile
+        store = HDFStore(self.dataFile)
+        for symbol in self.wp.items:
+            store[symbol] = self.wp[symbol]
+            
+        store.close()
+                    
+            
             
     def downloadData(self,symbols):
-        ''' get data from yahoo, save to csv  '''
+        ''' get data from yahoo  '''
         
         for symbol in symbols:
             print 'Downloading %s' % symbol
-            s=(getHistoricData(symbol,self.startDate)[self.dataColumn] )
-            s.name = symbol
-            self.df = self.df.join(s,how='outer')
-            #print self.df
+            df = getHistoricData(symbol,self.startDate)
+            if self.autoAdjust:
+               df =  adjust(df,removeOrig=True)
+            
+            if len(self.symbols)==0:
+                self.wp = WidePanel({symbol:df})
+            else:
+                self.wp[symbol] = df
+             
+             
+    def loadSymbols(self,symbols,field='close'): 
+        ''' load file from HDF5, update if needed '''
+        
        
-        print ('Saving to %s' % self.dataFile)
-        self.to_csv(self.dataFile)
-        
-    def loadSymbols(self,symbols, forceDownload = False): 
-        ''' load file from csv, update if needed '''
-        
-        if forceDownload:
-            print 'Download forced, clearing data'
-            self.df = DataFrame()
-        
         # check symbols
         missing = []
         for symbol in symbols:
@@ -53,30 +70,22 @@ class HistData(object):
             print "Missing: {0}".format(missing)
             self.downloadData(missing)
 
-        return self.df[symbols]
+        return self.wp
                     
       
             
     
     @property
     def symbols(self):
-        return self.df.columns.tolist()        
+        return self.wp.items.tolist()        
            
-    def to_csv(self,fName):
-        self.df.to_csv(fName)
-    
-    def loadCsv(self):
-        try:
-            self.df=DataFrame.from_csv(self.dataFile)
-        except Exception:
-            print "Could not load %s" % self.dataFile
-            self.df = DataFrame()
-                
-    
+  
     def __repr__(self):
-        return str(self.df)
+        return str(self.symbols)
 
-
+#    def __del__(self):
+#        self._save()
+#       
 
 def getQuote(symbols):
     ''' get current yahoo quote
@@ -155,7 +164,21 @@ def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]
     
     return df
 
-
+def adjust(df, removeOrig=False):
+    ''' adjust hist data based on adj_close field '''
+    c = df['close']/df['adj_close']
+    
+    df['adj_open'] = df['open']/c
+    df['adj_high'] = df['high']/c
+    df['adj_low'] = df['low']/c
+ 
+    if removeOrig:
+      df=df.drop(['open','close','high','low','volume'],axis=1)
+      renames = dict(zip(['adj_open','adj_close','adj_high','adj_low'],['open','close','high','low']))
+      df=df.rename(columns=renames)
+    
+    return df
+    
 def getScreenerSymbols(fileName):
     ''' read symbols from a .csv saved by yahoo stock screener '''
     

@@ -45,17 +45,29 @@ class HistData(object):
     def downloadData(self,symbols):
         ''' get data from yahoo  '''
         
-        for symbol in symbols:
-            print 'Downloading %s' % symbol
-            df = getHistoricData(symbol,self.startDate)
-            if self.autoAdjust:
-               df =  adjust(df,removeOrig=True)
+        store = HDFStore(self.dataFile)        
+        
+        for idx,symbol in enumerate(symbols):
+            print 'Downloading %s [%i/%i]' % (symbol,idx+1,len(symbols))
+            try:            
+                df = getHistoricData(symbol,self.startDate)
+                print 'Got %i samples' % len(df)            
+                if self.autoAdjust:
+                   df =  adjust(df,removeOrig=True)
+                
+                if len(self.symbols)==0:
+                    self.wp = WidePanel({symbol:df})
+                else:
+                    self.wp[symbol] = df
             
-            if len(self.symbols)==0:
-                self.wp = WidePanel({symbol:df})
+            except Exception,e:
+                print e 
+            
             else:
-                self.wp[symbol] = df
-             
+                store[symbol] = self.wp[symbol]
+                store.flush()
+            
+        store.close()
              
     def loadSymbols(self,symbols,field='close'): 
         ''' load file from HDF5, update if needed '''

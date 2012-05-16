@@ -98,7 +98,14 @@ def logReturns(df):
     t = np.log(df)
     return t-t.shift(1)
     
-
+def dateTimeToDate(idx):
+    ''' convert datetime index to date '''
+    dates = []
+    for dtm in idx:
+        dates.append(dtm.date())
+    return dates
+        
+    
 
 def readBiggerScreener(fName):
     ''' import data from Bigger Capital screener '''

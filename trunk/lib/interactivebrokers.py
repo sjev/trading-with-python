@@ -13,7 +13,7 @@ from PyQt4.QtGui import (QApplication,QFileDialog,QDialog,QVBoxLayout,QHBoxLayou
                          QTableView, QPushButton,QWidget,QLabel,QLineEdit,QGridLayout,QHeaderView)
 
 from ib.ext.Contract import Contract
-from ib.opt import ibConnection
+from ib.opt import ibConnection, message
 from ib.ext.Order import Order
 
 import tradingWithPython.lib.logger as logger
@@ -89,8 +89,8 @@ class Subscriptions(DataFrameModel, Sender):
         
         # register callbacks
         if tws is not None:
-            tws.register(self.priceHandler,'TickPrice')
-            tws.register(self.accountHandler,'UpdatePortfolio')
+            tws.register(self.priceHandler,message.TickPrice)
+            tws.register(self.accountHandler,message.UpdatePortfolio)
             
             
         
@@ -168,7 +168,7 @@ class Broker(object):
         self.dataModel = Subscriptions(self.tws) # data container
         
         self.tws.registerAll(self.defaultHandler) 
-        #self.tws.register(self.data.priceHandler,message.TickPrice)
+        #self.tws.register(self.debugHandler,message.TickPrice)
         self.tws.register(self.nextValidIdHandler,'NextValidId')
         self.log.debug('Connecting to tws')
         self.tws.connect()  
@@ -241,13 +241,16 @@ class Broker(object):
         '''destructor, clean up '''
         print 'Broker is cleaning up after itself.'
         self.tws.disconnect()
+    
+    def debugHandler(self,msg):
+        print msg
 
     def defaultHandler(self,msg):
         ''' default message handler '''
         #print msg.typeName
         if msg.typeName == 'Error':
             self.log.error(msg)
-        
+       
 
     def nextValidIdHandler(self,msg):
         self.nextValidOrderId = msg.orderId
@@ -420,12 +423,13 @@ def startGui():
     app.exec_()
 
 if __name__ == "__main__":
-    
-    #testConnection()
+    import ib
+    print 'iby version:' , ib.version 
+    testConnection()
     #testBroker()
     #testSubscriptions()
-    
-    startGui()
+    print message.messageTypeNames()
+    #startGui()
     print 'All done'
     
     

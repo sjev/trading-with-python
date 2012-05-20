@@ -185,7 +185,7 @@ def adjust(df, removeOrig=False):
     df['adj_low'] = df['low']/c
  
     if removeOrig:
-      df=df.drop(['open','close','high','low','volume'],axis=1)
+      df=df.drop(['open','close','high','low'],axis=1)
       renames = dict(zip(['adj_open','adj_close','adj_high','adj_low'],['open','close','high','low']))
       df=df.rename(columns=renames)
     

@@ -11,7 +11,7 @@ from datetime import datetime, date
 from pandas import DataFrame, Index, Series
 import numpy as np
 import csv
-
+import matplotlib.pyplot as plt
 
 def pos2pnl(price,position ):
     """
@@ -157,3 +157,44 @@ def drawdown(pnl):
         drawdowndur[t]= (0 if drawdown[t] == 0 else drawdowndur[t-1]+1)
     
     return drawdown, drawdowndur
+
+def candlestick(df,width=0.5, colorup='b', colordown='r'):
+    ''' plot a candlestick chart of a dataframe '''
+    
+    O = df['open'].values
+    H = df['high'].values
+    L = df['low'].values
+    C = df['close'].values
+    
+    fig = plt.gcf()
+    ax = plt.axes()
+    #ax.hold(True)    
+    
+    X = df.index
+      
+    
+    #plot high and low
+    ax.bar(X,height=H-L,bottom=L,width=0.1,color='k')  
+    
+    idxUp = C>O
+    ax.bar(X[idxUp],height=(C-O)[idxUp],bottom=O[idxUp],width=width,color=colorup)
+    
+    idxDown = C<=O
+    ax.bar(X[idxDown],height=(O-C)[idxDown],bottom=C[idxDown],width=width,color=colordown)
+    
+    try:
+        fig.autofmt_xdate()
+    except Exception:  # pragma: no cover
+        pass
+
+  
+    ax.grid(True)
+    
+    #ax.bar(x,height=H-L,bottom=L,width=0.01,color='k')
+    
+    
+    
+if __name__ == '__main__':
+    df = DataFrame({'open':[1,2,3],'high':[5,6,7],'low':[-2,-1,0],'close':[2,1,4]})
+    plt.clf()
+    candlestick(df)

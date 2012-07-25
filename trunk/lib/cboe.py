@@ -47,6 +47,32 @@ def vixExpiration(year,month):
     t_exp = t_new-datetools.relativedelta(days=30)
     return t_exp
 
+def getPutCallRatio():
+    """ download current Put/Call ratio"""
+    urlStr = 'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/totalpc.csv'
+
+    try:
+        lines = urllib2.urlopen(urlStr).readlines()
+    except Exception, e:
+        s = "Failed to download:\n{0}".format(e);
+        print s
+       
+    headerLine = 2
+    
+    header = lines[headerLine].strip().split(',')
+    
+    data =   [[] for i in range(len(header))]
+    
+    for line in lines[(headerLine+1):]:
+        fields = line.rstrip().split(',')
+        data[0].append(datetime.strptime(fields[0],'%m/%d/%Y'))
+        for i,field  in enumerate(fields[1:]):
+            data[i+1].append(float(field))
+    
+   
+    return DataFrame(dict(zip(header[1:],data[1:])), index = Index(data[0]))
+
+
 def getHistoricData(symbol):
     ''' get historic data from CBOE
         symbol: VIX or VXV

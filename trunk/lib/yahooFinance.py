@@ -12,29 +12,34 @@ from datetime import datetime, date
 import urllib2
 from pandas import DataFrame, Index, HDFStore, WidePanel
 import numpy as np
+import os
 
 
 class HistData(object):
     ''' a class for working with yahoo finance data '''
-    def __init__(self, dataFile,autoAdjust=True):
+    def __init__(self, autoAdjust=True):
        
-        self.dataFile = dataFile
         self.startDate = (2008,1,1)
         self.autoAdjust=autoAdjust
-        self._load()
+        self.wp = WidePanel()
         
-    def _load(self):
+        
+    def load(self,dataFile):
         """load data from HDF"""
-        store = HDFStore(self.dataFile)
-        symbols = store.keys()    
-        data = dict(zip(symbols,[store[symbol] for symbol in symbols]))
-        self.wp = WidePanel(data)
-        store.close()
+        if os.path.exists(dataFile):
+            store = HDFStore(dataFile)
+            symbols = store.keys()    
+            data = dict(zip(symbols,[store[symbol] for symbol in symbols]))
+            self.wp = WidePanel(data)
+            store.close()
+        else:
+            raise IOError('Data file does not exist')
+            
         
-    def save(self):
+    def save(self,dataFile):
         """ save data to HDF"""
-        print 'Saving data to', self.dataFile
-        store = HDFStore(self.dataFile)
+        print 'Saving data to', dataFile
+        store = HDFStore(dataFile)
         for symbol in self.wp.items:
             store[symbol] = self.wp[symbol]
             
@@ -42,10 +47,13 @@ class HistData(object):
                     
             
             
-    def downloadData(self,symbols):
+    def downloadData(self,symbols='all'):
         ''' get data from yahoo  '''
         
-        store = HDFStore(self.dataFile)        
+        if symbols == 'all':
+            symbols = self.symbols
+        
+        #store = HDFStore(self.dataFile)        
         
         for idx,symbol in enumerate(symbols):
             print 'Downloading %s [%i/%i]' % (symbol,idx+1,len(symbols))
@@ -63,26 +71,33 @@ class HistData(object):
             except Exception,e:
                 print e 
             
-            else:
-                store[symbol] = self.wp[symbol]
-                store.flush()
-            
-        store.close()
-             
-    def loadSymbols(self,symbols,field='close'): 
-        ''' load file from HDF5, update if needed '''
-        
-       
-        # check symbols
-        missing = []
-        for symbol in symbols:
-            if symbol not in self.symbols:
-                missing.append(symbol)
-        if len(missing)>0:
-            print "Missing: {0}".format(missing)
-            self.downloadData(missing)
+#            else:
+#                store[symbol] = self.wp[symbol]
+#                store.flush()
+#            
+#        store.close()
+    
+    def getDataFrame(self,symbols,field='close'):
+        ''' return a slice on wide panel for a given field '''
+        return self.wp.minor_xs(field)[symbols]
+         
+#    def updateData(self,symbols='all'): 
+#        ''' load file from HDF5, update if needed '''
+#        
+#        if symbols == 'all':
+#            symbols = self.symbols
+#               
+#       
+#        # check symbols
+#        missing = []
+#        for symbol in symbols:
+#            if symbol not in self.symbols:
+#                missing.append(symbol)
+#        if len(missing)>0:
+#            print "Missing: {0}".format(missing)
+#            self.downloadData(missing)
 
-        return self.wp
+        
                     
       
             
@@ -93,7 +108,7 @@ class HistData(object):
            
   
     def __repr__(self):
-        return str(self.symbols)
+        return str(self.wp)
 
 #    def __del__(self):
 #        self._save()
@@ -140,7 +155,8 @@ def getQuote(symbols):
     
 
 def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]):
-    """ get data from Yahoo finance and return pandas dataframe
+    """ 
+    get data from Yahoo finance and return pandas dataframe
 
     symbol: Yahoo finanance symbol
     sDate: start date (y,m,d)
@@ -163,6 +179,7 @@ def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]
     
     # header : Date,Open,High,Low,Close,Volume,Adj Close
     for line in lines[1:]:
+        #print line
         fields = line.rstrip().split(',')
         dates.append(datetime.strptime( fields[0],'%Y-%m-%d'))
         for i,field in enumerate(fields[1:]):

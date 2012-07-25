@@ -134,7 +134,7 @@ class Spread(object):
     ''' 
     Spread class, used to build a spread out of two symbols.    
     '''
-    def __init__(self,symbols, bet = 100, histClose=None, estimateBeta = True):
+    def __init__(self,symbols, bet = 100, histClose=None, beta = None):
         """ symbols : ['XYZ','SPY'] . first one is primary , second one is hedge """
         self.symbols = symbols
         self.histClose =  histClose
@@ -142,12 +142,13 @@ class Spread(object):
             self._getYahooData()
         
         self.params = DataFrame(index=self.symbols)
-        if estimateBeta:
+        if beta is None:
             self.beta =self._estimateBeta()
         else:
-            self.beta = 1
+            self.beta = beta
+       
         
-        self.params['capital'] = Series({symbols[0]:bet, symbols[1]:-bet*self.beta})
+        self.params['capital'] = Series({symbols[0]:bet, symbols[1]:-bet/self.beta})
         self.params['lastClose'] = self.histClose.tail(1).T.ix[:,0]
         self.params['last'] = self.params['lastClose']
         self.params['shares'] = (self.params['capital']/self.params['last']) 
@@ -180,7 +181,7 @@ class Spread(object):
        
     
     def _estimateBeta(self):
-        return estimateBeta(self.histClose[self.symbols[0]],self.histClose[self.symbols[1]])
+        return estimateBeta(self.histClose[self.symbols[1]],self.histClose[self.symbols[0]])
         
     def __repr__(self):
         

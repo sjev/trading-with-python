@@ -8,7 +8,7 @@ from time import sleep
 
 # print all messages from TWS
 def watcher(msg):
-    print msg
+    print '[watcher]',msg
 
 def dummyHandler(msg):
     pass
@@ -19,8 +19,7 @@ def my_BidAsk(msg):
     print msg
     
     if msg.field == 1:
-        print '%s: bid: %s' % (contractTuple[0],
-                        msg.price)
+        print '%s: bid: %s' % (contractTuple[0],  msg.price)
     elif msg.field == 2:
         print '%s: ask: %s' % (contractTuple[0],  msg.price)
         
@@ -74,21 +73,41 @@ def testExecutions():
 def testAccountUpdates():
     con.reqAccountUpdates(True,'')
 
+def testHistoricData(con):
+    print 'Testing historic data'
+    
+    contractTuple = ('SPY', 'STK', 'SMART', 'USD')
+    contract = makeStkContract(contractTuple)
+    
+    con.reqHistoricalData(1,contract,'20120803 22:00:00','1800 S','1 secs','TRADES',1,2)
+    sleep(2)
+
+
+def showMessageTypes():
+    # show available messages
+    m = message.registry.keys()
+    m.sort()
+    print 'Available message types\n-------------------------'
+    for msgType in m:
+        print msgType
+
 if __name__ == '__main__':
     
     
+    showMessageTypes()
+    
     con = ibConnection()
-    con.registerAll(dummyHandler)
+    con.registerAll(watcher) # show all messages
     con.register(portfolioHandler,message.UpdatePortfolio)
-   
+    #con.register(watcher,(message.tickPrice,))
     con.connect()
     
-    
+    testHistoricData(con)
     
     sleep(1)
     #testMarketData()
     #testExecutions()
-    testAccountUpdates()
+    #testAccountUpdates()
  
     con.disconnect()
     sleep(2)

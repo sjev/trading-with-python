@@ -22,7 +22,8 @@ today = dt.date.today()
 print type(today)
 print 'Today is %s' % today.strftime('%Y.%m.%d')
 
-
+# parse datetime
+d = dt.datetime.strptime('20120803  21:59:59',"%Y%m%d %H:%M:%S")
 
 
 

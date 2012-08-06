@@ -8,6 +8,11 @@ import numpy as np
 from pandas import *
 from matplotlib.pyplot import *
 
+
+
+#df1 = DataFrame.from_csv('test1.csv').astype(np.dtype('f4'))
+#df2 = DataFrame.from_csv('test2.csv').astype(np.dtype('f4'))
+#df = DataFrame([df1,df2])
 df = DataFrame.from_csv('test.csv').astype(np.dtype('f4'))
 
 close('all')

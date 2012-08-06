@@ -59,3 +59,10 @@ for month in xrange(1,13):
 
 #rng = DateRange(t, t+datetools.YearEnd())
 #print rng
+
+# create a range of times
+start = dt.datetime(2012,8,1)+datetools.relativedelta(hours=9,minutes=30)
+end = dt.datetime(2012,8,1)+datetools.relativedelta(hours=22)
+
+rng = date_range(start,end,freq='30min')
+for r in rng: print r.strftime("%Y%m%d %H:%M:%S")

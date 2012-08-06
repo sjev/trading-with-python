@@ -14,6 +14,14 @@ from time import sleep
 import tradingWithPython.lib.logger as logger
 from pandas import DataFrame, Index
 import datetime as dt
+from timeKeeper import TimeKeeper
+
+#----error def
+class TimingError(Exception):
+    ''' Exception raised when timing constraints are not met '''
+    def __init__(self,msg):
+        self.msg = msg
+
 
 class DataHandler(object):
     ''' handles incoming messages '''
@@ -60,6 +68,7 @@ class Downloader(object):
         self._log.debug('Connecting to tws')
         self.tws.connect() 
         
+        self._timeKeeper = TimeKeeper() # keep track of past requests
         self._reqId = 1 # current request id
      
     @property
@@ -73,6 +82,12 @@ class Downloader(object):
     def requestData(self,contract,endDateTime,durationStr='1800 S',barSizeSetting='1 secs',whatToShow='TRADES',useRTH=1,formatDate=1):  
         self._log.debug('Requesting data for %s end time %s' % (contract.m_symbol,endDateTime))
         
+        nrRequests = self._timeKeeper.nrRequests(timeSpan=15)
+        self._log.debug('Past requests: %i' % nrRequests)
+        if  nrRequests > 0:
+            raise TimingError('Too many requests:%i' % nrRequests)
+        
+        self._timeKeeper.addRequest()
         self._dataHandler.reset()
         self.tws.reqHistoricalData(self._reqId,contract,endDateTime,durationStr,barSizeSetting,whatToShow,useRTH,formatDate)
         self._reqId+=1
@@ -83,8 +98,6 @@ class Downloader(object):
         
 if __name__=='__main__':
     
-    import matplotlib.pyplot as plt
-    
     dl = Downloader(debug=True)
     
     c = Contract()
@@ -92,7 +105,11 @@ if __name__=='__main__':
     c.m_secType = 'STK'
     c.m_exchange = 'SMART'
     c.m_currency = 'USD'
-    dl.requestData(c, '20120803 16:00:00 EST')
+    try:
+        dl.requestData(c, '20120803 16:00:00 EST')
+    except TimingError as e:
+        print 'Timing error,skipping download.'+e.msg
+    
     sleep(3)
     dl.disconnect()
     

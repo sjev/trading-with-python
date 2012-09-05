@@ -19,10 +19,17 @@ def pos2pnl(price,position ):
     Returns a portfolio DataFrame
     """
     delta=position.diff()
-
     port = DataFrame(index=price.index)
-    port['cash'] = (-delta*price).sum(axis=1).cumsum()
-    port['stock'] = (position*price).sum(axis=1)
+    
+    if isinstance(price,Series): # no need to sum along 1 for series
+        port['cash'] = (-delta*price).cumsum()
+        port['stock'] = (position*price)
+        
+    else: # dealing with DataFrame here
+        port['cash'] = (-delta*price).sum(axis=1).cumsum()
+        port['stock'] = (position*price).sum(axis=1)
+        
+    
     port['total'] = port['stock']+port['cash']
 
     return port

@@ -34,6 +34,31 @@ def pos2pnl(price,position ):
 
     return port
 
+def tradeBracket(price,entryBar,maxTradeLength,bracket):
+    ''' 
+    trade a symmetrical bracket on price series, return price delta and exit bar #
+    Input
+    ------
+        price : series of price values
+        entryBar: entry bar number
+        maxTradeLength : max trade duration in bars
+        bracket : allowed price deviation 
+    
+    
+    '''
+    
+    lastBar = min(entryBar+maxTradeLength,len(price)-1)
+    p = price[entryBar:lastBar]-price[entryBar]
+    
+    idxOutOfBound = np.nonzero(abs(p)>bracket) # find indices where price comes out of bracket
+    if idxOutOfBound[0].any(): # found match
+        priceDelta = p[idxOutOfBound[0][0]]
+        exitBar =  idxOutOfBound[0][0]+entryBar
+    else: # all in bracket, exiting based on time
+        priceDelta = p[-1]
+        exitBar = lastBar
+    
+    return priceDelta, exitBar
 
 
 def estimateBeta(priceY,priceX,algo = 'standard'):

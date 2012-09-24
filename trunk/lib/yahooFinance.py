@@ -152,7 +152,20 @@ def getQuote(symbols):
     idx = data.pop('symbol')
     
     return DataFrame(data,index=idx)
+
+def historicDataUrl(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]):
+    """ 
+    generate url
+
+    symbol: Yahoo finanance symbol
+    sDate: start date (y,m,d)
+    eDate: end date (y,m,d)
+    """
+
+    urlStr = 'http://ichart.finance.yahoo.com/table.csv?s={0}&a={1}&b={2}&c={3}&d={4}&e={5}&f={6}'.\
+    format(symbol.upper(),sDate[1]-1,sDate[2],sDate[0],eDate[1]-1,eDate[2],eDate[0])
     
+    return urlStr
 
 def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]):
     """ 

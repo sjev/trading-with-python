@@ -23,6 +23,25 @@ def fileName2date(fName):
 def parseDateTime(dateTimeStr):
     return dt.datetime.strptime(dateTimeStr,dateTimeFormat)
     
+def loadCsv(fName):
+    ''' load DataFrame from csv file '''
+    with open(fName,'r') as f:
+        lines = f.readlines()
+    
+    dates= []    
+    header = [h.strip() for h in lines[0].strip().split(',')[1:]]
+    data = [[] for i in range(len(header))]
+   
+    
+    for line in lines[1:]:
+        fields = line.rstrip().split(',')
+        dates.append(parseDateTime(fields[0]))
+        for i,field in enumerate(fields[1:]):
+            data[i].append(float(field))
+     
+    return DataFrame(data=dict(zip(header,data)),index=Index(dates))    
+    
+    
 class HistDataCsv(object):
     '''class for working with historic database in .csv format'''
     def __init__(self,symbol,dbDir):
@@ -38,17 +57,16 @@ class HistDataCsv(object):
         ''' load data '''
         s = self.symbol+'_'+date.strftime(dateFormat)+'.csv' # file name
         
-        df = DataFrame.from_csv(os.path.join(self.dbDir,s))
-        
-        cols = [col.strip() for col in df.columns.tolist()]
-        df.columns = cols
-       
+        #df = DataFrame.from_csv(os.path.join(self.dbDir,s))
+        #cols = [col.strip() for col in df.columns.tolist()]
+        #df.columns = cols
+        df = loadCsv(os.path.join(self.dbDir,s))
        
         return df
         
             
     def __repr__(self):
-        return '{symbol} dataset wit {nrDates} days of data'.format(symbol=self.symbol, nrDates=len(self.dates))
+        return '{symbol} dataset with {nrDates} days of data'.format(symbol=self.symbol, nrDates=len(self.dates))
         
          
         
@@ -60,7 +78,10 @@ if __name__=='__main__':
     dbDir =os.path.normpath('D:/data/30sec')
     vxx = HistDataCsv('VXX',dbDir)
     spy = HistDataCsv('SPY',dbDir)
-   
-    date = vxx.dates[-1]   
+#   
+    date = dt.date(2012,8,31)
+    print date
+#    
+    pair = DataFrame({'SPY':spy.loadDate(date)['close'],'VXX':vxx.loadDate(date)['close']})
     
-    pair = DataFrame({'SPY':spy.loadDate(date)['wap'],'VXX':vxx.loadDate(date)['wap']})
+    print pair.tail()

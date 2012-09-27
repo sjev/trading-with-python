@@ -78,10 +78,11 @@ def getHistoricData(symbol):
         symbol: VIX or VXV
         return dataframe
     '''
+    print 'Downloading %s' % symbol
     urls = {'VIX':'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/vixcurrent.csv', \
             'VXV':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/vxvdailyprices.csv' }
     
-    startLine = {'VIX':1,'VXV':2}    
+    startLine = {'VIX':2,'VXV':3}    
     
     urlStr = urls[symbol]
     
@@ -95,11 +96,17 @@ def getHistoricData(symbol):
     dates = []
     data = [[] for i in range(len(header))]
      
+     
     for line in lines[startLine[symbol]:]:
         fields = line.rstrip().split(',')
-        dates.append(datetime.strptime( fields[0],'%m/%d/%Y'))
-        for i,field in enumerate(fields[1:]):
-            data[i].append(float(field))
+        try:
+            dates.append(datetime.strptime( fields[0],'%m/%d/%Y'))
+            for i,field in enumerate(fields[1:]):
+                data[i].append(float(field))
+        except ValueError as e:
+            print 'Catched error:' , e
+            print 'Line:', line
+            
         
     
     

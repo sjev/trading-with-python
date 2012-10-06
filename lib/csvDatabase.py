@@ -64,6 +64,26 @@ class HistDataCsv(object):
        
         return df
         
+        
+    def createOHLC(self):
+        ''' create ohlc from intraday data'''
+        ohlc = DataFrame(index=self.dates, columns=['open','high','low','close'])
+        
+        for date in self.dates:
+            
+            print 'Processing', date
+            try:
+                df = self.loadDate(date)
+                
+                ohlc.set_value(date,'open',df['wap'][0])
+                ohlc.set_value(date,'high',df['wap'].max())
+                ohlc.set_value(date,'low', df['wap'].min())
+                ohlc.set_value(date,'close',df['wap'][-1])
+        
+            except Exception as e:
+                print 'Could not convert:', e
+                
+        return ohlc
             
     def __repr__(self):
         return '{symbol} dataset with {nrDates} days of data'.format(symbol=self.symbol, nrDates=len(self.dates))

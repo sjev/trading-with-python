@@ -167,7 +167,7 @@ def historicDataUrl(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]
     
     return urlStr
 
-def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]):
+def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3],verbose=True):
     """ 
     get data from Yahoo finance and return pandas dataframe
 
@@ -203,6 +203,9 @@ def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]
     
     # create a pandas dataframe structure   
     df = DataFrame(data,index=idx).sort()
+    
+    if verbose:
+        print 'Got %i days of data' % len(df)
     
     return df
 

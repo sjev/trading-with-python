@@ -74,6 +74,7 @@ def readActivityFlex(fName):
     data = dict(zip(header,[[] for h in header]))
     
     for row in rows[1:]:
+        print row
         for col in header:
             val = types[col](row[idx[col]])
             data[col].append(val)

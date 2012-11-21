@@ -7,7 +7,8 @@ Licence: GPL v2
 """
 
 from scipy  import  polyfit, polyval
-from datetime import datetime, date
+import datetime as dt
+#from datetime import datetime, date
 from pandas import DataFrame, Index, Series
 import numpy as np
 import csv
@@ -223,7 +224,12 @@ def candlestick(df,width=0.5, colorup='b', colordown='r'):
     ax.grid(True)
     
     #ax.bar(x,height=H-L,bottom=L,width=0.01,color='k')
-    
+
+def datetime2matlab(t):
+   ''' convert datetime timestamp to matlab numeric timestamp '''
+   mdn = t + dt.timedelta(days = 366)
+   frac = (t-dt.datetime(t.year,t.month,t.day,0,0,0)).seconds / (24.0 * 60.0 * 60.0)
+   return mdn.toordinal() + frac
     
     
 if __name__ == '__main__':

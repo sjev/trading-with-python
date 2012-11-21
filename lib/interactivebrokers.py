@@ -31,7 +31,7 @@ import time
 
 priceTicks = {1:'bid',2:'ask',4:'last',6:'high',7:'low',9:'close', 14:'open'} 
 timeFormat = "%Y%m%d %H:%M:%S"
-
+dateFormat = "%Y%m%d"
 
 def createContract(symbol, secType='STK', exchange='SMART',currency='USD'):
     ''' contract factory function '''
@@ -298,7 +298,12 @@ class _HistDataHandler(object):
             self.dataReady = True
             return
         
-        self._timestamp.append(dt.datetime.strptime(msg.date,timeFormat))
+        if len(msg.date) > 8:
+            self._timestamp.append(dt.datetime.strptime(msg.date,timeFormat))
+        else:
+            self._timestamp.append(dt.datetime.strptime(msg.date,dateFormat))
+                        
+            
         for k in self._data.keys():
             self._data[k].append(getattr(msg, k))
     

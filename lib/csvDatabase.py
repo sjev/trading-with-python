@@ -48,19 +48,31 @@ class HistDataCsv(object):
         self.symbol = symbol
         self.dbDir = os.path.normpath(os.path.join(dbDir,symbol))
         
+        if not os.path.exists(self.dbDir):
+            print 'Creating data directory ', self.dbDir
+            os.mkdir(self.dbDir)
+        
         self.dates = []        
         
         for fName in os.listdir(self.dbDir):
             self.dates.append(fileName2date(fName))
-     
+    
+    
+    def saveData(self,date, df):
+        ''' add data to database'''
+        s = self.symbol+'_'+date.strftime(dateFormat)+'.csv' # file name
+        dest = os.path.join(self.dbDir,s) # full path destination
+        print 'Saving data to: ', dest
+        df.to_csv(dest)
+    
     def loadDate(self,date):  
         ''' load data '''
         s = self.symbol+'_'+date.strftime(dateFormat)+'.csv' # file name
         
-        #df = DataFrame.from_csv(os.path.join(self.dbDir,s))
-        #cols = [col.strip() for col in df.columns.tolist()]
-        #df.columns = cols
-        df = loadCsv(os.path.join(self.dbDir,s))
+        df = DataFrame.from_csv(os.path.join(self.dbDir,s))
+        cols = [col.strip() for col in df.columns.tolist()]
+        df.columns = cols
+        #df = loadCsv(os.path.join(self.dbDir,s))
        
         return df
         
@@ -75,10 +87,10 @@ class HistDataCsv(object):
             try:
                 df = self.loadDate(date)
                 
-                ohlc.set_value(date,'open',df['wap'][0])
+                ohlc.set_value(date,'open',df['open'][0])
                 ohlc.set_value(date,'high',df['wap'].max())
                 ohlc.set_value(date,'low', df['wap'].min())
-                ohlc.set_value(date,'close',df['wap'][-1])
+                ohlc.set_value(date,'close',df['close'][-1])
         
             except Exception as e:
                 print 'Could not convert:', e

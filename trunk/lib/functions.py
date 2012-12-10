@@ -14,6 +14,37 @@ import numpy as np
 import csv
 import matplotlib.pyplot as plt
 
+
+def pca(A):
+     """ performs principal components analysis 
+     (PCA) on the n-by-p DataFrame A
+     Rows of A correspond to observations, columns to variables. 
+    
+     Returns :  
+      coeff : principal components, column-wise
+      transform: A in principal component space
+      latent :  eigenvalues
+ 
+     """
+     # computing eigenvalues and eigenvectors of covariance matrix
+     M = (A - A.mean()).T # subtract the mean (along columns)
+     [latent,coeff] = np.linalg.eig(np.cov(M)) # attention:not always sorted
+     
+     idx = np.argsort(latent) # sort eigenvalues
+     idx = idx[::-1] # in ascending order
+     
+     coeff = coeff[:,idx]
+     latent = latent[idx]
+     
+     score = np.dot(coeff.T,M) # projection of the data in the new space
+     
+     transform = DataFrame(index = A.index, data = score.T)
+     
+     return coeff,transform,latent
+
+
+
+
 def pos2pnl(price,position ):
     """
     calculate pnl based on price and position

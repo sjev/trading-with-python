@@ -12,7 +12,35 @@ import datetime as dt
 from pandas import DataFrame, Index, Series
 import numpy as np
 import csv
-import matplotlib.pyplot as plt
+from matplotlib.pyplot import *
+
+
+def plotCorrelationMatrix(price, thresh = None):
+    ''' plot a correlation matrix as a heatmap image
+        inputs: 
+            price: prices DataFrame   
+            thresh: correlation threshold to use for checking, default None
+        
+    '''    
+    symbols = price.columns.tolist()
+    R = price.pct_change()
+    
+    
+    correlationMatrix = R.corr()
+    
+    if thresh is not None:
+        correlationMatrix = correlationMatrix > thresh
+
+    
+    print np.round(correlationMatrix,2)
+    clf()
+    imshow(abs(correlationMatrix.values),interpolation='none')
+    xticks(range(len(symbols)),symbols)
+    yticks(range(len(symbols)),symbols)
+    colorbar()
+    title('Correlation matrix') 
+    
+    return correlationMatrix
 
 
 def pca(A):
@@ -36,7 +64,7 @@ def pca(A):
      coeff = coeff[:,idx]
      latent = latent[idx]
      
-     score = np.dot(coeff.T,M) # projection of the data in the new space
+     score = np.dot(coeff.T,A.T) # projection of the data in the new space
      
      transform = DataFrame(index = A.index, data = score.T)
      
@@ -230,8 +258,8 @@ def candlestick(df,width=0.5, colorup='b', colordown='r'):
     L = df['low'].values
     C = df['close'].values
     
-    fig = plt.gcf()
-    ax = plt.axes()
+    fig =  gcf()
+    ax =  axes()
     #ax.hold(True)    
     
     X = df.index
@@ -265,5 +293,5 @@ def datetime2matlab(t):
     
 if __name__ == '__main__':
     df = DataFrame({'open':[1,2,3],'high':[5,6,7],'low':[-2,-1,0],'close':[2,1,4]})
-    plt.clf()
+    clf()
     candlestick(df)

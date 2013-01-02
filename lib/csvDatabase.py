@@ -11,6 +11,7 @@ from pandas import *
 import numpy as np
 import datetime as dt
 import os
+from sys import stdout
 
 dateFormat = "%Y%m%d" # date format for converting filenames to dates
 dateTimeFormat = "%Y%m%d %H:%M:%S"
@@ -76,6 +77,16 @@ class HistDataCsv(object):
        
         return df
         
+    def loadDates(self,dates):
+        ''' load multiple dates, concantenating to one DataFrame '''
+        tmp =[]
+        print 'Loading multiple dates for ' , self.symbol        
+        for i,date in enumerate(dates):
+            print 'Loading [%i/%i] %s ' % (i,len(dates),str(date))
+            tmp.append(self.loadDate(date))
+                     
+        return concat(tmp)
+        
         
     def createOHLC(self):
         ''' create ohlc from intraday data'''
@@ -100,9 +111,58 @@ class HistDataCsv(object):
     def __repr__(self):
         return '{symbol} dataset with {nrDates} days of data'.format(symbol=self.symbol, nrDates=len(self.dates))
         
-         
+class HistDatabase(object):
+    ''' class working with multiple symbols at once '''
+    def __init__(self, symbols, dataDir):
+        
+        #build dataset
+        self.csv = {} # dict of HistDataCsv halndlers
+
+        for symbol in symbols:
+            self.csv[symbol] = HistDataCsv(symbol,dataDir)
+    
+    
+    def loadDates(self,dates=None):
+        ''' 
+        get data for all symbols as wide panel
+        provide a dates list. If no dates list is provided, common dates are used.
+        '''
+        if dates is None: dates=self.commonDates
+        
+        tmp = {}
+        for k,v in self.csv.iteritems():
+            tmp[k] = v.loadDates(dates)
+            
+        return WidePanel(tmp)
+        
+    def toHDF(self,dataFile,dates):
+        ''' write wide panel data to a hdfstore file '''
+        store = HDFStore(dataFile)        
+        wp = self.loadDates(dates)
+        
+        store['data'] = wp
+        store.close()
         
         
+        
+        
+    
+    @property 
+    def commonDates(self):
+        ''' return dates common for all symbols '''
+        t = [v.dates for v in self.csv.itervalues()] # get all dates in a list
+        
+        d = list(set(t[0]).intersection(*t[1:]))
+        return sorted(d)
+        
+     
+    def __repr__(self):
+        s = '-----Hist CSV Database-----\n'
+        for k,v in self.csv.iteritems():
+            s+= (str(v)+'\n')
+        return s
+  
+          
 #--------------------
 
 if __name__=='__main__':

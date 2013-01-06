@@ -45,7 +45,7 @@ print t
 
 # print every 3d wednesday of the month
 for month in xrange(1,13):
-    t = dt.date(2012,month,1)+datetools.relativedelta(months=1)
+    t = dt.date(2013,month,1)+datetools.relativedelta(months=1)
     
     
     offset = datetools.Week(weekday=4)

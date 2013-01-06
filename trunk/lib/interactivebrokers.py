@@ -337,7 +337,7 @@ class Downloader(object):
         print '[debug]', msg
         
     
-    def requestData(self,contract,endDateTime,durationStr='1800 S',barSizeSetting='1 secs',whatToShow='TRADES',useRTH=1,formatDate=1):  
+    def requestData(self,contract,endDateTime,durationStr='1 D',barSizeSetting='30 secs',whatToShow='TRADES',useRTH=1,formatDate=1):  
         self._log.debug('Requesting data for %s end time %s.' % (contract.m_symbol,endDateTime))
         
         

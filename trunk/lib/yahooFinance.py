@@ -61,7 +61,7 @@ class HistData(object):
                 df = getHistoricData(symbol,self.startDate)
                 print 'Got %i samples' % len(df)            
                 if self.autoAdjust:
-                   df =  adjust(df,removeOrig=True)
+                    df =  adjust(df,removeOrig=True)
                 
                 if len(self.symbols)==0:
                     self.wp = WidePanel({symbol:df})
@@ -77,9 +77,9 @@ class HistData(object):
 #            
 #        store.close()
     
-    def getDataFrame(self,symbols,field='close'):
+    def getDataFrame(self,field='close'):
         ''' return a slice on wide panel for a given field '''
-        return self.wp.minor_xs(field)[symbols]
+        return self.wp.minor_xs(field)
          
 #    def updateData(self,symbols='all'): 
 #        ''' load file from HDF5, update if needed '''

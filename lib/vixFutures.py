@@ -8,7 +8,7 @@ Licence: GPL v2
 
 import datetime as dt
 from pandas import *
-from pandas.core import datetools 
+import os
 import urllib2
 #from csvDatabase import HistDataCsv
 
@@ -69,14 +69,37 @@ class Future(object):
         return t_new
     
 
-    def getCboeData(self):
-        ''' download interday CBOE data '''
-        self.cboeData = getCboeData(self.year, self.month)
+    def getCboeData(self, dataDir=None, forceUpdate=False):
+        ''' download interday CBOE data 
+        specify dataDir to save data to csv. 
+        data will not be downloaded if csv file is already present. 
+        This can be overridden with setting forceUpdate to True
+        '''
+        
+        
+        if dataDir is not None:
+            fileFound = os.path.exists(self._csvFilename(dataDir))
+            
+            if forceUpdate or not fileFound:
+                self.cboeData = getCboeData(self.year, self.month)
+                self.to_csv(dataDir)
+            else:
+                self.cboeData = DataFrame.from_csv(self._csvFilename(dataDir))
+            
+        else:
+            self.cboeData = getCboeData(self.year, self.month)
+                
+        
         return self.cboeData
     
     def updateIntradayDb(self,dbDir):
         #self.intradayDb = 
         pass
+    
+    def to_csv(self,dataDir):
+        ''' save to csv in given dir. Filename is automatically generated '''
+        self.cboeData.to_csv(self._csvFilename(dataDir))
+        
     
     @property
     def dates(self):
@@ -87,6 +110,10 @@ class Future(object):
             dates = None
             
         return dates
+    
+    def _csvFilename(self,dataDir):
+        fName =  "VIX_future_%i_%i.csv" % (self.year, self.month)
+        return os.path.join(dataDir,fName)
     
     def __repr__(self):
         s = 'Vix future [%i-%i (%s)] exp: %s\n' % (self.year, self.month,monthToCode[self.month], self.expiration.strftime("%B, %d %Y (%A)"))

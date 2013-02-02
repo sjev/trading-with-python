@@ -74,6 +74,7 @@ def pos2pnl(price,position ):
     calculate pnl based on price and position
     Returns a portfolio DataFrame
     """
+     
     delta=position.diff()
     port = DataFrame(index=price.index)
     

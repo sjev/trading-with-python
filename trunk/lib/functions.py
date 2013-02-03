@@ -69,9 +69,15 @@ def pca(A):
 
 
 
-def pos2pnl(price,position ):
+def pos2pnl(price,position , ibTransactionCost=False ):
     """
     calculate pnl based on price and position
+    Inputs:
+    ---------
+    price: series or dataframe of price
+    position: number of shares at each time. Column names must be same as in price
+    ibTransactionCost: use bundled Interactive Brokers transaction cost of 0.005$/share
+    
     Returns a portfolio DataFrame
     """
      
@@ -87,7 +93,18 @@ def pos2pnl(price,position ):
         port['stock'] = (position*price).sum(axis=1)
         
     
-    port['total'] = port['stock']+port['cash']
+    
+    if ibTransactionCost:
+        tc = -0.005*position.diff().abs() # basic transaction cost
+        tc[(tc<1) & (tc>0)] = 1  # everything under 1$ will be ceil'd to 1$
+        tc = tc.sum(axis=1)
+        port['tc'] = tc.cumsum()
+    else:
+        port['tc'] = 0.
+        
+    port['total'] = port['stock']+port['cash']+port['tc']
+    
+    
 
     return port
 

@@ -96,7 +96,7 @@ def pos2pnl(price,position , ibTransactionCost=False ):
     
     if ibTransactionCost:
         tc = -0.005*position.diff().abs() # basic transaction cost
-        tc[(tc<1) & (tc>0)] = 1  # everything under 1$ will be ceil'd to 1$
+        tc[(tc>-1) & (tc<0)] = -1  # everything under 1$ will be ceil'd to 1$
         tc = tc.sum(axis=1)
         port['tc'] = tc.cumsum()
     else:

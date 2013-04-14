@@ -1,9 +1,25 @@
 # -*- coding: utf-8 -*-
-"""
-toolset working with yahoo finance data
 
-Copyright: Jev Kuznetsov
-Licence: BSD
+# Author: Jev Kuznetsov <jev.kuznetsov@gmail.com>
+# License: BSD
+
+
+"""
+Toolset working with yahoo finance data
+
+This module includes functions for easy access to YahooFinance data
+
+Functions
+----------
+- `getHistoricData`  get historic data for a single symbol
+- `getQuote` get current quote for a symbol
+- `getScreenerSymbols` load symbols from a yahoo stock screener file
+
+Classes
+---------
+- `HistData` a class for working with multiple symbols
+
+
 
 """
 
@@ -61,7 +77,7 @@ class HistData(object):
                 df = getHistoricData(symbol,self.startDate)
                 print 'Got %i samples' % len(df)            
                 if self.autoAdjust:
-                    df =  adjust(df,removeOrig=True)
+                    df =  _adjust(df,removeOrig=True)
                 
                 if len(self.symbols)==0:
                     self.wp = WidePanel({symbol:df})
@@ -71,36 +87,11 @@ class HistData(object):
             except Exception,e:
                 print e 
             
-#            else:
-#                store[symbol] = self.wp[symbol]
-#                store.flush()
-#            
-#        store.close()
     
     def getDataFrame(self,field='close'):
         ''' return a slice on wide panel for a given field '''
         return self.wp.minor_xs(field)
          
-#    def updateData(self,symbols='all'): 
-#        ''' load file from HDF5, update if needed '''
-#        
-#        if symbols == 'all':
-#            symbols = self.symbols
-#               
-#       
-#        # check symbols
-#        missing = []
-#        for symbol in symbols:
-#            if symbol not in self.symbols:
-#                missing.append(symbol)
-#        if len(missing)>0:
-#            print "Missing: {0}".format(missing)
-#            self.downloadData(missing)
-
-        
-                    
-      
-            
     
     @property
     def symbols(self):
@@ -110,9 +101,6 @@ class HistData(object):
     def __repr__(self):
         return str(self.wp)
 
-#    def __del__(self):
-#        self._save()
-#       
 
 def getQuote(symbols):
     ''' get current yahoo quote
@@ -121,7 +109,7 @@ def getQuote(symbols):
     , return a DataFrame  '''
     
     if not isinstance(symbols,list):
-        raise TypeError, "symbols must be a list"
+        symbols = [symbols]
     # for codes see: http://www.gummy-stuff.org/Yahoo-data.htm
     codes = {'symbol':'s','last':'l1','change_pct':'p2','PE':'r','time':'t1','short_ratio':'s7'}
     request = str.join('',codes.values())
@@ -153,7 +141,7 @@ def getQuote(symbols):
     
     return DataFrame(data,index=idx)
 
-def historicDataUrl(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]):
+def _historicDataUrll(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]):
     """ 
     generate url
 
@@ -209,8 +197,10 @@ def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]
     
     return df
 
-def adjust(df, removeOrig=False):
-    ''' adjust hist data based on adj_close field '''
+def _adjust(df, removeOrig=False):
+    ''' 
+  _adjustust hist data based on adj_close field 
+    '''
     c = df['close']/df['adj_close']
     
     df['adj_open'] = df['open']/c
@@ -218,9 +208,9 @@ def adjust(df, removeOrig=False):
     df['adj_low'] = df['low']/c
  
     if removeOrig:
-      df=df.drop(['open','close','high','low'],axis=1)
-      renames = dict(zip(['adj_open','adj_close','adj_high','adj_low'],['open','close','high','low']))
-      df=df.rename(columns=renames)
+        df=df.drop(['open','close','high','low'],axis=1)
+        renames = dict(zip(['adj_open','adj_close','adj_high','adj_low'],['open','close','high','low']))
+        df=df.rename(columns=renames)
     
     return df
     
@@ -238,20 +228,3 @@ def getScreenerSymbols(fileName):
             symbols.append(field) 
     return symbols
 
-#-------------------test functioins
-def testHistData():
-   
-    h = HistData('C:/temp/histData.csv')
-    symbols = ['SPY','USO']
-    
-    df = h.loadSymbols(symbols,forceDownload = True)
-    print df.tail()
-
-
-if __name__=='__main__':
-    print 'Testing twp toolset'
-    #data = getHistoricData('SPY')
-    #print data
-    testHistData()
-   
-    #print getQuote(['SPY','VXX','GOOG','AAPL'])

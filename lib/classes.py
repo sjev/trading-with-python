@@ -8,9 +8,9 @@ Licence: GPL v2
 __docformat__ = 'restructuredtext'
 
 import os
-import tradingWithPython.lib.logger as logger
-from tradingWithPython.lib.yahooFinance import getHistoricData
-from tradingWithPython.lib.functions import estimateBeta, returns, rank
+import logger as logger
+from yahooFinance import getHistoricData
+from functions import estimateBeta, returns, rank
 from datetime import date
 from pandas import DataFrame, Series
 import numpy as np

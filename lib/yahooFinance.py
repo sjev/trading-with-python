@@ -29,7 +29,7 @@ import urllib2
 from pandas import DataFrame, Index, HDFStore, WidePanel
 import numpy as np
 import os
-
+from extra import ProgressBar
 
 class HistData(object):
     ''' a class for working with yahoo finance data '''
@@ -70,12 +70,12 @@ class HistData(object):
             symbols = self.symbols
         
         #store = HDFStore(self.dataFile)        
+        p = ProgressBar(len(symbols))
         
         for idx,symbol in enumerate(symbols):
-            print 'Downloading %s [%i/%i]' % (symbol,idx+1,len(symbols))
+            
             try:            
-                df = getHistoricData(symbol,self.startDate)
-                print 'Got %i samples' % len(df)            
+                df = getHistoricData(symbol,self.startDate,verbose=False)
                 if self.autoAdjust:
                     df =  _adjust(df,removeOrig=True)
                 
@@ -86,7 +86,7 @@ class HistData(object):
             
             except Exception,e:
                 print e 
-            
+            p.animate(idx+1)
     
     def getDataFrame(self,field='close'):
         ''' return a slice on wide panel for a given field '''

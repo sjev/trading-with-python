@@ -1,1 +1,1 @@
-__docformat__ = 'restructuredtext'from datetime import datetimeimport numpy as npfrom tradingWithPython.lib.classes import *from tradingWithPython.lib.functions import *from tradingWithPython.lib.csvDatabase import HistDataCsv
+__docformat__ = 'restructuredtext'from datetime import datetimeimport numpy as npfrom lib.classes import *from lib.functions import *from lib.csvDatabase import HistDataCsv

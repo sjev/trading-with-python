@@ -10,7 +10,7 @@ targetDir = 'dist\\tradingWithPython'
 
 if not os.path.exists(targetDir): os.mkdir(targetDir)
 
-includes = ['cboe','csvDatabase','functions','yahooFinance']
+includes = ['cboe','csvDatabase','functions','yahooFinance','extra']
 
 for root, dirs, files in os.walk(sourceDir):
     for f in files:

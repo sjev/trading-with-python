@@ -10,10 +10,9 @@ from scipy  import  polyfit, polyval
 import datetime as dt
 #from datetime import datetime, date
 from pandas import DataFrame, Index, Series
-import numpy as np
 import csv
-from matplotlib.pyplot import *
-
+import matplotlib.pyplot as plt
+import numpy as np
 
 def plotCorrelationMatrix(price, thresh = None):
     ''' plot a correlation matrix as a heatmap image
@@ -31,11 +30,11 @@ def plotCorrelationMatrix(price, thresh = None):
     if thresh is not None:
         correlationMatrix = correlationMatrix > thresh
 
-    imshow(abs(correlationMatrix.values),interpolation='none')
-    xticks(range(len(symbols)),symbols)
-    yticks(range(len(symbols)),symbols)
-    colorbar()
-    title('Correlation matrix') 
+    plt.imshow(abs(correlationMatrix.values),interpolation='none')
+    plt.xticks(range(len(symbols)),symbols)
+    plt.yticks(range(len(symbols)),symbols)
+    plt.colorbar()
+    plt.title('Correlation matrix') 
     
     return correlationMatrix
 
@@ -272,8 +271,8 @@ def candlestick(df,width=0.5, colorup='b', colordown='r'):
     L = df['low'].values
     C = df['close'].values
     
-    fig =  gcf()
-    ax =  axes()
+    fig =  plt.gcf()
+    ax =  plt.axes()
     #ax.hold(True)    
     
     X = df.index
@@ -299,13 +298,13 @@ def candlestick(df,width=0.5, colorup='b', colordown='r'):
     #ax.bar(x,height=H-L,bottom=L,width=0.01,color='k')
 
 def datetime2matlab(t):
-   ''' convert datetime timestamp to matlab numeric timestamp '''
-   mdn = t + dt.timedelta(days = 366)
-   frac = (t-dt.datetime(t.year,t.month,t.day,0,0,0)).seconds / (24.0 * 60.0 * 60.0)
-   return mdn.toordinal() + frac
+    ''' convert datetime timestamp to matlab numeric timestamp '''
+    mdn = t + dt.timedelta(days = 366)
+    frac = (t-dt.datetime(t.year,t.month,t.day,0,0,0)).seconds / (24.0 * 60.0 * 60.0)
+    return mdn.toordinal() + frac
     
     
 if __name__ == '__main__':
     df = DataFrame({'open':[1,2,3],'high':[5,6,7],'low':[-2,-1,0],'close':[2,1,4]})
-    clf()
+    plt.clf()
     candlestick(df)

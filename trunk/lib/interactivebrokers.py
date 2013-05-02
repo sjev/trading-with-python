@@ -17,9 +17,9 @@ from ib.ext.Contract import Contract
 from ib.opt import ibConnection, message
 from ib.ext.Order import Order
 
-import tradingWithPython.lib.logger as logger
-from tradingWithPython.lib.qtpandas import DataFrameModel, TableView
-from tradingWithPython.lib.eventSystem import Sender
+import logger as logger
+from qtpandas import DataFrameModel, TableView
+from eventSystem import Sender
 import numpy as np
 
 import pandas

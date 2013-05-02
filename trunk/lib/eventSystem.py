@@ -7,7 +7,7 @@ sender-reciever pattern.
 
 '''
 
-import tradingWithPython.lib.logger as logger
+import logger as logger
 import types
 
 class Sender(object):

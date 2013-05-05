@@ -1,4 +1,5 @@
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
-from functions import pos2pnl, tradeBracket, estimateBeta, sharpe, drawdown, plotCorrelationMatrix
+
+from lib.functions import pos2pnl, tradeBracket, estimateBeta, sharpe, drawdown, plotCorrelationMatrix

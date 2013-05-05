@@ -6,7 +6,7 @@ import os, shutil
 # <codecell>
 
 sourceDir = 'lib'
-targetDir = 'dist\\tradingWithPython'
+targetDir = 'dist\\tradingWithPython\\lib'
 
 if not os.path.exists(targetDir): os.makedirs(targetDir)
 

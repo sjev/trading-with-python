@@ -25,10 +25,10 @@ def price_tick_handler(msg):
 
 #--------------main script------------------
 
-con = ibConnection()
-#con.registerAll(debug_tick_handler)
-con.register(price_tick_handler, message.TickPrice)
-con.connect()
+tws = ibConnection()
+#tws.registerAll(debug_tick_handler)
+tws.register(price_tick_handler, message.TickPrice)
+tws.connect()
 
 #-------create contract and subscribe to data
 c = Contract()
@@ -37,7 +37,7 @@ c.m_secType= "STK"
 c.m_exchange = "SMART"
 c.m_currency = "USD"
 
-con.reqMktData(1,c,"",False)
+tws.reqMktData(1,c,"",False)
 
 #-------start endless loop
 print 'Press Ctr-C to stop loop'
@@ -48,4 +48,4 @@ try:
 except KeyboardInterrupt:
     print 'All done'
             
-con.disconnect()
+tws.disconnect()

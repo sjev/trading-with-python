@@ -8,6 +8,12 @@ convenience functions for interactiveBrokers module
 '''
 from ib.ext.Contract import Contract
 
+
+priceTicks = {1:'bid',2:'ask',4:'last',6:'high',7:'low',9:'close', 14:'open'} 
+timeFormat = "%Y%m%d %H:%M:%S"
+dateFormat = "%Y%m%d"
+
+
 def createContract(symbol):
     ''' create contract object '''
     c = Contract()

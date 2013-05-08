@@ -9,5 +9,5 @@ setup(name = "tradingWithPython",
       author = "Jev Kuznetsov",
       author_email = "jev.kuznetsov@gmail.com",
       url = "http://www.tradingwithpython.com/",
-      packages=["tradingWithPython","tradingWithPython\\lib"]
+      packages=["tradingWithPython","tradingWithPython\\lib","tradingWithPython\\lib\\interactiveBrokers"]
       )

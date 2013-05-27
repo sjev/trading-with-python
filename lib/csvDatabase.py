@@ -8,17 +8,16 @@ intraday data handlers in csv format.
 from __future__ import division
 
 from pandas import *
-import numpy as np
 import datetime as dt
 import os
-from sys import stdout
+from extra import ProgressBar
 
 dateFormat = "%Y%m%d" # date format for converting filenames to dates
 dateTimeFormat = "%Y%m%d %H:%M:%S"
 
 def fileName2date(fName):
     '''convert filename to date'''
-    name, ext = os.path.splitext(fName)
+    name = os.path.splitext(fName)[0]
     return dt.datetime.strptime(name.split('_')[1],dateFormat).date() 
     
 def parseDateTime(dateTimeStr):
@@ -59,8 +58,12 @@ class HistDataCsv(object):
             self.dates.append(fileName2date(fName))
     
     
-    def saveData(self,date, df):
+    def saveData(self,date, df,lowerCaseColumns=True):
         ''' add data to database'''
+        
+        if lowerCaseColumns: # this should provide consistency to column names. All lowercase
+            df.columns = [ c.lower() for c in df.columns]
+        
         s = self.symbol+'_'+date.strftime(dateFormat)+'.csv' # file name
         dest = os.path.join(self.dbDir,s) # full path destination
         print 'Saving data to: ', dest
@@ -81,10 +84,13 @@ class HistDataCsv(object):
         ''' load multiple dates, concantenating to one DataFrame '''
         tmp =[]
         print 'Loading multiple dates for ' , self.symbol        
+        p = ProgressBar(len(dates))
+        
         for i,date in enumerate(dates):
-            print 'Loading [%i/%i] %s ' % (i,len(dates),str(date))
             tmp.append(self.loadDate(date))
-                     
+            p.animate(i+1)
+            
+        print ''
         return concat(tmp)
         
         
@@ -113,7 +119,13 @@ class HistDataCsv(object):
         
 class HistDatabase(object):
     ''' class working with multiple symbols at once '''
-    def __init__(self, symbols, dataDir):
+    def __init__(self, dataDir):
+        
+        # get symbols from directory names
+        symbols = []
+        for l in os.listdir(dataDir):
+            if os.path.isdir(os.path.join(dataDir,l)):
+                symbols.append(l)
         
         #build dataset
         self.csv = {} # dict of HistDataCsv halndlers
@@ -130,13 +142,17 @@ class HistDatabase(object):
         if dates is None: dates=self.commonDates
         
         tmp = {}
+        
+        
         for k,v in self.csv.iteritems():
             tmp[k] = v.loadDates(dates)
             
         return WidePanel(tmp)
         
-    def toHDF(self,dataFile,dates):
+    def toHDF(self,dataFile,dates=None):
         ''' write wide panel data to a hdfstore file '''
+        
+        if dates is None: dates=self.commonDates
         store = HDFStore(dataFile)        
         wp = self.loadDates(dates)
         

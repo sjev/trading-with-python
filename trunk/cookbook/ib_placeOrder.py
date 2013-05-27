@@ -85,7 +85,7 @@ orderId = handler.nextValidOrderId # numeric order id, must be unique.
 print 'Placing order with id ', orderId
 
 contract = createContract('SPY')
-order = createOrder(orderId,shares=5) # create order
+order = createOrder(orderId,shares=5, transmit=0) # create order
 
 
 tws.placeOrder(orderId, contract, order) # place order

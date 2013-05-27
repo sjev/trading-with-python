@@ -14,12 +14,12 @@ timeFormat = "%Y%m%d %H:%M:%S"
 dateFormat = "%Y%m%d"
 
 
-def createContract(symbol):
+def createContract(symbol,secType='STK',exchange='SMART',currency='USD'):
     ''' create contract object '''
     c = Contract()
     c.m_symbol = symbol
-    c.m_secType= "STK"
-    c.m_exchange = "SMART"
-    c.m_currency = "USD"
+    c.m_secType= secType
+    c.m_exchange = exchange
+    c.m_currency = currency
     
     return c

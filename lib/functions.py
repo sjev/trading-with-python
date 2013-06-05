@@ -263,6 +263,35 @@ def drawdown(pnl):
     
     return drawdown, drawdowndur
 
+
+def profitRatio(pnl):
+    ''' 
+    calculate profit ratio as sum(pnl)/drawdown
+    Input: pnl  - daily pnl, Series or DataFrame
+    '''
+    def processVector(pnl): # process a single column
+        s = pnl.fillna(0)
+        dd = drawdown(s)[0]
+        p = s.sum()/dd.max()
+        return p
+    
+    if isinstance(pnl,Series):
+        return processVector(pnl)
+        
+    elif isinstance(pnl,DataFrame):
+        
+        p = Series(index = pnl.columns)
+        
+        for col in pnl.columns:
+            p[col] = processVector(pnl[col])
+        
+        return p
+    else:
+        raise TypeError("Input must be DataFrame or Series, not "+str(type(pnl)))
+
+
+
+
 def candlestick(df,width=0.5, colorup='b', colordown='r'):
     ''' plot a candlestick chart of a dataframe '''
     

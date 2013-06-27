@@ -44,11 +44,11 @@ def loadCsv(fName):
     
 class HistDataCsv(object):
     '''class for working with historic database in .csv format'''
-    def __init__(self,symbol,dbDir):
+    def __init__(self,symbol,dbDir,autoCreateDir=False):
         self.symbol = symbol
         self.dbDir = os.path.normpath(os.path.join(dbDir,symbol))
         
-        if not os.path.exists(self.dbDir):
+        if not os.path.exists(self.dbDir) and autoCreateDir:
             print 'Creating data directory ', self.dbDir
             os.mkdir(self.dbDir)
         

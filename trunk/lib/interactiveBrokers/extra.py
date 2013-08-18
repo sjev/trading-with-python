@@ -24,7 +24,7 @@ def createContract(symbol,secType='STK',exchange='SMART',currency='USD'):
     
     return c
 
-def createOrder(orderId,shares,limit = None, transmit=0):
+def createOrder(orderId,shares,orderType='MKT', limit = None, transmit=0):
     ''' 
     create order object 
     
@@ -47,11 +47,9 @@ def createOrder(orderId,shares,limit = None, transmit=0):
     o.m_action = action[cmp(shares,0)]
     o.m_totalQuantity = abs(shares)
     o.m_transmit = transmit
+    o.m_orderType = orderType
     
     if limit is not None:
-        o.m_orderType = 'LMT'
         o.m_lmtPrice = limit
-    else:
-        o.m_orderType = 'MKT'
     
     return o    

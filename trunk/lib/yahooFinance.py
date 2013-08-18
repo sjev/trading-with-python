@@ -111,7 +111,7 @@ def getQuote(symbols):
     if not isinstance(symbols,list):
         symbols = [symbols]
     # for codes see: http://www.gummy-stuff.org/Yahoo-data.htm
-    codes = {'symbol':'s','last':'l1','change_pct':'p2','PE':'r','time':'t1','short_ratio':'s7'}
+    codes = {'symbol':'s','last':'l1','change_pct':'p2','PE':'r','time':'t1','short_ratio':'s7','prev_close':'p'}
     request = str.join('',codes.values())
     header = codes.keys()
     

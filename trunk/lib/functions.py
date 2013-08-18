@@ -333,6 +333,27 @@ def datetime2matlab(t):
     return mdn.toordinal() + frac
     
     
+def getDataSources(fName = None):
+    ''' return data sources directories for this machine.
+    directories are defined in datasources.ini or provided filepath'''
+    import socket
+    from ConfigParser import ConfigParser
+    
+    pcName = socket.gethostname()
+    p = ConfigParser()
+    p.optionxform = str
+    
+    if fName is None:
+        fName = 'datasources.ini'
+    
+    p.read(fName)
+    
+    dataSources = {}
+    for option in p.options(pcName):
+        dataSources[option] = p.get(pcName,option)
+    
+    return dataSources
+
 if __name__ == '__main__':
     df = DataFrame({'open':[1,2,3],'high':[5,6,7],'low':[-2,-1,0],'close':[2,1,4]})
     plt.clf()

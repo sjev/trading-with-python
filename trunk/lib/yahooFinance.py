@@ -44,7 +44,7 @@ class HistData(object):
         """load data from HDF"""
         if os.path.exists(dataFile):
             store = HDFStore(dataFile)
-            symbols = store.keys()    
+            symbols = [str(s).strip('/') for s in store.keys() ]   
             data = dict(zip(symbols,[store[symbol] for symbol in symbols]))
             self.wp = WidePanel(data)
             store.close()

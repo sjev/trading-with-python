@@ -7,7 +7,7 @@ intraday data handlers in csv format.
 
 from __future__ import division
 
-from pandas import *
+import pandas as pd
 import datetime as dt
 import os
 from extra import ProgressBar
@@ -39,7 +39,7 @@ def loadCsv(fName):
         for i,field in enumerate(fields[1:]):
             data[i].append(float(field))
      
-    return DataFrame(data=dict(zip(header,data)),index=Index(dates))    
+    return pd.DataFrame(data=dict(zip(header,data)),index=pd.Index(dates))    
     
     
 class HistDataCsv(object):
@@ -73,7 +73,7 @@ class HistDataCsv(object):
         ''' load data '''
         s = self.symbol+'_'+date.strftime(dateFormat)+'.csv' # file name
         
-        df = DataFrame.from_csv(os.path.join(self.dbDir,s))
+        df = pd.DataFrame.from_csv(os.path.join(self.dbDir,s))
         cols = [col.strip() for col in df.columns.tolist()]
         df.columns = cols
         #df = loadCsv(os.path.join(self.dbDir,s))
@@ -91,12 +91,12 @@ class HistDataCsv(object):
             p.animate(i+1)
             
         print ''
-        return concat(tmp)
+        return pd.concat(tmp)
         
         
     def createOHLC(self):
         ''' create ohlc from intraday data'''
-        ohlc = DataFrame(index=self.dates, columns=['open','high','low','close'])
+        ohlc = pd.DataFrame(index=self.dates, columns=['open','high','low','close'])
         
         for date in self.dates:
             
@@ -147,13 +147,13 @@ class HistDatabase(object):
         for k,v in self.csv.iteritems():
             tmp[k] = v.loadDates(dates)
             
-        return WidePanel(tmp)
+        return pd.WidePanel(tmp)
         
     def toHDF(self,dataFile,dates=None):
         ''' write wide panel data to a hdfstore file '''
         
         if dates is None: dates=self.commonDates
-        store = HDFStore(dataFile)        
+        store = pd.HDFStore(dataFile)        
         wp = self.loadDates(dates)
         
         store['data'] = wp
@@ -190,6 +190,6 @@ if __name__=='__main__':
     date = dt.date(2012,8,31)
     print date
 #    
-    pair = DataFrame({'SPY':spy.loadDate(date)['close'],'VXX':vxx.loadDate(date)['close']})
+    pair = pd.DataFrame({'SPY':spy.loadDate(date)['close'],'VXX':vxx.loadDate(date)['close']})
     
     print pair.tail()

@@ -24,7 +24,7 @@ targetDir = 'dist\\tradingWithPython\\lib'
 
 
 
-includes = ['__init__','cboe','csvDatabase','functions','yahooFinance','extra']
+includes = ['__init__','cboe','csvDatabase','functions','yahooFinance','extra','bats']
 
 print '-----------lib files---------'
 copyFiles(sourceDir,targetDir,includes)

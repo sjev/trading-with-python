@@ -9,11 +9,12 @@ __docformat__ = 'restructuredtext'
 
 import os
 import logger as logger
-from yahooFinance import getHistoricData
-from functions import estimateBeta, returns, rank
+import yahooFinance as yahoo
+from functions import returns, rank
 from datetime import date
 from pandas import DataFrame, Series
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 class Symbol(object):
@@ -37,7 +38,7 @@ class Symbol(object):
         startDate and endDate are tuples in form (d,m,y)
         '''
         self.log.debug('Getting OHLC data')
-        self.ohlc = getHistoricData(self.name,startDate,endDate)
+        self.ohlc = yahoo.getHistoricData(self.name,startDate,endDate)
     
        
     def histData(self,column='adj_close'):
@@ -128,116 +129,116 @@ class Portfolio(object):
         
         
     
-
-
 class Spread(object):
     ''' 
     Spread class, used to build a spread out of two symbols.    
     '''
-    def __init__(self,symbols, bet = 100, histClose=None, beta = None):
-        """ symbols : ['XYZ','SPY'] . first one is primary , second one is hedge """
-        self.symbols = symbols
-        self.histClose =  histClose
-        if self.histClose is None:
+    
+    def __init__(self,stock,hedge,beta=None):
+        ''' init with symbols or price series '''
+        
+        if isinstance(stock,str) and isinstance(hedge,str):
+            self.symbols = [stock,hedge]
             self._getYahooData()
-        
-        self.params = DataFrame(index=self.symbols)
-        if beta is None:
-            self.beta =self._estimateBeta()
+        elif isinstance(stock,pd.Series) and isinstance(hedge,pd.Series):
+            self.symbols = [stock.name,hedge.name]
+            self.price = pd.DataFrame(dict(zip(self.symbols,[stock,hedge]))).dropna()
         else:
+            raise ValueError('Both stock and hedge should be of the same type, symbol string or Series')
+    
+        # calculate returns
+        self.returns = self.price.pct_change()
+        
+        if beta is not None:
             self.beta = beta
-       
-        
-        self.params['capital'] = Series({symbols[0]:bet, symbols[1]:-bet/self.beta})
-        self.params['lastClose'] = self.histClose.tail(1).T.ix[:,0]
-        self.params['last'] = self.params['lastClose']
-        self.params['shares'] = (self.params['capital']/self.params['last']) 
+        else:
+            self.estimateBeta()
+            
+            
+        # set data
+        self.data = pd.DataFrame(index = self.symbols)
+        self.data['beta'] = pd.Series({self.symbols[0]:1., self.symbols[1]:-self.beta})
+    
+    def calculateShares(self,bet):
+        ''' set number of shares based on last quote '''
+        if 'price' not in self.data.columns:
+            print 'Getting quote...'
+            self.getQuote()
+        self.data['shares'] = bet*self.data['beta']/self.data['price']    
         
     
-        self._calculate()
-    def _calculate(self):
-        """ internal calculations """
-        self.params['change'] = (self.params['last']-self.params['lastClose'])*self.params['shares']
-        self.params['mktValue'] = self.params['shares']*self.params['last']
+    def estimateBeta(self,plotOn=False):
+        """ linear estimation of beta """
+        x = self.returns[self.symbols[1]] # hedge
+        y = self.returns[self.symbols[0]] # stock
         
-    def setLast(self,last):
-        """ set current price, perform internal recalculation """
-        self.params['last'] = last
-        self._calculate()
+        #avoid extremes
+        low = np.percentile(x,20)
+        high = np.percentile(x,80)
+        iValid = (x>low) & (x<high)
+        
+        x = x[iValid]
+        y = y[iValid]
+        
+        if plotOn:
+            plt.plot(x,y,'o')
+            plt.grid(True)
+        
+        iteration = 1
+        nrOutliers = 1
+        while iteration < 3 and nrOutliers > 0 :
+            
+            (a,b) = np.polyfit(x,y,1)
+            yf = np.polyval([a,b],x)
+            
+            err = yf-y
+            idxOutlier = abs(err) > 3*np.std(err)
+            nrOutliers =sum(idxOutlier)
+            beta = a
+            #print 'Iteration: %i beta: %.2f outliers: %i' % (iteration,beta, nrOutliers)
+            x = x[~idxOutlier]
+            y = y[~idxOutlier]
+            iteration += 1
+
     
-    def setShares(self,shares):
-        """ set target shares, adjust capital """
-        self.params['shares'] = shares
-        self.params['capital'] = self.params['last']*self.params['shares']
+        if plotOn:
+            yf = x*beta
+            plt.plot(x,yf,'-',color='red')
+            plt.xlabel(self.symbols[1])
+            plt.ylabel(self.symbols[0])
+        
+        self.beta = beta
+        return beta
     
+    @property
+    def spread(self):
+        ''' return daily returns of the pair '''
+        return (self.returns*self.data['beta']).sum(1)
+
+    
+    def getQuote(self):
+        ''' get current quote from yahoo '''
+        q = yahoo.getQuote(self.symbols)
+        self.data['price'] = q['last']
+        
     def _getYahooData(self, startDate=(2007,1,1)):
         """ fetch historic data """
         data = {}        
         for symbol in self.symbols:
             print 'Downloading %s' % symbol
-            data[symbol]=(getHistoricData(symbol,startDate)['adj_close'] )
+            data[symbol]=(yahoo.getHistoricData(symbol,startDate)['adj_close'] )
            
-        self.histClose = DataFrame(data).dropna()
-       
-    
-    def _estimateBeta(self):
-        return estimateBeta(self.histClose[self.symbols[1]],self.histClose[self.symbols[0]])
+        self.price = pd.DataFrame(data).dropna()
+   
         
     def __repr__(self):
+        return 'Spread 1*%s & %.2f*%s ' % (self.symbols[0],-self.beta,self.symbols[1])
         
-        header = '-'*10+self.name+'-'*10
-        return header+'\n'+str(self.params)+'\n'
-    
-    @property   
-    def change(self):
-        return (returns(self.histClose)*self.params['capital']).sum(axis=1)
-    
-    @property     
-    def value(self):
-        """ historic market value of the spread """
-        return (self.histClose*self.params['shares']).sum(axis=1)
-   
     @property
     def name(self):
         return str.join('_',self.symbols)
-   
-    def calculateStatistics(self):
-        ''' calculate spread statistics '''
-        res = {}
-        res['micro'] = rank(self.params['change'].sum(),self.change)
-        res['macro'] = rank(self.params['mktValue'].sum(), self.value)
-        res['last'] = self.params['mktValue'].sum()
-             
-        return   Series(res,name=self.name)    
-    
-    
-  
-    
-    #-----------plotting functions-------------------
-    def plot(self, figure=None):
-        
-        if figure is None:
-            figure = plt.gcf()
-      
-        figure.clear()
-        
-        ax1 = plt.subplot(2,1,1)
-        self.value.plot(ax=ax1, style = 'o-')
-        p = self.params.T
-        plt.title('Spread %.2f (\$ %.2f) %s vs %.2f (\$%.2f) %s ' %(p.ix['shares',0],p.ix['capital',0], p.columns[0], 
-                                                            p.ix['shares',1],p.ix['capital',1],p.columns[1]))
-                
-        
-        ax2 = plt.subplot(2,1,2,sharex = ax1)
-        (self.change).plot(ax=ax2, style= 'o-')
-        plt.title('daily change')
-        plt.ylabel('$ change')
-        
-#        ax3 = plt.subplot(3,1,3,sharex = ax1)
-#        self.histClose.plot(ax=ax3)
-#        plt.title('Price movements')
-#        plt.ylabel('$')
-        
+
+
         
 if __name__=='__main__':
     

@@ -31,6 +31,27 @@ import numpy as np
 import os
 from extra import ProgressBar
 
+
+def parseStr(s):
+    ''' convert string to a float or string '''
+    f = s.strip()
+    if f[0] == '"':
+        return f.strip('"')
+    elif f=='N/A':
+        return np.nan
+    
+    else:
+        try: # try float conversion
+            prefixes = {'M':1e6, 'B': 1e9} 
+            prefix = f[-1]
+            
+            if prefix in prefixes: # do we have a Billion/Million character?
+                return float(f[:-1])*prefixes[prefix]
+            else:                       # no, convert to float directly
+                return float(f)
+        except ValueError: # failed, return original string
+            return s
+
 class HistData(object):
     ''' a class for working with yahoo finance data '''
     def __init__(self, autoAdjust=True):
@@ -103,19 +124,17 @@ class HistData(object):
 
 
 def getQuote(symbols):
-    ''' get current yahoo quote
-    
-    
-    , return a DataFrame  '''
-    
+    ''' get current yahoo quote, return a DataFrame  '''
+    # for codes see: http://www.gummy-stuff.org/Yahoo-data.htm
     if not isinstance(symbols,list):
         symbols = [symbols]
-    # for codes see: http://www.gummy-stuff.org/Yahoo-data.htm
-    codes = {'symbol':'s','last':'l1','change_pct':'p2','PE':'r','time':'t1','short_ratio':'s7','prev_close':'p'}
-    request = str.join('',codes.values())
-    header = codes.keys()
     
-    data = dict(zip(codes.keys(),[[] for i in range(len(codes))]))
+    
+    header =               ['symbol','last','change_pct','PE','time','short_ratio','prev_close','eps','market_cap']    
+    request = str.join('', ['s',     'l1',     'p2'  ,   'r', 't1',     's7',        'p',       'e'     , 'j1'])
+    
+    
+    data = dict(zip(header,[[] for i in range(len(header))]))
     
     urlStr = 'http://finance.yahoo.com/d/quotes.csv?s=%s&f=%s' % (str.join('+',symbols), request)
     
@@ -124,20 +143,15 @@ def getQuote(symbols):
     except Exception, e:
         s = "Failed to download:\n{0}".format(e);
         print s
-
+    
     for line in lines:
         fields = line.strip().split(',')
-        #print fields
+        #print fields, len(fields)
         for i,field in enumerate(fields):
-            if field[0] == '"':
-                data[header[i]].append( field.strip('"'))
-            else:
-                try:
-                    data[header[i]].append(float(field))
-                except ValueError:
-                    data[header[i]].append(np.nan)
-
+            data[header[i]].append( parseStr(field))
+            
     idx = data.pop('symbol')
+    
     
     return DataFrame(data,index=idx)
 

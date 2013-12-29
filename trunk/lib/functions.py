@@ -155,9 +155,18 @@ def estimateBeta(priceY,priceX,algo = 'standard'):
         ret = (X/X.shift(1)-1).dropna().values
 
         #print len(ret)
-
+        
         x = ret[:,0]
         y = ret[:,1]
+        
+        # filter high values
+        low = np.percentile(x,20)
+        high = np.percentile(x,80)
+        iValid = (x>low) & (x<high)
+        
+        x = x[iValid]
+        y = y[iValid]
+        
 
         iteration = 1
         nrOutliers = 1

@@ -10,5 +10,5 @@ setup(name = "tradingWithPython",
       author_email = "jev.kuznetsov@gmail.com",
       url = "http://www.tradingwithpython.com/",
       license = "BSD",
-      packages=["tradingWithPython","tradingWithPython\\lib","tradingWithPython\\lib\\interactiveBrokers"]
+      packages=["tradingWithPython","tradingWithPython/lib","tradingWithPython/lib/interactiveBrokers"]
       )

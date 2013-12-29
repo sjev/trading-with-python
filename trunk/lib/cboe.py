@@ -79,8 +79,8 @@ def getHistoricData(symbol):
         return dataframe
     '''
     print 'Downloading %s' % symbol
-    urls = {'VIX':'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/vixcurrent.csv', \
-            'VXV':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/vxvdailyprices.csv' }
+    urls = {'VIX':'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/vixcurrent.csv', 
+            'VXV':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/vxvdailyprices.csv'}
     
     startLine = {'VIX':2,'VXV':3}    
     

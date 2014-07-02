@@ -8,7 +8,7 @@ Licence: BSD
 import datetime
 from datetime import datetime, date
 import urllib2
-from pandas import DataFrame, Index, DateRange
+from pandas import DataFrame, Index
 from pandas.core import datetools 
 import numpy as np
 
@@ -119,6 +119,8 @@ class VixFuture(object):
     Class for easy handling of futures data.
     """    
     
+        
+    
     def __init__(self,year,month):
         self.year = year
         self.month = month
@@ -128,6 +130,8 @@ class VixFuture(object):
     
     def daysLeft(self,date):
         """ business days to expiration date """
+        from pandas import  DateRange # this will cause a problem with pandas 0.14 and higher... Method is depreciated and replaced by DatetimeIndex
+
         r = DateRange(date,self.expirationDate())
         return len(r)
     

@@ -11,7 +11,9 @@
 #-------------------------------------------------------------------------------
 
 import pandas as pd
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+import sys
+import numpy as np
 
 class Backtest(object):
     """
@@ -55,6 +57,12 @@ class Backtest(object):
         
         self.data['cash'] = (-delta*self.data['price']).fillna(0).cumsum()+initialCash
         self.data['pnl'] = self.data['cash']+self.data['value']-initialCash
+      
+      
+    @property
+    def sharpe(self):
+        ''' return annualized sharpe ratio of the pnl '''
+        return sharpe(self.data['pnl'].diff())  # need the diff here as sharpe works on daily returns.
         
     @property
     def pnl(self):
@@ -68,6 +76,8 @@ class Backtest(object):
             short entry : red triangle down
             exit : black circle
         """
+        l = ['price']
+        
         p = self.data['price']
         p.plot(style='x-')
         
@@ -87,9 +97,49 @@ class Backtest(object):
         idx = (self.data['shares'] > 0) | (self.data['shares'] > 0).shift(1) 
         if idx.any():
             p[idx].plot(style='go')
+            l.append('long')
         
         #colored line for short positions    
         idx = (self.data['shares'] < 0) | (self.data['shares'] < 0).shift(1) 
         if idx.any():
             p[idx].plot(style='ro')
+            l.append('short')
+
+        plt.xlim([p.index[0],p.index[-1]]) # show full axis
+        
+        plt.legend(l,'best')
+        plt.title('trades')
+        
+        
+class ProgressBar:
+    def __init__(self, iterations):
+        self.iterations = iterations
+        self.prog_bar = '[]'
+        self.fill_char = '*'
+        self.width = 50
+        self.__update_amount(0)
+
+    def animate(self, iteration):
+        print '\r',self,
+        sys.stdout.flush()
+        self.update_iteration(iteration + 1)
+
+    def update_iteration(self, elapsed_iter):
+        self.__update_amount((elapsed_iter / float(self.iterations)) * 100.0)
+        self.prog_bar += '  %d of %s complete' % (elapsed_iter, self.iterations)
+
+    def __update_amount(self, new_amount):
+        percent_done = int(round((new_amount / 100.0) * 100.0))
+        all_full = self.width - 2
+        num_hashes = int(round((percent_done / 100.0) * all_full))
+        self.prog_bar = '[' + self.fill_char * num_hashes + ' ' * (all_full - num_hashes) + ']'
+        pct_place = (len(self.prog_bar) // 2) - len(str(percent_done))
+        pct_string = '%d%%' % percent_done
+        self.prog_bar = self.prog_bar[0:pct_place] + \
+            (pct_string + self.prog_bar[pct_place + len(pct_string):])
+    def __str__(self):
+        return str(self.prog_bar)
+    
+def sharpe(pnl):
+    return  np.sqrt(250)*pnl.mean()/pnl.std()
 

@@ -50,7 +50,7 @@ class Backtest(object):
         self.data = pd.DataFrame(index=price.index , columns = ['price','shares','value','cash','pnl'])
         self.data['price'] = price
         
-        self.data['shares'] = self.trades.reindex(self.data.index).ffill().fillna(0)
+        self.data['shares'] = self.trades.reindex(self.data.index).ffill()
         self.data['value'] = self.data['shares'] * self.data['price']
        
         delta = self.data['shares'].diff() # shares bought sold

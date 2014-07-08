@@ -24,8 +24,10 @@ targetDir = 'dist\\tradingWithPython\\lib'
 
 
 
-includes = ['__init__','cboe','csvDatabase','functions','yahooFinance','extra','bats']
+includes = ['__init__','cboe','csvDatabase','functions','yahooFinance','extra','bats','backtest']
 
+print '-----------init file---------'
+shutil.copyfile('__init__.py','dist\\tradingWithPython\\__init__.py')
 print '-----------lib files---------'
 copyFiles(sourceDir,targetDir,includes)
 print '-----------IB files----------'

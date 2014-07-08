@@ -1,1 +1,1 @@
-__docformat__ = 'restructuredtext'from datetime import datetimeimport numpy as npfrom lib.classes import *from lib.functions import *from lib.csvDatabase import HistDataCsv
+__docformat__ = 'restructuredtext'__version__ = '0.0.11'from datetime import datetimeimport numpy as npfrom lib.functions import *from lib.csvDatabase import HistDataCsvfrom lib.backtest import Backtest

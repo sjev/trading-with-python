@@ -50,7 +50,7 @@ class Backtest(object):
         self.data = pd.DataFrame(index=price.index , columns = ['price','shares','value','cash','pnl'])
         self.data['price'] = price
         
-        self.data['shares'] = self.trades.reindex(self.data.index).ffill()
+        self.data['shares'] = self.trades.reindex(self.data.index).ffill().fillna(0)
         self.data['value'] = self.data['shares'] * self.data['price']
        
         delta = self.data['shares'].diff() # shares bought sold
@@ -62,7 +62,8 @@ class Backtest(object):
     @property
     def sharpe(self):
         ''' return annualized sharpe ratio of the pnl '''
-        return sharpe(self.data['pnl'].diff())  # need the diff here as sharpe works on daily returns.
+        pnl = (self.data['pnl'].diff()).shift(-1)[self.data['shares']!=0] # use only days with position.
+        return sharpe(pnl)  # need the diff here as sharpe works on daily returns.
         
     @property
     def pnl(self):
@@ -82,7 +83,7 @@ class Backtest(object):
         p.plot(style='x-')
         
         # ---plot markers
-        
+        # this works, but I rather prefer colored markers for each day of position rather than entry-exit signals
 #         indices = {'g^': self.trades[self.trades > 0].index , 
 #                    'ko':self.trades[self.trades == 0].index, 
 #                    'rv':self.trades[self.trades < 0].index}

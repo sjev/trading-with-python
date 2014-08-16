@@ -13,6 +13,14 @@ from pandas import DataFrame, Index, Series
 import csv
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+
+def nans(shape, dtype=float):
+    ''' create a nan numpy array '''
+    a = np.empty(shape, dtype)
+    a.fill(np.nan)
+    return a
+
 
 def plotCorrelationMatrix(price, thresh = None):
     ''' plot a correlation matrix as a heatmap image
@@ -246,32 +254,43 @@ def sharpe(pnl):
     return  np.sqrt(250)*pnl.mean()/pnl.std()
 
 
-def drawdown(pnl):
+def drawdown(s):
     """
     calculate max drawdown and duration
 
     Input:
-        pnl, in $
+        s, price or cumulative pnl curve $
     Returns:
         drawdown : vector of drawdwon values
         duration : vector of drawdown duration
 
 
     """
-    cumret = pnl.cumsum()
-
-    highwatermark = [0]
-
-    idx = pnl.index
-    drawdown = Series(index = idx)
-    drawdowndur = Series(index = idx)
-
-    for t in range(1, len(idx)) :
-        highwatermark.append(max(highwatermark[t-1], cumret[t]))
-        drawdown[t]= (highwatermark[t]-cumret[t])
+    # convert to array if got pandas series, 10x speedup
+    if isinstance(s,pd.Series):
+        idx = s.index
+        s = s.values
+        returnSeries = True
+    else:
+        returnSeries = False
+     
+    if s.min() < 0: # offset if signal minimum is less than zero
+        s = s-s.min() 
+     
+    highwatermark = np.zeros(len(s))
+    drawdown = np.zeros(len(s))
+    drawdowndur = np.zeros(len(s))
+ 
+  
+    for t in range(1,len(s)):
+        highwatermark[t] = max(highwatermark[t-1], s[t])
+        drawdown[t] = (highwatermark[t]-s[t])
         drawdowndur[t]= (0 if drawdown[t] == 0 else drawdowndur[t-1]+1)
-
-    return drawdown, drawdowndur
+        
+    if returnSeries:
+        return pd.Series(index=idx,data=drawdown), pd.Series(index=idx,data=drawdowndur)
+    else:
+        return drawdown , drawdowndur
 
 
 def profitRatio(pnl):

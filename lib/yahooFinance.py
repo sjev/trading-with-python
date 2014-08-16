@@ -32,6 +32,7 @@ import os
 from extra import ProgressBar
 
 
+
 def parseStr(s):
     ''' convert string to a float or string '''
     f = s.strip()
@@ -169,7 +170,34 @@ def _historicDataUrll(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:
     
     return urlStr
 
-def getHistoricData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3],verbose=True):
+def getHistoricData(symbols, **options):
+    ''' 
+    get data from Yahoo finance and return pandas dataframe
+    Will get OHLCV data frame if sinle symbol is provided. 
+    If many symbols are provided, it will return a wide panel
+    
+    Parameters
+    ------------
+    symbols: Yahoo finanance symbol or a list of symbols
+    sDate: start date (y,m,d)
+    eDate: end date (y,m,d)
+    
+    '''
+    assert isinstance(symbols,(list,str)), 'Input must be a string symbol or a list of symbols'
+    
+    if isinstance(symbols,str):
+        return getSymbolData(symbols,**options)
+    else:
+        data = {}
+        print 'Downloading data:'
+        p = ProgressBar(len(symbols))
+        for idx,symbol in enumerate(symbols):
+            p.animate(idx+1)
+            data[symbol] = getSymbolData(symbol,verbose=False,**options)
+        
+        return WidePanel(data)
+
+def getSymbolData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3],verbose=True):
     """ 
     get data from Yahoo finance and return pandas dataframe
 

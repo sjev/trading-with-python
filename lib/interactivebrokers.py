@@ -577,11 +577,11 @@ def startGui():
 if __name__ == "__main__":
     import ib
     print 'iby version:' , ib.version 
-    testConnection()
+    #testConnection()
     #testBroker()
     #testSubscriptions()
     print message.messageTypeNames()
-    #startGui()
+    startGui()
     print 'All done'
     
     

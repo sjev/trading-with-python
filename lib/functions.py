@@ -209,6 +209,44 @@ def estimateBeta(priceY,priceX,algo = 'standard'):
 
     return beta
 
+def estimateVolatility(ohlc, N=10, algo='YangZhang'):
+    """ 
+    Volatility estimation 
+    Possible algorithms: ['YangZhang', 'CC']
+    
+    """
+    
+    
+    cc = np.log(ohlc.close/ohlc.close.shift(1))
+    
+    if algo == 'YangZhang': # Yang-zhang volatility
+        ho = np.log(ohlc.high/ohlc.open)
+        lo = np.log(ohlc.low/ohlc.open)
+        co = np.log(ohlc.close/ohlc.open)
+        
+        oc = np.log(ohlc.open/ohlc.close.shift(1))
+        oc_sq = oc**2
+        
+        
+        cc_sq = cc**2
+        
+        rs = ho*(ho-co)+lo*(lo-co)
+        
+        close_vol = pd.rolling_sum(cc_sq, window=N) * (1.0 / (N - 1.0))
+        open_vol = pd.rolling_sum(oc_sq, window=N) * (1.0 / (N - 1.0))
+        window_rs = pd.rolling_sum(rs, window=N) * (1.0 / (N - 1.0))
+        
+        result = (open_vol + 0.164333 * close_vol + 0.835667 * window_rs).apply(np.sqrt) * np.sqrt(252)
+        
+        result[:N-1] = np.nan
+    
+    elif algo == 'CC': # standard close-close estimator
+        result = np.sqrt(252)*np.sqrt(((pd.rolling_sum(cc**2,N))/N))
+        
+   
+    return result*100 
+
+
 def rank(current,past):
     ''' calculate a relative rank 0..1 for a value against series '''
     return (current>past).sum()/float(past.count())

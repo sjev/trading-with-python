@@ -181,8 +181,10 @@ def getHistoricData(symbols, **options):
     symbols: Yahoo finanance symbol or a list of symbols
     sDate: start date (y,m,d)
     eDate: end date (y,m,d)
+    adjust : T/[F] adjust data based on adj_close
     
     '''
+    
     assert isinstance(symbols,(list,str)), 'Input must be a string symbol or a list of symbols'
     
     if isinstance(symbols,str):
@@ -197,7 +199,7 @@ def getHistoricData(symbols, **options):
         
         return WidePanel(data)
 
-def getSymbolData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3],verbose=True):
+def getSymbolData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3], adjust=False, verbose=True):
     """ 
     get data from Yahoo finance and return pandas dataframe
 
@@ -238,7 +240,10 @@ def getSymbolData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3],v
     if verbose:
         print 'Got %i days of data' % len(df)
     
-    return df
+    if adjust:
+        return _adjust(df,removeOrig=True)
+    else:
+        return df
 
 def _adjust(df, removeOrig=False):
     ''' 

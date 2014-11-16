@@ -226,7 +226,7 @@ class Spread(object):
         data = {}        
         for symbol in self.symbols:
             print 'Downloading %s' % symbol
-            data[symbol]=(yahoo.getHistoricData(symbol,startDate)['adj_close'] )
+            data[symbol]=(yahoo.getHistoricData(symbol,sDate=startDate)['adj_close'] )
            
         self.price = pd.DataFrame(data).dropna()
    

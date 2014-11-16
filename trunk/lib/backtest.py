@@ -20,7 +20,7 @@ class Backtest(object):
     Backtest class, simple vectorized one. Works with pandas objects.
     """
     
-    def __init__(self,price, signal, signalType='capital',initialCash = 0):
+    def __init__(self,price, signal, signalType='capital',initialCash = 0, roundShares=True):
         """
         Arguments:
         
@@ -28,8 +28,12 @@ class Backtest(object):
         *signal* Series with capital to invest (long+,short-) or number of shares. 
         *sitnalType* capital to bet or number of shares 'capital' mode is default.
         *initialCash* starting cash. 
+        *roundShares* round off number of shares to integers
         
         """
+        
+        #TODO: add auto rebalancing
+        
         # check for correct input
         assert signalType in ['capital','shares'], "Wrong signal type provided, must be 'capital' or 'shares'"
         
@@ -44,7 +48,9 @@ class Backtest(object):
         if signalType == 'shares':
             self.trades = self.signal[tradeIdx] # selected rows where tradeDir changes value. trades are in Shares
         elif signalType =='capital':
-            self.trades = (self.signal[tradeIdx]/price[tradeIdx]).round()
+            self.trades = (self.signal[tradeIdx]/price[tradeIdx])
+            if roundShares:
+                self.trades = self.trades.round()
         
         # now create internal data structure 
         self.data = pd.DataFrame(index=price.index , columns = ['price','shares','value','cash','pnl'])
@@ -108,7 +114,7 @@ class Backtest(object):
 
         plt.xlim([p.index[0],p.index[-1]]) # show full axis
         
-        plt.legend(l,'best')
+        plt.legend(l,loc='best')
         plt.title('trades')
         
         

@@ -5,12 +5,12 @@ toolset working with cboe data
 @author: Jev Kuznetsov
 Licence: BSD
 """
-import datetime
 from datetime import datetime, date
 import urllib2
 from pandas import DataFrame, Index
 from pandas.core import datetools 
 import numpy as np
+import pandas as pd
 
 
 def monthCode(month):
@@ -72,46 +72,37 @@ def getPutCallRatio():
    
     return DataFrame(dict(zip(header[1:],data[1:])), index = Index(data[0]))
 
+        
+    
 
-def getHistoricData(symbol):
+def getHistoricData(symbols =  ['VIX','VXV','VXMT','VVIX']):
     ''' get historic data from CBOE
-        symbol: VIX or VXV
+       
         return dataframe
     '''
-    print 'Downloading %s' % symbol
-    urls = {'VIX':'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/vixcurrent.csv', 
-            'VXV':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/vxvdailyprices.csv'}
+    if not isinstance(symbols,list):
+        symbols = [symbols]
     
-    startLine = {'VIX':2,'VXV':3}    
+    urls = {'VIX':'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/vixcurrent.csv',
+            'VXV':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/vxvdailyprices.csv',
+            'VXMT':'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/vxmtdailyprices.csv',
+            'VVIX':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/VVIXtimeseries.csv'}
     
-    urlStr = urls[symbol]
+    startLines = {'VIX':1,'VXV':2,'VXMT':2,'VVIX':1}
+    cols = {'VIX':'VIX Close','VXV':'CLOSE','VXMT':'Close','VVIX':'VVIX'}
     
-    try:
-        lines = urllib2.urlopen(urlStr).readlines()
-    except Exception, e:
-        s = "Failed to download:\n{0}".format(e);
-        print s
+    data = {}
+  
+    for symbol in symbols:
+        urlStr = urls[symbol]
+        print 'Downloading %s from %s' % (symbol,urlStr)
         
-    header = ['open','high','low','close']   
-    dates = []
-    data = [[] for i in range(len(header))]
-     
-     
-    for line in lines[startLine[symbol]:]:
-        fields = line.rstrip().split(',')
-        try:
-            dates.append(datetime.strptime( fields[0],'%m/%d/%Y'))
-            for i,field in enumerate(fields[1:]):
-                data[i].append(float(field))
-        except ValueError as e:
-            print 'Catched error:' , e
-            print 'Line:', line
-            
-        
+        data[symbol] = pd.read_csv(urllib2.urlopen(urlStr), header=startLines[symbol],index_col=0,parse_dates=True)[cols[symbol]]
     
     
-    return DataFrame(dict(zip(header,data)),index=Index(dates)).sort()
-
+    return pd.DataFrame(data)
+    
+ 
 
 #---------------------classes--------------------------------------------
 class VixFuture(object):

@@ -243,6 +243,8 @@ def estimateVolatility(ohlc, N=10, algo='YangZhang'):
     elif algo == 'CC': # standard close-close estimator
         result = np.sqrt(252)*np.sqrt(((pd.rolling_sum(cc**2,N))/N))
         
+    else:
+        raise ValueError('Unknown algo type.')
    
     return result*100 
 

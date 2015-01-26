@@ -6,8 +6,9 @@ Licence: BSD
 
 '''
 from PyQt4.QtCore import (QAbstractTableModel,Qt,QVariant,QModelIndex,SIGNAL)
-from PyQt4.QtGui import (QApplication,QDialog,QVBoxLayout, QTableView, 
+from PyQt4.QtGui import (QApplication,QDialog,QVBoxLayout, QHBoxLayout, QTableView, QPushButton,
                          QWidget,QTableWidget, QHeaderView, QFont,QMenu,QAbstractItemView)
+
 
 from pandas import DataFrame, Index
 
@@ -31,6 +32,7 @@ class DataFrameModel(QAbstractTableModel):
          
     def setDataFrame(self,dataFrame):
         self.df = dataFrame
+        
         self.signalUpdate()
     
     def signalUpdate(self):
@@ -39,6 +41,38 @@ class DataFrameModel(QAbstractTableModel):
     
     def __repr__(self):
         return str(self.df) 
+
+    def setData(self,index,value, role=Qt.EditRole):
+          
+        if index.isValid():
+            row,column = index.row(), index.column()
+            dtype = self.df.dtypes.tolist()[column] # get column dtype        
+            
+            if np.issubdtype(dtype,np.float):
+                val,ok = value.toFloat()
+            elif np.issubdtype(dtype,np.int):
+                val,ok = value.toInt()
+            else:
+                val = value.toString()
+                ok = True
+            
+            if ok:
+                self.df.iloc[row,column] = val
+                return True                
+            
+        return False
+  
+    def flags(self, index):
+        if not index.isValid():
+            return Qt.ItemIsEnabled
+        return Qt.ItemFlags(
+                QAbstractTableModel.flags(self, index)|
+                Qt.ItemIsEditable)  
+  
+    def appendRow(self, index, data=0):
+        self.df.loc[index,:] = data
+        self.signalUpdate()
+        
   
     #------------- table display functions -----------------     
     def headerData(self,section,orientation,role=Qt.DisplayRole):
@@ -77,9 +111,9 @@ class DataFrameModel(QAbstractTableModel):
         
         self.layoutAboutToBeChanged.emit()
         if order == Qt.AscendingOrder:
-            self.df = self.df.sort(column=self.df.columns[nCol], ascending=True)
+            self.df = self.df.sort(columns=self.df.columns[nCol], ascending=True)
         elif order == Qt.DescendingOrder:
-            self.df = self.df.sort(column=self.df.columns[nCol], ascending=False)          
+            self.df = self.df.sort(columns=self.df.columns[nCol], ascending=False)          
           
         self.layoutChanged.emit()
         
@@ -152,7 +186,10 @@ class DataFrameWidget(QWidget):
             
     
     def resizeColumnsToContents(self):
-        self.dataTable.resizeColumnsToContents()    
+        self.dataTable.resizeColumnsToContents()  
+        
+    def insertRow(self):
+        self.dataModel.appendRow('foo')
         
 #-----------------stand alone test code
 
@@ -167,16 +204,30 @@ class Form(QDialog):
         super(Form,self).__init__(parent)
          
         df = testDf() # make up some data
-        widget = DataFrameWidget(parent=self)
-        widget.setDataFrame(df)
-        #widget.resizeColumnsToContents()
-        widget.fitColumns()
-        widget.setFormat({'float': '%.2f'})
+        self.table = DataFrameWidget(parent=self)
+        self.table.setDataFrame(df)
+        #self.table.resizeColumnsToContents()
+        self.table.fitColumns()
+        self.table.setFormat({'float': '%.2f'})
         
+        
+        #buttons
+       #but_add = QPushButton('Add')
+        but_test = QPushButton('Test')
+        but_test.clicked.connect(self.testFcn)
+        hbox = QHBoxLayout()
+        #hbox.addself.table(but_add)
+        hbox.addWidget(but_test)                
                      
         layout = QVBoxLayout()
-        layout.addWidget(widget)
+        layout.addWidget(self.table)
+        layout.addLayout(hbox)
+        
         self.setLayout(layout)
+        
+    def testFcn(self):
+        print 'test function'
+        self.table.insertRow()
         
 if __name__=='__main__':
     import sys

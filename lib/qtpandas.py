@@ -72,7 +72,13 @@ class DataFrameModel(QAbstractTableModel):
     def appendRow(self, index, data=0):
         self.df.loc[index,:] = data
         self.signalUpdate()
-        
+      
+    def deleteRow(self, index):
+        idx = self.df.index[index]
+        #self.beginRemoveRows(QModelIndex(), index,index)
+        #self.df = self.df.drop(idx,axis=0)
+        #self.endRemoveRows()
+        #self.signalUpdate()
   
     #------------- table display functions -----------------     
     def headerData(self,section,orientation,role=Qt.DisplayRole):
@@ -136,17 +142,19 @@ class TableView(QTableView):
     def contextMenuEvent(self, event):
         menu = QMenu(self)
 
-        Action = menu.addAction("print selected rows")
-        Action.triggered.connect(self.printName)
+        Action = menu.addAction("delete row")
+        Action.triggered.connect(self.deleteRow)
 
         menu.exec_(event.globalPos())
 
-    def printName(self):
+    def deleteRow(self):
         print "Action triggered from " + self.name
         
         print 'Selected rows:'
         for idx in self.selectionModel().selectedRows():
             print idx.row()
+           # self.model.deleteRow(idx.row())
+            
 
 
 class DataFrameWidget(QWidget):
@@ -159,7 +167,7 @@ class DataFrameWidget(QWidget):
         self.dataModel.setDataFrame(DataFrame())
         
         self.dataTable = QTableView()
-        self.dataTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        #self.dataTable.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.dataTable.setSortingEnabled(True)
         
         self.dataTable.setModel(self.dataModel)
@@ -188,8 +196,8 @@ class DataFrameWidget(QWidget):
     def resizeColumnsToContents(self):
         self.dataTable.resizeColumnsToContents()  
         
-    def insertRow(self):
-        self.dataModel.appendRow('foo')
+    def insertRow(self,index, data=None):
+        self.dataModel.appendRow(index,data)
         
 #-----------------stand alone test code
 
@@ -227,7 +235,7 @@ class Form(QDialog):
         
     def testFcn(self):
         print 'test function'
-        self.table.insertRow()
+        self.table.insertRow('foo')
         
 if __name__=='__main__':
     import sys

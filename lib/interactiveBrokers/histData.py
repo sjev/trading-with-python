@@ -181,3 +181,15 @@ class TimeKeeper(object):
         return requests
 
 
+if __name__ == '__main__':
+ 
+    from extra import createContract
+     
+    dl = Downloader(debug=True) # historic data downloader class
+     
+    contract = createContract('SPY') # create contract using defaults (STK,SMART,USD)
+    data = dl.requestData(contract,"20141208 16:00:00 EST") # request 30-second data bars up till now
+     
+    data.to_csv('SPY.csv') # write data to csv
+     
+    print 'Done'

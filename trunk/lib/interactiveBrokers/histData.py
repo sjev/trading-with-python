@@ -153,6 +153,11 @@ class TimeKeeper(object):
 
         self._timeFormat = "%Y%m%d %H:%M:%S"
         self.dataFile = os.path.normpath(os.path.join(dataDir,'requests.txt'))
+        
+        # Create file if it's missing
+        if not os.path.exists(self.dataFile):  
+            open(self.dataFile,'w').close() 
+        
         self._log.debug('Data file: {0}'.format(self.dataFile))
         
     def addRequest(self):
@@ -166,7 +171,7 @@ class TimeKeeper(object):
         delta = dt.timedelta(seconds=timeSpan)
         now = dt.datetime.now()
         requests = 0
-        
+
         with open(self.dataFile,'r') as f:
             lines = f.readlines()
             

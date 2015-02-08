@@ -97,7 +97,7 @@ class HistData(object):
         for idx,symbol in enumerate(symbols):
             
             try:            
-                df = getHistoricData(symbol,sDate=self.startDate,verbose=False)
+                df = getSymbolData(symbol,sDate=self.startDate,verbose=False)
                 if self.autoAdjust:
                     df =  _adjust(df,removeOrig=True)
                 

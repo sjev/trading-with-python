@@ -15,6 +15,56 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 
+
+
+
+def tradeBracket(price,entryBar,upper=None, lower=None, timeout=None):
+    '''
+    trade a  bracket on price series, return price delta and exit bar #
+    Input
+    ------
+        price : numpy array of price values
+        entryBar: entry bar number, *determines entry price*
+        upper : high stop
+        lower : low stop
+        timeout : max number of periods to hold
+
+    Returns exit price  and number of bars held
+
+    '''
+    assert isinstance(price, np.ndarray) , 'price must be a numpy array'
+    
+    
+    # create list of exit indices and add max trade duration. Exits are relative to entry bar
+    if timeout: # set trade length to timeout or series length
+        exits = [min(timeout,len(price)-entryBar-1)]
+    else:
+        exits = [len(price)-entryBar-1] 
+        
+    p = price[entryBar:entryBar+exits[0]+1] # subseries of price
+    
+    # extend exits list with conditional exits
+    # check upper bracket
+    if upper:
+        assert upper>p[0] , 'Upper bracket must be higher than entry price '
+        idx = np.where(p>upper)[0] # find where price is higher than the upper bracket
+        if idx.any(): 
+            exits.append(idx[0]) # append first occurence
+    # same for lower bracket
+    if lower:
+        assert lower<p[0] , 'Lower bracket must be lower than entry price '
+        idx = np.where(p<lower)[0]
+        if idx.any(): 
+            exits.append(idx[0]) 
+   
+    
+    exitBar = min(exits) # choose first exit    
+  
+    
+
+    return p[exitBar], exitBar
+
+
 class Backtest(object):
     """
     Backtest class, simple vectorized one. Works with pandas objects.

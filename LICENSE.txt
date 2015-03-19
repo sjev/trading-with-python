@@ -1,4 +1,4 @@
-Copyright (C) 2010-2013 Jev Kuznetsov <jev.kuznetsov@gmail.com>
+Copyright (C) 2010-2015 Jev Kuznetsov <jev.kuznetsov@gmail.com>
 All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without

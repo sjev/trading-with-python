@@ -152,8 +152,9 @@ class Orders(object):
     def data(self):
         """ get open order data as a pandas DataFrame """
         df = pd.DataFrame(self._data).T
+        cols = ['symbol','orderId','filled','remaining','lastFillPrice','avgFillPrice']        
         
-        return df
+        return df[cols]
 
     #-----------handlers    
     def _h_orderStauts(self,msg):

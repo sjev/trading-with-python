@@ -45,7 +45,7 @@ class PCA(object):
         
     def transform(self,ds):
         """ gransform dataset to a new one """
-        return pd.DataFrame(np.dot(self.eig_vec.T,ds.T).T)
+        return pd.DataFrame(np.dot(self.eig_vec.T,ds.T).T, index=ds.index)
        
 
 

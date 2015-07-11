@@ -17,6 +17,40 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
+
+class PCA(object):
+    """ class for executing pca transformation, works on pandas structures """
+    
+    def __init__(self,ds):
+        """ intit with a dataset, rows are observations, columns are features """
+        
+        # the dataset will be normalized to zero mean per column
+        self.mean = ds.mean(0)
+       
+        ds = ds - self.mean # subtract mean
+                
+        # transform
+        cov_mat = np.cov(ds.T) # create covariance matrix
+        eig_val, eig_vec = np.linalg.eig(cov_mat)
+        
+        idx = np.argsort(eig_val) # sort eigenvalues
+        idx = idx[::-1] # in ascending order
+        
+        eig_vec = eig_vec[:,idx]
+        eig_val = eig_val[idx]
+               
+        self.eig_vec = pd.DataFrame(eig_vec, index= ds.columns)
+        self.eig_val = pd.DataFrame(eig_val, index= ds.columns)
+        
+    def transform(self,ds):
+        """ gransform dataset to a new one """
+        return pd.DataFrame(np.dot(self.eig_vec.T,ds.T).T)
+       
+
+
+
+
 class Symbol(object):
     ''' 
     Symbol class, the foundation of Trading With Python library,

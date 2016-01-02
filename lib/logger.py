@@ -32,6 +32,5 @@ def getLogger(name='twp', level=level, format=format,
     @param datefmt format string for log dates
     @return logging instance (the module)
     """
-	#print 'Loglevel:' , level
     logging.basicConfig(level=level, format=format, datefmt=datefmt)
     return logging.getLogger(name)

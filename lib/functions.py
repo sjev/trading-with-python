@@ -39,8 +39,8 @@ def plotCorrelationMatrix(price, thresh = None):
         correlationMatrix = correlationMatrix > thresh
 
     plt.imshow(abs(correlationMatrix.values),interpolation='none')
-    plt.xticks(range(len(symbols)),symbols)
-    plt.yticks(range(len(symbols)),symbols)
+    plt.xticks(list(range(len(symbols))),symbols)
+    plt.yticks(list(range(len(symbols))),symbols)
     plt.colorbar()
     plt.title('Correlation matrix')
 
@@ -288,7 +288,7 @@ def readBiggerScreener(fName):
 
 
 
-    return DataFrame(dict(zip(header,data)),index=Index(range(len(data[0]))))[header]
+    return DataFrame(dict(list(zip(header,data))),index=Index(list(range(len(data[0])))))[header]
 
 def sharpe(pnl):
     return  np.sqrt(250)*pnl.mean()/pnl.std()
@@ -406,7 +406,7 @@ def getDataSources(fName = None):
     ''' return data sources directories for this machine.
     directories are defined in datasources.ini or provided filepath'''
     import socket
-    from ConfigParser import ConfigParser
+    from configparser import ConfigParser
 
     pcName = socket.gethostname()
 

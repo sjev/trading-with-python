@@ -3,9 +3,9 @@ Created on Apr 28, 2013
 Copyright: Jev Kuznetsov
 License: BSD
 '''
-from __future__ import print_function
+
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import os
 import xlrd # module for excel file reading
 import pandas as pd
@@ -49,7 +49,7 @@ def getSpyHoldings(dataDir):
         print('File found, skipping download')
     else:
         print('saving to', dest)
-        urllib.urlretrieve ("https://www.spdrs.com/site-content/xls/SPY_All_Holdings.xls?fund=SPY&docname=All+Holdings&onyx_code1=1286&onyx_code2=1700",
+        urllib.request.urlretrieve ("https://www.spdrs.com/site-content/xls/SPY_All_Holdings.xls?fund=SPY&docname=All+Holdings&onyx_code1=1286&onyx_code2=1700",
                              dest) # download xls file and save it to data directory
         
     # parse

@@ -9,22 +9,6 @@ Toolset working with yahoo finance data
 
 This module includes functions for easy access to YahooFinance data
 
-First, we import as follows:
-
-.. ipython:: python
-
-   from tradingWithPython import yahooFinance as yf
-   import numpy as np
-   
-   
-Then, to get data for a symbol use `getSymbolData`
-
-.. ipython:: python
-    
-   df = yf.getSymbolData("SPY")
-   df.head()
-
-
 """
 
 
@@ -203,14 +187,32 @@ def getHistoricData(symbols, **options):
         
         return WidePanel(data)
 
-def getSymbolData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3], adjust=False, verbose=True):
+def getSymbolData(symbol, sDate=(1990,1,1), eDate=None, adjust=False, verbose=True):
     """ 
     get data from Yahoo finance and return pandas dataframe
 
-    symbol: Yahoo finanance symbol
-    sDate: start date (y,m,d)
-    eDate: end date (y,m,d)
+    Parameters
+    -----------
+    symbol : str
+        Yahoo finanance symbol
+    sDate : tuple , optional
+        start date (y,m,d), defaults to 1 jan 1990
+    eDate : tuple , optional
+        end date (y,m,d), defaults to current date
+    adjust : bool , optional
+        use adjusted close values to correct OHLC. adj_close will be ommited
+    verbose : bool , optional
+        print output
+            
+    Returns
+    ---------
+        DataFrame
+            
     """
+
+    
+    if eDate is None: eDate = date.today().timetuple()[0:3]
+    
 
     urlStr = 'http://ichart.finance.yahoo.com/table.csv?s={0}&a={1}&b={2}&c={3}&d={4}&e={5}&f={6}'.\
     format(symbol.upper(),sDate[1]-1,sDate[2],sDate[0],eDate[1]-1,eDate[2],eDate[0])

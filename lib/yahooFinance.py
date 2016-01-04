@@ -9,16 +9,20 @@ Toolset working with yahoo finance data
 
 This module includes functions for easy access to YahooFinance data
 
-Functions
-----------
-- `getHistoricData`  get historic data for a single symbol
-- `getQuote` get current quote for a symbol
-- `getScreenerSymbols` load symbols from a yahoo stock screener file
+First, we import as follows:
 
-Classes
----------
-- `HistData` a class for working with multiple symbols
+.. ipython:: python
 
+   from tradingWithPython import yahooFinance as yf
+   import numpy as np
+   
+   
+Then, to get data for a symbol use `getSymbolData`
+
+.. ipython:: python
+    
+   df = yf.getSymbolData("SPY")
+   df.head()
 
 
 """

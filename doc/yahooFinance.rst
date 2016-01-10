@@ -1,10 +1,13 @@
 
-yahooFinance
-=============
+.. automodule:: lib.yahooFinance
 
-Toolset working with yahoo finance data
-This module includes functions for easy access to YahooFinance data
+Module functionality
+====================
 
+
+
+Getting historic data
+----------------------
 
 The module is usually imported as follows:
 
@@ -17,7 +20,7 @@ The module is usually imported as follows:
 Then, to get raw yahoo finance data for a symbol use :func:`getSymbolData`
 
 .. ipython:: python
-    
+
    df = yf.getSymbolData("SPY")
    df.head()
    
@@ -28,9 +31,25 @@ We can also normalize OHLC with the adj_close data:
     df = yf.getSymbolData("SPY",adjust=True)
     df.head()
     
+
+Getting current quotes
+-----------------------
+
+The :func:`getQuote` is used to get current quote 
+
+.. ipython:: python
+
+    quote = yf.getQuote(['SPY','XLE','QQQ'])
+    quote
+    
+.. note::
+
+    YahooFinance quotes may be delayed for more than 15 minutes
+
   
    
 Functions
--------------
+==========
 
 .. autofunction:: lib.yahooFinance.getSymbolData
+.. autofunction:: lib.yahooFinance.getQuote

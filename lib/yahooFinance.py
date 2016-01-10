@@ -6,8 +6,7 @@
 
 """
 Toolset working with yahoo finance data
-
-This module includes functions for easy access to YahooFinance data
+Module includes functions for easy access to YahooFinance data
 
 """
 
@@ -113,7 +112,21 @@ class HistData(object):
 
 
 def getQuote(symbols):
-    ''' get current yahoo quote, return a DataFrame  '''
+    """ 
+    get current yahoo quote
+    
+    Parameters
+    -----------
+    symbols : list of str
+        list of ticker symbols
+        
+    Returns
+    -----------
+    DataFrame , data is row-wise
+
+
+    """
+    
     # for codes see: http://www.gummy-stuff.org/Yahoo-data.htm
     if not isinstance(symbols,list):
         symbols = [symbols]
@@ -134,7 +147,7 @@ def getQuote(symbols):
         print(s)
     
     for line in lines:
-        fields = line.strip().split(',')
+        fields = line.decode().strip().split(',')
         #print fields, len(fields)
         for i,field in enumerate(fields):
             data[header[i]].append( parseStr(field))
@@ -240,7 +253,7 @@ def getSymbolData(symbol, sDate=(1990,1,1), eDate=None, adjust=False, verbose=Tr
     data = dict(list(zip(['open','high','low','close','volume','adj_close'],data)))
     
     # create a pandas dataframe structure   
-    df = DataFrame(data,index=idx).sort()
+    df = DataFrame(data,index=idx).sort_index()
     
     if verbose:
         print(('Got %i days of data' % len(df)))

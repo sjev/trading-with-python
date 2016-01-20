@@ -26,7 +26,7 @@ Classes
 
 from datetime import datetime, date
 import urllib2
-from pandas import DataFrame, Index, HDFStore, WidePanel
+from pandas import DataFrame, Index, HDFStore, Panel
 import numpy as np
 import os
 from extra import ProgressBar
@@ -59,7 +59,7 @@ class HistData(object):
        
         self.startDate = (2008,1,1)
         self.autoAdjust=autoAdjust
-        self.wp = WidePanel()
+        self.wp = Panel()
         
         
     def load(self,dataFile):
@@ -68,7 +68,7 @@ class HistData(object):
             store = HDFStore(dataFile)
             symbols = [str(s).strip('/') for s in store.keys() ]   
             data = dict(zip(symbols,[store[symbol] for symbol in symbols]))
-            self.wp = WidePanel(data)
+            self.wp = Panel(data)
             store.close()
         else:
             raise IOError('Data file does not exist')
@@ -102,7 +102,7 @@ class HistData(object):
                     df =  _adjust(df,removeOrig=True)
                 
                 if len(self.symbols)==0:
-                    self.wp = WidePanel({symbol:df})
+                    self.wp = Panel({symbol:df})
                 else:
                     self.wp[symbol] = df
             
@@ -197,7 +197,7 @@ def getHistoricData(symbols, **options):
             p.animate(idx+1)
             data[symbol] = getSymbolData(symbol,verbose=False,**options)
         
-        return WidePanel(data)
+        return Panel(data)
 
 def getSymbolData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3], adjust=False, verbose=True):
     """ 
@@ -235,7 +235,7 @@ def getSymbolData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3], 
     data = dict(zip(['open','high','low','close','volume','adj_close'],data))
     
     # create a pandas dataframe structure   
-    df = DataFrame(data,index=idx).sort()
+    df = DataFrame(data,index=idx).sort_index()
     
     if verbose:
         print 'Got %i days of data' % len(df)

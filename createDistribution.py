@@ -20,16 +20,17 @@ def copyFiles(sourceDir,targetDir,includes=None):
 
 
 sourceDir = 'lib'
-targetDir = 'dist\\tradingWithPython\\lib'
+targetDir = 'dist/tradingWithPython/lib'
 
 
 
-includes = ['__init__','cboe','csvDatabase','functions','yahooFinance','extra','bats','backtest']
+includes = ['__init__','cboe','csvDatabase','functions','yahooFinance',
+	    'extra','bats','backtest','classes','logger']
 
 print '-----------init file---------'
-shutil.copyfile('__init__.py','dist\\tradingWithPython\\__init__.py')
+shutil.copyfile('__init__.py','dist/tradingWithPython/__init__.py')
 print '-----------lib files---------'
 copyFiles(sourceDir,targetDir,includes)
 print '-----------IB files----------'
-copyFiles(sourceDir+'\\interactiveBrokers',targetDir+'\\interactiveBrokers')     
+copyFiles(sourceDir+'/interactiveBrokers',targetDir+'/interactiveBrokers')     
 

@@ -13,7 +13,7 @@ Module includes functions for easy access to YahooFinance data
 
 from datetime import datetime, date
 import urllib.request
-from pandas import DataFrame, Index, HDFStore, WidePanel
+from pandas import DataFrame, Index, HDFStore, Panel
 import numpy as np
 import os
 from .extra import ProgressBar
@@ -46,7 +46,7 @@ class HistData(object):
        
         self.startDate = (2008,1,1)
         self.autoAdjust=autoAdjust
-        self.wp = WidePanel()
+        self.wp = Panel()
         
         
     def load(self,dataFile):
@@ -55,7 +55,7 @@ class HistData(object):
             store = HDFStore(dataFile)
             symbols = [str(s).strip('/') for s in list(store.keys()) ]   
             data = dict(list(zip(symbols,[store[symbol] for symbol in symbols])))
-            self.wp = WidePanel(data)
+            self.wp = Panel(data)
             store.close()
         else:
             raise IOError('Data file does not exist')
@@ -89,7 +89,7 @@ class HistData(object):
                     df =  _adjust(df,removeOrig=True)
                 
                 if len(self.symbols)==0:
-                    self.wp = WidePanel({symbol:df})
+                    self.wp = Panel({symbol:df})
                 else:
                     self.wp[symbol] = df
             
@@ -179,10 +179,18 @@ def getHistoricData(symbols, **options):
     
     Parameters
     ------------
-    symbols: Yahoo finanance symbol or a list of symbols
-    sDate: start date (y,m,d)
-    eDate: end date (y,m,d)
-    adjust : T/[F] adjust data based on adj_close
+    symbols : str or list  
+        Yahoo finanance symbol or a list of symbols
+    sDate : tuple  (optional)
+        start date (y,m,d)
+    eDate : tuple  (optional)
+        end date (y,m,d) 
+    adjust : bool
+        T/[F] adjust data based on adj_close
+    
+    Returns
+    ---------
+    Panel
     
     '''
     
@@ -198,7 +206,7 @@ def getHistoricData(symbols, **options):
             p.animate(idx+1)
             data[symbol] = getSymbolData(symbol,verbose=False,**options)
         
-        return WidePanel(data)
+        return Panel(data)
 
 def getSymbolData(symbol, sDate=(1990,1,1), eDate=None, adjust=False, verbose=True):
     """ 

@@ -1,8 +1,7 @@
 .. currentmodule:: tradingWithPython
 
-.. automodule:: lib.yahooFinance
 
-Module functionality
+Yahoo Finance 
 ====================
 
 
@@ -16,7 +15,8 @@ The module is usually imported as follows:
 
    from tradingWithPython import yahooFinance as yf
 
-   
+Singe symbol
+~~~~~~~~~~~~~
    
 Then, to get raw yahoo finance data for a symbol use :func:`~lib.yahooFinance.getSymbolData`
 
@@ -33,7 +33,19 @@ the *close* column will be equal to *adj_close* , so the latter is omitted from 
     df = yf.getSymbolData("SPY",adjust=True)
     df.head()
     
+Multiple symbols
+~~~~~~~~~~~~~~~~~~
 
+:func:`~lib.yahooFinance.getHistoricData` will accept one ore more symbols and download them
+while displaying a progress bar.
+
+.. ipython:: python
+    
+    symbols = ['XLE','USO','SPY']
+    data = yf.getHistoricData(symbols)
+    
+    print(data)
+    
 Getting current quotes
 -----------------------
 
@@ -53,5 +65,5 @@ The :func:`~lib.yahooFinance.getQuote` is used to get current quote
 Functions
 ==========
 
-.. autofunction:: getSymbolData
-.. autofunction:: getQuote
+.. autofunction:: lib.yahooFinance.getSymbolData
+.. autofunction:: lib.yahooFinance.getHistoricData

@@ -6,7 +6,7 @@ toolset working with cboe data
 Licence: BSD
 """
 from datetime import datetime, date
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from pandas import DataFrame, Index
 from pandas.core import datetools 
 import numpy as np
@@ -39,7 +39,7 @@ def vixExpiration(year,month):
     
     
     offset = datetools.Week(weekday=4)
-    if t.weekday()<>4:
+    if t.weekday()!=4:
         t_new = t+3*offset
     else:
         t_new = t+2*offset    
@@ -52,10 +52,10 @@ def getPutCallRatio():
     urlStr = 'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/totalpc.csv'
 
     try:
-        lines = urllib2.urlopen(urlStr).readlines()
-    except Exception, e:
+        lines = urllib.request.urlopen(urlStr).readlines()
+    except Exception as e:
         s = "Failed to download:\n{0}".format(e);
-        print s
+        print(s)
        
     headerLine = 2
     
@@ -70,7 +70,7 @@ def getPutCallRatio():
             data[i+1].append(float(field))
     
    
-    return DataFrame(dict(zip(header[1:],data[1:])), index = Index(data[0]))
+    return DataFrame(dict(list(zip(header[1:],data[1:]))), index = Index(data[0]))
 
         
     
@@ -95,9 +95,9 @@ def getHistoricData(symbols =  ['VIX','VXV','VXMT','VVIX']):
   
     for symbol in symbols:
         urlStr = urls[symbol]
-        print 'Downloading %s from %s' % (symbol,urlStr)
+        print('Downloading %s from %s' % (symbol,urlStr))
         
-        data[symbol] = pd.read_csv(urllib2.urlopen(urlStr), header=startLines[symbol],index_col=0,parse_dates=True)[cols[symbol]]
+        data[symbol] = pd.read_csv(urllib.request.urlopen(urlStr), header=startLines[symbol],index_col=0,parse_dates=True)[cols[symbol]]
     
     
     return pd.DataFrame(data)
@@ -137,9 +137,9 @@ def testDownload():
     vxv.plot()       
 
 def testExpiration():
-    for month in xrange(1,13):
+    for month in range(1,13):
         d = vixExpiration(2011,month)
-        print d.strftime("%B, %d %Y (%A)")    
+        print(d.strftime("%B, %d %Y (%A)"))    
 
 
 
@@ -147,8 +147,8 @@ if __name__ == '__main__':
     
     #testExpiration()
     v = VixFuture(2011,11)
-    print v
+    print(v)
     
-    print v.daysLeft(datetime(2011,11,10))
+    print(v.daysLeft(datetime(2011,11,10)))
         
     

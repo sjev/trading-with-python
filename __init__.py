@@ -1,5 +1,9 @@
 __docformat__ = 'restructuredtext'
 
-__version__ = '3.0.0'
+# major , python ver, minor, bugfix
+__version__ = '0.3.0.0'
+
+import matplotlib.pyplot as plt
+plt.style.use('ggplot')
 
 from .lib import yahooFinance

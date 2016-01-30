@@ -1,13 +1,13 @@
 .. currentmodule:: tradingWithPython
 
-
+====================
 Yahoo Finance 
 ====================
 
 
 
 Getting historic data
-----------------------
+=======================
 
 The module is usually imported as follows:
 
@@ -16,7 +16,7 @@ The module is usually imported as follows:
    from tradingWithPython import yahooFinance as yf
 
 Singe symbol
-~~~~~~~~~~~~~
+---------------------
    
 Then, to get raw yahoo finance data for a symbol use :func:`~lib.yahooFinance.getSymbolData`
 
@@ -34,7 +34,7 @@ the *close* column will be equal to *adj_close* , so the latter is omitted from 
     df.head()
     
 Multiple symbols
-~~~~~~~~~~~~~~~~~~
+-------------------------
 
 :func:`~lib.yahooFinance.getHistoricData` will accept one ore more symbols and download them
 while displaying a progress bar.

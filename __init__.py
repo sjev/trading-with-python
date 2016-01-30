@@ -7,3 +7,4 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
 from .lib import yahooFinance
+from .lib import backtest

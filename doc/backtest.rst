@@ -1,5 +1,12 @@
 .. currentmodule:: tradingWithPython
 
+.. ipython:: python
+    :suppress:
+    
+    import matplotlib.pyplot as plt
+    plt.style.use('ggplot')
+
+
 ===============
 Backtesting 
 ===============
@@ -18,6 +25,30 @@ The backtester needs an instrument price and entry/exit signals to do its job. L
     
     import tradingWithPython as twp
     import pandas as pd
+    import numpy as np
     
     
 foo bar
+
+::
+    
+   ts = pd.Series(np.random.randn(1000), index=pd.date_range('1/1/2000', periods=1000))
+   ts = ts.cumsum()
+
+   @savefig series_plot_basic.png
+   ts.plot()
+   
+   
+   
+
+
+Backtest class
+----------------
+.. autoclass:: lib.backtest.ExampleClass
+    :members:
+
+.. autoclass:: lib.backtest.Backtest
+    :members:
+    
+
+.. autofunction:: lib.backtest.tradeBracket

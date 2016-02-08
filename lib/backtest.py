@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""
 #-------------------------------------------------------------------------------
 # Name:        backtest
 # Purpose:     perform routine backtesting  tasks. 
@@ -9,6 +11,7 @@
 # Copyright:   (c) Jev Kuznetsov 2013
 # Licence:     BSD
 #-------------------------------------------------------------------------------
+"""
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -19,19 +22,27 @@ import numpy as np
 
 
 def tradeBracket(price,entryBar,upper=None, lower=None, timeout=None):
-    '''
+    """
     trade a  bracket on price series, return price delta and exit bar #
-    Input
-    ------
-        price : numpy array of price values
-        entryBar: entry bar number, *determines entry price*
-        upper : high stop
-        lower : low stop
-        timeout : max number of periods to hold
+    
+    Parameters
+    --------------
+    price : np.array 
+        array of price values
+    entryBar : int
+        entry bar number, *determines entry price*
+    upper : float 
+        high stop
+    lower : float 
+        low stop
+    timeout : int 
+        max number of periods to hold
 
-    Returns exit price  and number of bars held
+    Returns 
+    ------------    
+    exit price  and number of bars held
 
-    '''
+    """
     assert isinstance(price, np.ndarray) , 'price must be a numpy array'
     
     
@@ -67,18 +78,30 @@ def tradeBracket(price,entryBar,upper=None, lower=None, timeout=None):
 
 class Backtest(object):
     """
-    Backtest class, simple vectorized one. Works with pandas objects.
+    Simple vectorized backtester. Works with pandas objects.
+    
+    Attributes
+    -----------
+    trades : Series
+        trade data
+    
     """
     
     def __init__(self,price, signal, signalType='capital',initialCash = 0, roundShares=True):
         """
-        Arguments:
         
-        *price*  Series with instrument price.
-        *signal* Series with capital to invest (long+,short-) or number of shares. 
-        *sitnalType* capital to bet or number of shares 'capital' mode is default.
-        *initialCash* starting cash. 
-        *roundShares* round off number of shares to integers
+        Parameters
+        ------------
+        price :  Series 
+            instrument price.
+        signal : Series 
+            capital to invest (long+,short-) or number of shares. 
+        sitnalType : 'capital' or 'shares'
+            capital to bet or number of shares 'capital' mode is default.
+        initialCash : float
+            starting cash. 
+        roundShares : bool 
+            round off number of shares to integers
         
         """
         
@@ -117,21 +140,21 @@ class Backtest(object):
       
     @property
     def sharpe(self):
-        ''' return annualized sharpe ratio of the pnl '''
+        """ return annualized sharpe ratio of the pnl """
         pnl = (self.data['pnl'].diff()).shift(-1)[self.data['shares']!=0] # use only days with position.
         return sharpe(pnl)  # need the diff here as sharpe works on daily returns.
         
     @property
     def pnl(self):
-        '''easy access to pnl data column '''
+        """ easy access to pnl data column """
         return self.data['pnl']
     
     def plotTrades(self):
         """ 
         visualise trades on the price chart 
-            long entry : green triangle up
-            short entry : red triangle down
-            exit : black circle
+        long entry : green triangle up
+        short entry : red triangle down
+        exit : black circle
         """
         l = ['price']
         
@@ -200,3 +223,141 @@ class ProgressBar:
 def sharpe(pnl):
     return  np.sqrt(250)*pnl.mean()/pnl.std()
 
+#-------------dummy class
+class ExampleClass(object):
+    """The summary line for a class docstring should fit on one line.
+
+    If the class has public attributes, they may be documented here
+    in an ``Attributes`` section and follow the same formatting as a
+    function's ``Args`` section. Alternatively, attributes may be documented
+    inline with the attribute's declaration (see __init__ method below).
+
+    Properties created with the ``@property`` decorator should be documented
+    in the property's getter method.
+
+    Attribute and property types -- if given -- should be specified according
+    to `PEP 484`_, though `PEP 484`_ conformance isn't required or enforced.
+
+    Attributes
+    ----------
+    attr1 : str
+        Description of `attr1`.
+    attr2 : Optional[int]
+        Description of `attr2`.
+
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484/
+
+    """
+
+    def __init__(self, param1, param2, param3):
+        """Example of docstring on the __init__ method.
+
+        The __init__ method may be documented in either the class level
+        docstring, or as a docstring on the __init__ method itself.
+
+        Either form is acceptable, but the two should not be mixed. Choose one
+        convention to document the __init__ method and be consistent with it.
+
+        Note
+        ----
+        Do not include the `self` parameter in the ``Parameters`` section.
+
+        Parameters
+        ----------
+        param1 : str
+            Description of `param1`.
+        param2 : List[str]
+            Description of `param2`. Multiple
+            lines are supported.
+        param3 : Optional[int]
+            Description of `param3`.
+
+        """
+        self.attr1 = param1
+        self.attr2 = param2
+        self.attr3 = param3  #: Doc comment *inline* with attribute
+
+        #: List[str]: Doc comment *before* attribute, with type specified
+        self.attr4 = ["attr4"]
+
+        self.attr5 = None
+        """Optional[str]: Docstring *after* attribute, with type specified."""
+
+    @property
+    def readonly_property(self):
+        """str: Properties should be documented in their getter method."""
+        return "readonly_property"
+
+    @property
+    def readwrite_property(self):
+        """List[str]: Properties with both a getter and setter should only
+        be documented in their getter method.
+
+        If the setter method contains notable behavior, it should be
+        mentioned here.
+        """
+        return ["readwrite_property"]
+
+    @readwrite_property.setter
+    def readwrite_property(self, value):
+        value
+
+    def example_method(self, param1, param2):
+        """Class methods are similar to regular functions.
+
+        Note
+        ----
+        Do not include the `self` parameter in the ``Parameters`` section.
+
+        Parameters
+        ----------
+        param1
+            The first parameter.
+        param2
+            The second parameter.
+
+        Returns
+        -------
+        bool
+            True if successful, False otherwise.
+
+        """
+        return True
+
+    def __special__(self):
+        """By default special members with docstrings are included.
+
+        Special members are any methods or attributes that start with and
+        end with a double underscore. Any special member with a docstring
+        will be included in the output.
+
+        This behavior can be disabled by changing the following setting in
+        Sphinx's conf.py::
+
+            napoleon_include_special_with_doc = False
+
+        """
+        pass
+
+    def __special_without_docstring__(self):
+        pass
+
+    def _private(self):
+        """By default private members are not included.
+
+        Private members are any methods or attributes that start with an
+        underscore and are *not* special. By default they are not included
+        in the output.
+
+        This behavior can be changed such that private members *are* included
+        by changing the following setting in Sphinx's conf.py::
+
+            napoleon_include_private_with_doc = True
+
+        """
+        pass
+
+    def _private_without_docstring(self):
+        pass

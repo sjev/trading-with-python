@@ -23,6 +23,8 @@ import tradingWithPython
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 sys.path.insert(0, os.path.abspath('..'))
+
+
 print('Path:')
 print(sys.path)
 
@@ -35,6 +37,8 @@ print(sys.path)
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.autosummary',
+              'sphinx.ext.doctest',
               'numpydoc', # used to parse numpy-style docstrings for autodoc
               'IPython.sphinxext.ipython_console_highlighting',
               'IPython.sphinxext.ipython_directive']

@@ -80,6 +80,9 @@ def setNotebookStyle():
     import matplotlib.pyplot as plt
     plt.style.use('ggplot')
 
+    # bigger fitures
+    import matplotlib
+    matplotlib.rcParams['figure.figsize'] = [12, 8]
 
     import pandas as pd
     pd.options.display.max_rows = 10

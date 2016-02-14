@@ -25,14 +25,14 @@ from .helpers import timeFormat, dateFormat
 class Downloader(object):
     def __init__(self,debug=False):
         self._log = logger.getLogger('DLD')        
-        self._log.debug('Initializing data dwonloader. Pandas version={0}, ibpy version:{1}'.format(pd.__version__,ib.version))
+        self._log.debug('Initializing data dwonloader. Pandas version={0}, ibpy version:{1}'.format(pd.__version__,ib.__version__))
 
         self.tws = ibConnection()
         self._dataHandler = _HistDataHandler(self.tws)
         
         if debug:
-            self.tws.registerAll(self._debugHandler)
-            self.tws.unregister(self._debugHandler,"HistoricalData")
+            self.tws.enableLogging() # show debugging output from ibpy
+           
             
         self._log.debug('Connecting to tws')
         self.tws.connect() 
@@ -41,8 +41,7 @@ class Downloader(object):
         self._reqId = 1 # current request id
      
         
-    def _debugHandler(self,msg):
-        print('[debug]', msg)
+   
         
     
     def requestData(self,contract,endDateTime,durationStr='1 D',barSizeSetting='30 secs',whatToShow='TRADES',useRTH=1,formatDate=1):  
@@ -72,7 +71,7 @@ class Downloader(object):
         if not self._dataHandler.dataReady:
             self._log.error('Data timeout')    
          
-        print(self._dataHandler.data)
+        print((self._dataHandler.data))
         
         return self._dataHandler.data  
     

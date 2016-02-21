@@ -52,26 +52,14 @@ def getPutCallRatio():
     urlStr = 'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/totalpc.csv'
 
     try:
-        lines = urllib.request.urlopen(urlStr).readlines()
+        data = urllib.request.urlopen(urlStr)
     except Exception as e:
         s = "Failed to download:\n{0}".format(e);
         print(s)
        
     headerLine = 2
     
-    header = lines[headerLine].strip().split(',')
-    
-    data =   [[] for i in range(len(header))]
-    
-    for line in lines[(headerLine+1):]:
-        fields = line.rstrip().split(',')
-        data[0].append(datetime.strptime(fields[0],'%m/%d/%Y'))
-        for i,field  in enumerate(fields[1:]):
-            data[i+1].append(float(field))
-    
-   
-    return DataFrame(dict(list(zip(header[1:],data[1:]))), index = Index(data[0]))
-
+    return pd.read_csv(data,header=headerLine,index_col=0)
         
     
 

@@ -59,7 +59,7 @@ def getPutCallRatio():
        
     headerLine = 2
     
-    return pd.read_csv(data,header=headerLine,index_col=0)
+    return pd.read_csv(data,header=headerLine,index_col=0,parse_dates=True)
         
     
 

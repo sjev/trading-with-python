@@ -5,7 +5,10 @@ import os, shutil
 
 def copyFiles(sourceDir,targetDir,includes=None):
     
-    if not os.path.exists(targetDir): os.makedirs(targetDir)
+    print('Copy %s -> %s' % (sourceDir,targetDir))
+    if not os.path.exists(targetDir): 
+        print('Creating ',targetDir)
+        os.makedirs(targetDir)
     
     
     for  f in os.listdir(sourceDir):
@@ -20,16 +23,22 @@ def copyFiles(sourceDir,targetDir,includes=None):
 
 
 sourceDir = 'lib'
-targetDir = 'dist\\tradingWithPython\\lib'
-
-
-
+targetDir = 'dist/tradingWithPython/lib'
 includes = ['__init__','cboe','csvDatabase','functions','yahooFinance','extra','bats','backtest']
 
+DEST = 'dist/tradingWithPython'
+
+try:
+    shutil.rmtree(DEST)
+except:
+    pass
+
+os.makedirs(DEST) # create target dir
+
 print('-----------init file---------')
-shutil.copyfile('__init__.py','dist\\tradingWithPython\\__init__.py')
+shutil.copyfile('__init__.py',os.path.join(DEST,'__init__.py'))
 print('-----------lib files---------')
 copyFiles(sourceDir,targetDir,includes)
 print('-----------IB files----------')
-copyFiles(sourceDir+'\\interactiveBrokers',targetDir+'\\interactiveBrokers')     
+copyFiles(sourceDir+'/interactiveBrokers',targetDir+'/interactiveBrokers')     
 

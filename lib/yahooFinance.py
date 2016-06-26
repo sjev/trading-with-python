@@ -6,30 +6,17 @@
 
 """
 Toolset working with yahoo finance data
-
-This module includes functions for easy access to YahooFinance data
-
-Functions
-----------
-- `getHistoricData`  get historic data for a single symbol
-- `getQuote` get current quote for a symbol
-- `getScreenerSymbols` load symbols from a yahoo stock screener file
-
-Classes
----------
-- `HistData` a class for working with multiple symbols
-
-
+Module includes functions for easy access to YahooFinance data
 
 """
 
 
 from datetime import datetime, date
-import urllib2
+import urllib.request
 from pandas import DataFrame, Index, HDFStore, Panel
 import numpy as np
 import os
-from extra import ProgressBar
+from .extra import ProgressBar
 
 
 
@@ -66,8 +53,8 @@ class HistData(object):
         """load data from HDF"""
         if os.path.exists(dataFile):
             store = HDFStore(dataFile)
-            symbols = [str(s).strip('/') for s in store.keys() ]   
-            data = dict(zip(symbols,[store[symbol] for symbol in symbols]))
+            symbols = [str(s).strip('/') for s in list(store.keys()) ]   
+            data = dict(list(zip(symbols,[store[symbol] for symbol in symbols])))
             self.wp = Panel(data)
             store.close()
         else:
@@ -76,7 +63,7 @@ class HistData(object):
         
     def save(self,dataFile):
         """ save data to HDF"""
-        print 'Saving data to', dataFile
+        print(('Saving data to', dataFile))
         store = HDFStore(dataFile)
         for symbol in self.wp.items:
             store[symbol] = self.wp[symbol]
@@ -106,8 +93,8 @@ class HistData(object):
                 else:
                     self.wp[symbol] = df
             
-            except Exception,e:
-                print e 
+            except Exception as e:
+                print(e) 
             p.animate(idx+1)
     
     def getDataFrame(self,field='close'):
@@ -125,7 +112,21 @@ class HistData(object):
 
 
 def getQuote(symbols):
-    ''' get current yahoo quote, return a DataFrame  '''
+    """ 
+    get current yahoo quote
+    
+    Parameters
+    -----------
+    symbols : list of str
+        list of ticker symbols
+        
+    Returns
+    -----------
+    DataFrame , data is row-wise
+
+
+    """
+    
     # for codes see: http://www.gummy-stuff.org/Yahoo-data.htm
     if not isinstance(symbols,list):
         symbols = [symbols]
@@ -135,18 +136,18 @@ def getQuote(symbols):
     request = str.join('', ['s',     'l1',     'p2'  ,   'r', 't1',     's7',        'p',       'e'     , 'j1'])
     
     
-    data = dict(zip(header,[[] for i in range(len(header))]))
+    data = dict(list(zip(header,[[] for i in range(len(header))])))
     
     urlStr = 'http://finance.yahoo.com/d/quotes.csv?s=%s&f=%s' % (str.join('+',symbols), request)
     
     try:
-        lines = urllib2.urlopen(urlStr).readlines()
-    except Exception, e:
+        lines = urllib.request.urlopen(urlStr).readlines()
+    except Exception as e:
         s = "Failed to download:\n{0}".format(e);
-        print s
+        print(s)
     
     for line in lines:
-        fields = line.strip().split(',')
+        fields = line.decode().strip().split(',')
         #print fields, len(fields)
         for i,field in enumerate(fields):
             data[header[i]].append( parseStr(field))
@@ -178,10 +179,18 @@ def getHistoricData(symbols, **options):
     
     Parameters
     ------------
-    symbols: Yahoo finanance symbol or a list of symbols
-    sDate: start date (y,m,d)
-    eDate: end date (y,m,d)
-    adjust : T/[F] adjust data based on adj_close
+    symbols : str or list  
+        Yahoo finanance symbol or a list of symbols
+    sDate : tuple  (optional)
+        start date (y,m,d)
+    eDate : tuple  (optional)
+        end date (y,m,d) 
+    adjust : bool
+        T/[F] adjust data based on adj_close
+    
+    Returns
+    ---------
+    Panel
     
     '''
     
@@ -191,7 +200,7 @@ def getHistoricData(symbols, **options):
         return getSymbolData(symbols,**options)
     else:
         data = {}
-        print 'Downloading data:'
+        print('Downloading data:')
         p = ProgressBar(len(symbols))
         for idx,symbol in enumerate(symbols):
             p.animate(idx+1)
@@ -199,46 +208,63 @@ def getHistoricData(symbols, **options):
         
         return Panel(data)
 
-def getSymbolData(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3], adjust=False, verbose=True):
+def getSymbolData(symbol, sDate=(1990,1,1), eDate=None, adjust=False, verbose=True):
     """ 
     get data from Yahoo finance and return pandas dataframe
 
-    symbol: Yahoo finanance symbol
-    sDate: start date (y,m,d)
-    eDate: end date (y,m,d)
+    Parameters
+    -----------
+    symbol : str
+        Yahoo finanance symbol
+    sDate : tuple , optional
+        start date (y,m,d), defaults to 1 jan 1990
+    eDate : tuple , optional
+        end date (y,m,d), defaults to current date
+    adjust : bool , optional
+        use adjusted close values to correct OHLC. adj_close will be ommited
+    verbose : bool , optional
+        print output
+            
+    Returns
+    ---------
+        DataFrame
+            
     """
+
+    
+    if eDate is None: eDate = date.today().timetuple()[0:3]
+    
 
     urlStr = 'http://ichart.finance.yahoo.com/table.csv?s={0}&a={1}&b={2}&c={3}&d={4}&e={5}&f={6}'.\
     format(symbol.upper(),sDate[1]-1,sDate[2],sDate[0],eDate[1]-1,eDate[2],eDate[0])
 
     
     try:
-        lines = urllib2.urlopen(urlStr).readlines()
-    except Exception, e:
+        lines = urllib.request.urlopen(urlStr).readlines()
+    except Exception as e:
         s = "Failed to download:\n{0}".format(e);
-        print s
+        print(s)
         return None
 
     dates = []
     data = [[] for i in range(6)]
     #high
-    
     # header : Date,Open,High,Low,Close,Volume,Adj Close
     for line in lines[1:]:
         #print line
-        fields = line.rstrip().split(',')
+        fields = line.decode().rstrip().split(',')
         dates.append(datetime.strptime( fields[0],'%Y-%m-%d'))
         for i,field in enumerate(fields[1:]):
             data[i].append(float(field))
        
     idx = Index(dates)
-    data = dict(zip(['open','high','low','close','volume','adj_close'],data))
+    data = dict(list(zip(['open','high','low','close','volume','adj_close'],data)))
     
     # create a pandas dataframe structure   
     df = DataFrame(data,index=idx).sort_index()
     
     if verbose:
-        print 'Got %i days of data' % len(df)
+        print(('Got %i days of data' % len(df)))
     
     if adjust:
         return _adjust(df,removeOrig=True)
@@ -257,7 +283,7 @@ def _adjust(df, removeOrig=False):
  
     if removeOrig:
         df=df.drop(['open','close','high','low'],axis=1)
-        renames = dict(zip(['adj_open','adj_close','adj_high','adj_low'],['open','close','high','low']))
+        renames = dict(list(zip(['adj_open','adj_close','adj_high','adj_low'],['open','close','high','low'])))
         df=df.rename(columns=renames)
     
     return df

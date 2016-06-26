@@ -18,7 +18,7 @@ class Logger(object):
         tws.registerAll(self.handler)
 
     def handler(self,msg):
-        print msg
+        print(msg)
     
 class Account(object):
     """ class for holding account data """
@@ -159,7 +159,7 @@ class Orders(object):
     #-----------handlers    
     def _h_orderStauts(self,msg):
         """ status handler """
-        for k,v in msg.items():
+        for k,v in list(msg.items()):
             self._data[msg.orderId][k] =  v
     
     def _h_openOrder(self,msg):

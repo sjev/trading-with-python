@@ -12,7 +12,7 @@ import pandas as pd
 from ib.ext.Contract import Contract
 from ib.opt import ibConnection, message
 
-import logger as logger
+from . import logger as logger
 
 from pandas import DataFrame, Index
 
@@ -20,19 +20,19 @@ import os
 import datetime as dt
 import time
 from time import sleep
-from extra import timeFormat, dateFormat
+from .helpers import timeFormat, dateFormat
 
 class Downloader(object):
     def __init__(self,debug=False):
         self._log = logger.getLogger('DLD')        
-        self._log.debug('Initializing data dwonloader. Pandas version={0}, ibpy version:{1}'.format(pd.__version__,ib.version))
+        self._log.debug('Initializing data dwonloader. Pandas version={0}, ibpy version:{1}'.format(pd.__version__,ib.__version__))
 
         self.tws = ibConnection()
         self._dataHandler = _HistDataHandler(self.tws)
         
         if debug:
-            self.tws.registerAll(self._debugHandler)
-            self.tws.unregister(self._debugHandler,message.HistoricalData)
+            self.tws.enableLogging() # show debugging output from ibpy
+           
             
         self._log.debug('Connecting to tws')
         self.tws.connect() 
@@ -41,8 +41,7 @@ class Downloader(object):
         self._reqId = 1 # current request id
      
         
-    def _debugHandler(self,msg):
-        print '[debug]', msg
+   
         
     
     def requestData(self,contract,endDateTime,durationStr='1 D',barSizeSetting='30 secs',whatToShow='TRADES',useRTH=1,formatDate=1):  
@@ -55,7 +54,7 @@ class Downloader(object):
         
         
         while self._timeKeeper.nrRequests(timeSpan=600) > 59:
-            print 'Too many requests done. Waiting... '
+            print('Too many requests done. Waiting... ')
             time.sleep(10)
         
         self._timeKeeper.addRequest()
@@ -72,7 +71,7 @@ class Downloader(object):
         if not self._dataHandler.dataReady:
             self._log.error('Data timeout')    
          
-        print self._dataHandler.data
+        print((self._dataHandler.data))
         
         return self._dataHandler.data  
     
@@ -101,7 +100,7 @@ class _HistDataHandler(object):
     ''' handles incoming messages '''
     def __init__(self,tws):
         self._log = logger.getLogger('DH') 
-        tws.register(self.msgHandler,message.HistoricalData)
+        tws.register(self.msgHandler,"HistoricalData")
         self.reset()
     
     def reset(self):
@@ -124,7 +123,7 @@ class _HistDataHandler(object):
             self._timestamp.append(dt.datetime.strptime(msg.date,dateFormat))
                         
             
-        for k in self._data.keys():
+        for k in list(self._data.keys()):
             self._data[k].append(getattr(msg, k))
     
     @property
@@ -197,4 +196,4 @@ if __name__ == '__main__':
      
     data.to_csv('SPY.csv') # write data to csv
      
-    print 'Done'
+    print('Done')

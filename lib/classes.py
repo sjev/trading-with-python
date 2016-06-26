@@ -8,9 +8,9 @@ Licence: GPL v2
 __docformat__ = 'restructuredtext'
 
 import os
-import logger as logger
-import yahooFinance as yahoo
-from functions import returns, rank
+from . import logger as logger
+from . import yahooFinance as yahoo
+from .functions import returns, rank
 from datetime import date
 from pandas import DataFrame, Series
 import numpy as np
@@ -176,7 +176,7 @@ class Spread(object):
             self._getYahooData()
         elif isinstance(stock,pd.Series) and isinstance(hedge,pd.Series):
             self.symbols = [stock.name,hedge.name]
-            self.price = pd.DataFrame(dict(zip(self.symbols,[stock,hedge]))).dropna()
+            self.price = pd.DataFrame(dict(list(zip(self.symbols,[stock,hedge])))).dropna()
         else:
             raise ValueError('Both stock and hedge should be of the same type, symbol string or Series')
     
@@ -196,7 +196,7 @@ class Spread(object):
     def calculateShares(self,bet):
         ''' set number of shares based on last quote '''
         if 'price' not in self.data.columns:
-            print 'Getting quote...'
+            print('Getting quote...')
             self.getQuote()
         self.data['shares'] = bet*self.data['beta']/self.data['price']    
         
@@ -259,7 +259,7 @@ class Spread(object):
         """ fetch historic data """
         data = {}        
         for symbol in self.symbols:
-            print 'Downloading %s' % symbol
+            print('Downloading %s' % symbol)
             data[symbol]=(yahoo.getHistoricData(symbol,sDate=startDate)['adj_close'] )
            
         self.price = pd.DataFrame(data).dropna()

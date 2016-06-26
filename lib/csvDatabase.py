@@ -5,12 +5,12 @@ intraday data handlers in csv format.
 @author: jev
 """
 
-from __future__ import division
+
 
 import pandas as pd
 import datetime as dt
 import os
-from extra import ProgressBar
+from .extra import ProgressBar
 
 dateFormat = "%Y%m%d" # date format for converting filenames to dates
 dateTimeFormat = "%Y%m%d %H:%M:%S"
@@ -39,7 +39,7 @@ def loadCsv(fName):
         for i,field in enumerate(fields[1:]):
             data[i].append(float(field))
      
-    return pd.DataFrame(data=dict(zip(header,data)),index=pd.Index(dates))    
+    return pd.DataFrame(data=dict(list(zip(header,data))),index=pd.Index(dates))    
     
     
 class HistDataCsv(object):
@@ -49,7 +49,7 @@ class HistDataCsv(object):
         self.dbDir = os.path.normpath(os.path.join(dbDir,symbol))
         
         if not os.path.exists(self.dbDir) and autoCreateDir:
-            print 'Creating data directory ', self.dbDir
+            print('Creating data directory ', self.dbDir)
             os.mkdir(self.dbDir)
         
         self.dates = []        
@@ -66,7 +66,7 @@ class HistDataCsv(object):
         
         s = self.symbol+'_'+date.strftime(dateFormat)+'.csv' # file name
         dest = os.path.join(self.dbDir,s) # full path destination
-        print 'Saving data to: ', dest
+        print('Saving data to: ', dest)
         df.to_csv(dest)
     
     def loadDate(self,date):  
@@ -83,14 +83,14 @@ class HistDataCsv(object):
     def loadDates(self,dates):
         ''' load multiple dates, concantenating to one DataFrame '''
         tmp =[]
-        print 'Loading multiple dates for ' , self.symbol        
+        print('Loading multiple dates for ' , self.symbol)        
         p = ProgressBar(len(dates))
         
         for i,date in enumerate(dates):
             tmp.append(self.loadDate(date))
             p.animate(i+1)
             
-        print ''
+        print('')
         return pd.concat(tmp)
         
         
@@ -100,7 +100,7 @@ class HistDataCsv(object):
         
         for date in self.dates:
             
-            print 'Processing', date
+            print('Processing', date)
             try:
                 df = self.loadDate(date)
                 
@@ -110,7 +110,7 @@ class HistDataCsv(object):
                 ohlc.set_value(date,'close',df['close'][-1])
         
             except Exception as e:
-                print 'Could not convert:', e
+                print('Could not convert:', e)
                 
         return ohlc
             
@@ -144,7 +144,7 @@ class HistDatabase(object):
         tmp = {}
         
         
-        for k,v in self.csv.iteritems():
+        for k,v in self.csv.items():
             tmp[k] = v.loadDates(dates)
             
         return pd.WidePanel(tmp)
@@ -166,7 +166,7 @@ class HistDatabase(object):
     @property 
     def commonDates(self):
         ''' return dates common for all symbols '''
-        t = [v.dates for v in self.csv.itervalues()] # get all dates in a list
+        t = [v.dates for v in self.csv.values()] # get all dates in a list
         
         d = list(set(t[0]).intersection(*t[1:]))
         return sorted(d)
@@ -174,7 +174,7 @@ class HistDatabase(object):
      
     def __repr__(self):
         s = '-----Hist CSV Database-----\n'
-        for k,v in self.csv.iteritems():
+        for k,v in self.csv.items():
             s+= (str(v)+'\n')
         return s
   
@@ -188,8 +188,8 @@ if __name__=='__main__':
     spy = HistDataCsv('SPY',dbDir)
 #   
     date = dt.date(2012,8,31)
-    print date
+    print(date)
 #    
     pair = pd.DataFrame({'SPY':spy.loadDate(date)['close'],'VXX':vxx.loadDate(date)['close']})
     
-    print pair.tail()
+    print(pair.tail())

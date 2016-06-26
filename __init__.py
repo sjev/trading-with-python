@@ -1,1 +1,11 @@
-__docformat__ = 'restructuredtext'__version__ = '0.0.14.2'from lib import yahooFinance as yahoofrom lib.classes import *from lib.functions import *from lib.csvDatabase import HistDataCsvfrom lib.backtest import Backtest
+__docformat__ = 'restructuredtext'
+
+# python ver, major ,  minor, bugfix
+__version__ = '3.1.0.0'
+
+from .lib import extra
+from .lib import yahooFinance
+from .lib import backtest
+from .lib.functions import *
+from .lib import cboe
+

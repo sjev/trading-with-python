@@ -3,11 +3,9 @@ Created on Apr 28, 2013
 Copyright: Jev Kuznetsov
 License: BSD
 '''
-from __future__ import print_function
+
 import sys
-import urllib
 import os
-import xlrd # module for excel file reading
 import pandas as pd
 
 class ProgressBar:
@@ -43,16 +41,19 @@ class ProgressBar:
 def getSpyHoldings(dataDir):
     ''' get SPY holdings from the net, uses temp data storage to save xls file '''
 
+    import urllib.request, urllib.parse, urllib.error
+    
     dest = os.path.join(dataDir,"spy_holdings.xls")
     
     if os.path.exists(dest):
         print('File found, skipping download')
     else:
         print('saving to', dest)
-        urllib.urlretrieve ("https://www.spdrs.com/site-content/xls/SPY_All_Holdings.xls?fund=SPY&docname=All+Holdings&onyx_code1=1286&onyx_code2=1700",
+        urllib.request.urlretrieve ("https://www.spdrs.com/site-content/xls/SPY_All_Holdings.xls?fund=SPY&docname=All+Holdings&onyx_code1=1286&onyx_code2=1700",
                              dest) # download xls file and save it to data directory
         
     # parse
+    import xlrd # module for excel file reading
     wb = xlrd.open_workbook(dest) # open xls file, create a workbook
     sh = wb.sheet_by_index(0) # select first sheet
     
@@ -67,3 +68,25 @@ def getSpyHoldings(dataDir):
       
     return  pd.DataFrame(data)    
     
+def setNotebookStyle():
+    """ 
+    
+    set notebook output styles 
+
+    for pandas options see `docs <http://pandas.pydata.org/pandas-docs/stable/options.html?highlight=max_rows#list-of-options>`_
+    
+    
+    """
+    import matplotlib.pyplot as plt
+    plt.style.use('ggplot')
+
+    # bigger fitures
+    import matplotlib
+    matplotlib.rcParams['figure.figsize'] = [12, 8]
+
+    import pandas as pd
+    pd.options.display.max_rows = 10
+    
+    pd.options.display.precision = 2 # two-digit precision, otherwise some tables will
+                                 # not fit on the screen
+

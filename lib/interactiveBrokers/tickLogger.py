@@ -20,7 +20,7 @@ import os # used to create directories
 import sys # used to print a dot to a terminal without new line
 
 #--------ibpy imports ----------------------
-from helpers import createContract
+from .helpers import createContract
 from ib.opt import ibConnection, message
 from ib.ext.Contract import Contract
 

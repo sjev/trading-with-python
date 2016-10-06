@@ -20,7 +20,7 @@ import os
 import datetime as dt
 import time
 from time import sleep
-from helpers import timeFormat, dateFormat
+from .helpers import timeFormat, dateFormat
 
 class Downloader(object):
     def __init__(self,debug=False):
@@ -71,7 +71,7 @@ class Downloader(object):
         if not self._dataHandler.dataReady:
             self._log.error('Data timeout')    
          
-        print((self._dataHandler.data))
+        #print((self._dataHandler.data))
         
         return self._dataHandler.data  
     

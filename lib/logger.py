@@ -1,36 +1,35 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Convenience module for creating loggers
 
-##
-# Defines logging formats and logger instance
-##
+@author: Jev Kuznetsov
+"""
 
 import logging
-import os
-
-##
-# Default log message formatting string.
-format = '%(asctime)s %(levelname)s [%(name)s]  %(message)s'
-
-##
-# Default log date formatting string.
-datefmt = '%d-%b-%y %H:%M:%S'
-
-##
-# Default log level.  Set TWP_LOGLEVEL environment variable to
-# change this default.
-level = int(os.environ.get('TWP_LOGLEVEL', logging.DEBUG))
 
 
-def getLogger(name='twp', level=level, format=format,
-               datefmt=datefmt):
-    """ Configures and returns a logging instance.
+# configure logging
+# create logger 
 
-    @param name ignored
-    @param level logging level
-    @param format format string for log messages
-    @param datefmt format string for log dates
-    @return logging instance (the module)
-    """
-    logging.basicConfig(level=level, format=format, datefmt=datefmt)
-    return logging.getLogger(name)
+def getLogger(name, logFile = None, consoleLevel = logging.INFO):
+    """ configure top level logging """
+    
+    logging.basicConfig(level=logging.DEBUG,
+                    filename = logFile,
+                    filemode = 'w',
+                    format="%(asctime)s [%(name)s-%(funcName)s] - %(levelname)s - %(message)s",
+                    datefmt="%H:%M:%S")
+                   
+                   
+                       
+    log = logging.getLogger(name)
+    log.setLevel(logging.DEBUG)
+    
+    # create stream log handler 
+    console = logging.StreamHandler()
+    console.setLevel(consoleLevel)
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger().addHandler(console)    # add the handler to the root logger
+  
+    return log

@@ -12,7 +12,7 @@ import pandas as pd
 from ib.ext.Contract import Contract
 from ib.opt import ibConnection, message
 
-from . import logger as logger
+import logging
 
 from pandas import DataFrame, Index
 
@@ -20,11 +20,11 @@ import os
 import datetime as dt
 import time
 from time import sleep
-from .helpers import timeFormat, dateFormat
+from helpers import timeFormat, dateFormat
 
 class Downloader(object):
     def __init__(self,debug=False):
-        self._log = logger.getLogger('DLD')        
+        self._log = logging.getLogger('DLD')        
         self._log.debug('Initializing data dwonloader. Pandas version={0}, ibpy version:{1}'.format(pd.__version__,ib.__version__))
 
         self.tws = ibConnection()
@@ -99,7 +99,7 @@ class Downloader(object):
 class _HistDataHandler(object):
     ''' handles incoming messages '''
     def __init__(self,tws):
-        self._log = logger.getLogger('DH') 
+        self._log = logging.getLogger('DH') 
         tws.register(self.msgHandler,"HistoricalData")
         self.reset()
     
@@ -144,7 +144,7 @@ class TimeKeeper(object):
     '''
     
     def __init__(self):
-        self._log = logger.getLogger('TK') 
+        self._log = logging.getLogger('TK') 
         dataDir = os.path.expanduser('~')+'/twpData'
         
         if not os.path.exists(dataDir):
@@ -187,12 +187,15 @@ class TimeKeeper(object):
 
 if __name__ == '__main__':
  
-    from extra import createContract
+    from helpers import createContract
+    
+    from tradingWithPython.lib import logger
+    log = logger.getLogger('main',logFile='downloader.log')
      
-    dl = Downloader(debug=True) # historic data downloader class
+    dl = Downloader(debug=False) # historic data downloader class
      
     contract = createContract('SPY') # create contract using defaults (STK,SMART,USD)
-    data = dl.requestData(contract,"20141208 16:00:00 EST") # request 30-second data bars up till now
+    data = dl.requestData(contract,"20161005 16:00:00 EST") # request 30-second data bars up till now
      
     data.to_csv('SPY.csv') # write data to csv
      

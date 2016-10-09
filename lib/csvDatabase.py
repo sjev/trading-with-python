@@ -10,36 +10,23 @@ intraday data handlers in csv format.
 import pandas as pd
 import datetime as dt
 import os
+import numpy as np
 from .extra import ProgressBar
 
 dateFormat = "%Y%m%d" # date format for converting filenames to dates
-dateTimeFormat = "%Y%m%d %H:%M:%S"
+dateTimeFormat = "%Y%m%d%H%M%S"
 
 def fileName2date(fName):
     '''convert filename to date'''
     name = os.path.splitext(fName)[0]
-    return dt.datetime.strptime(name.split('_')[1],dateFormat).date() 
+    return dt.datetime.strptime(name.split('_')[1],dateTimeFormat) 
     
 def parseDateTime(dateTimeStr):
     return dt.datetime.strptime(dateTimeStr,dateTimeFormat)
     
 def loadCsv(fName):
     ''' load DataFrame from csv file '''
-    with open(fName,'r') as f:
-        lines = f.readlines()
-    
-    dates= []    
-    header = [h.strip() for h in lines[0].strip().split(',')[1:]]
-    data = [[] for i in range(len(header))]
-   
-    
-    for line in lines[1:]:
-        fields = line.rstrip().split(',')
-        dates.append(parseDateTime(fields[0]))
-        for i,field in enumerate(fields[1:]):
-            data[i].append(float(field))
-     
-    return pd.DataFrame(data=dict(list(zip(header,data))),index=pd.Index(dates))    
+    return pd.DataFrame.from_csv(fName)
     
     
 class HistDataCsv(object):
@@ -54,68 +41,44 @@ class HistDataCsv(object):
         
         self.dates = []        
         
-        for fName in os.listdir(self.dbDir):
-            self.dates.append(fileName2date(fName))
+        
     
+    @property        
+    def dateRange(self):
+        """ get min and max values of the timestamps in database """
+        
+        files = os.listdir(self.dbDir)
+        if len(files) == 0:
+            return (None, None)
+        
+        ts = [fileName2date(fName) for fName in files]
+        
+        # earliest
+        t0 =  self._loadCsv(files[np.argmin(ts)]).index[0]
+        t1 =  self._loadCsv(files[np.argmax(ts)]).index[-1]    
+        
+        return (t0,t1)
     
-    def saveData(self,date, df,lowerCaseColumns=True):
+    def _loadCsv(self,fName):
+        """ convenience function, prepending right path """
+        return pd.DataFrame.from_csv(os.path.join(self.dbDir,fName))
+    
+    def saveData(self, df,lowerCaseColumns=True):
         ''' add data to database'''
         
         if lowerCaseColumns: # this should provide consistency to column names. All lowercase
             df.columns = [ c.lower() for c in df.columns]
         
-        s = self.symbol+'_'+date.strftime(dateFormat)+'.csv' # file name
+        s = self.symbol+'_'+df.index[-1].strftime(dateTimeFormat)+'.csv' # file name
         dest = os.path.join(self.dbDir,s) # full path destination
         print('Saving data to: ', dest)
         df.to_csv(dest)
     
-    def loadDate(self,date):  
-        ''' load data '''
-        s = self.symbol+'_'+date.strftime(dateFormat)+'.csv' # file name
-        
-        df = pd.DataFrame.from_csv(os.path.join(self.dbDir,s))
-        cols = [col.strip() for col in df.columns.tolist()]
-        df.columns = cols
-        #df = loadCsv(os.path.join(self.dbDir,s))
-       
-        return df
-        
-    def loadDates(self,dates):
-        ''' load multiple dates, concantenating to one DataFrame '''
-        tmp =[]
-        print('Loading multiple dates for ' , self.symbol)        
-        p = ProgressBar(len(dates))
-        
-        for i,date in enumerate(dates):
-            tmp.append(self.loadDate(date))
-            p.animate(i+1)
-            
-        print('')
-        return pd.concat(tmp)
-        
-        
-    def createOHLC(self):
-        ''' create ohlc from intraday data'''
-        ohlc = pd.DataFrame(index=self.dates, columns=['open','high','low','close'])
-        
-        for date in self.dates:
-            
-            print('Processing', date)
-            try:
-                df = self.loadDate(date)
-                
-                ohlc.set_value(date,'open',df['open'][0])
-                ohlc.set_value(date,'high',df['wap'].max())
-                ohlc.set_value(date,'low', df['wap'].min())
-                ohlc.set_value(date,'close',df['close'][-1])
-        
-            except Exception as e:
-                print('Could not convert:', e)
-                
-        return ohlc
+  
             
     def __repr__(self):
-        return '{symbol} dataset with {nrDates} days of data'.format(symbol=self.symbol, nrDates=len(self.dates))
+        rng = self.dateRange
+        return '%s dataset range: %s ... %s' % (self.symbol, rng[0], rng[1] )
         
 class HistDatabase(object):
     ''' class working with multiple symbols at once '''

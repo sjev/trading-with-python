@@ -41,13 +41,39 @@ class HistDataCsv(object):
         
         self.dates = []        
         
+    @property 
+    def files(self):
+        """ a list of csv files present """
+        files = os.listdir(self.dbDir)
+        files.sort()
         
+        return files
     
+    def loadAll(self):
+        """ load all files from the database and return as DataFrame """
+        
+        files = self.files
+        
+        data = [self._loadCsv(f) for f in files]
+        data = pd.concat(data) 
+        
+        data = data.groupby(data.index).first() # remove duplicate rows
+        
+        return data
+    
+    def to_hdf(self,fName):
+        """ 
+        convert data to hdf5 file. If no fName is provided, the file is created in
+        the database root directory """
+        
+        df = self.loadAll()
+        df.to_hdf(fName,self.symbol)     
+        
     @property        
     def dateRange(self):
         """ get min and max values of the timestamps in database """
         
-        files = os.listdir(self.dbDir)
+        files = self.files
         if len(files) == 0:
             return (None, None)
         
@@ -78,7 +104,7 @@ class HistDataCsv(object):
             
     def __repr__(self):
         rng = self.dateRange
-        return '%s dataset range: %s ... %s' % (self.symbol, rng[0], rng[1] )
+        return '%s dataset %i files\nrange: %s ... %s' % (self.symbol, len(self.files), rng[0], rng[1] )
         
 class HistDatabase(object):
     ''' class working with multiple symbols at once '''

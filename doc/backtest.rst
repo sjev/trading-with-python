@@ -2,13 +2,13 @@
 
 .. ipython:: python
     :suppress:
-    
+
     import matplotlib.pyplot as plt
     plt.style.use('ggplot')
 
 
 ===============
-Backtesting 
+Backtesting
 ===============
 
 Strategy simulation often includes going through same steps : determining entry and exit moments, calculating number of shares capital and pnl. To limit the number of lines of code needed to perform a backtest, the *twp* library includes a simple backtesting module.
@@ -22,24 +22,24 @@ The backtester needs an instrument price and entry/exit signals to do its job. L
 
 
 .. ipython:: python
-    
+
     import tradingWithPython as twp
     import pandas as pd
     import numpy as np
-    
-    
+
+
 foo bar
 
-::
-    
+.. ipython:: python
+
    ts = pd.Series(np.random.randn(1000), index=pd.date_range('1/1/2000', periods=1000))
    ts = ts.cumsum()
 
    @savefig series_plot_basic.png
    ts.plot()
-   
-   
-   
+
+
+
 
 
 Backtest class
@@ -49,6 +49,6 @@ Backtest class
 
 .. autoclass:: lib.backtest.Backtest
     :members:
-    
+
 
 .. autofunction:: lib.backtest.tradeBracket

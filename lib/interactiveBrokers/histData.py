@@ -30,6 +30,8 @@ class Downloader(object):
         self.tws = ibConnection()
         self._dataHandler = _HistDataHandler(self.tws)
         
+        self.tws.register(self._twsErrorHandler,"error")
+        
         if debug:
             self.tws.enableLogging() # show debugging output from ibpy
            
@@ -40,7 +42,11 @@ class Downloader(object):
         self._timeKeeper = TimeKeeper() # keep track of past requests
         self._reqId = 1 # current request id
      
+    
+    def _twsErrorHandler(self,msg):
+        """ log tws errors """
         
+        self._log.error(msg.errorString)
    
         
     
@@ -64,7 +70,7 @@ class Downloader(object):
     
         #wait for data
         startTime = time.time()
-        timeout = 3
+        timeout = 5
         while not self._dataHandler.dataReady and (time.time()-startTime < timeout):
             sleep(2)
         
@@ -165,7 +171,7 @@ class TimeKeeper(object):
             f.write(dt.datetime.now().strftime(self._timeFormat)+'\n')
             
 
-    def nrRequests(self,timeSpan=600):
+    def nrRequests(self,timeSpan=610):
         ''' return number of requests in past timespan (s) '''
         delta = dt.timedelta(seconds=timeSpan)
         now = dt.datetime.now()

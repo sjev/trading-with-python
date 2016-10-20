@@ -15,7 +15,7 @@ Contents:
 .. toctree::
     :maxdepth: 2
    
-    yahooFinance
+    historicData
     backtest
 
 

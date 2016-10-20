@@ -1,13 +1,13 @@
 .. currentmodule:: tradingWithPython
 
-====================
+
 Yahoo Finance 
 ====================
 
 
 
 Getting historic data
-=======================
+-----------------------
 
 The module is usually imported as follows:
 

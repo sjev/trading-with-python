@@ -43,11 +43,10 @@ The backtester needs an instrument price and entry/exit signals to do its job. L
 
 Backtest class
 ----------------
-.. autoclass:: tradingWithPython.lib.backtest.ExampleClass
-    :members:
-
 .. autoclass:: tradingWithPython.lib.backtest.Backtest
     :members:
 
 
+Functions
+------------
 .. autofunction:: tradingWithPython.lib.backtest.tradeBracket

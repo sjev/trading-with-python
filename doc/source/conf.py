@@ -24,12 +24,15 @@ import tradingWithPython as twp
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('../../lib'))
 
-sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('../../lib'))
+
+
+for p in ['..','../../lib','../../tools/getHistData']:
+	sys.path.insert(0,os.path.abspath(p))
 
 print('Path:')
 print(sys.path)
 
+import getData 
 
 # -- General configuration ------------------------------------------------
 
@@ -52,7 +55,8 @@ extensions = [
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting',
     'sphinx.ext.todo',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.viewcode',
+    'sphinxarg.ext'
 ]
 
 # supress warnings during toctree generation. 

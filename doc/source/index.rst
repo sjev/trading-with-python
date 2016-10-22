@@ -10,6 +10,12 @@ Welcome to TradingWithPython documentation!
 
 **Date**: |today| **Version**: |version|
 
+
+.. note::
+
+    This documentation corresponds to the master branch on the github. 
+    Please clone from `git` instead of installing from `PyPi` 
+
 Contents:
 
 .. toctree::

@@ -136,7 +136,7 @@ def download(settings):
 def getParser():
     """ create command line parser """
     parser = argparse.ArgumentParser(description='Download historic data')
-    parser.add_argument("--symbols",help = 'symbols separated by coma: SPY,VXX',default='all')
+    parser.add_argument("--symbols",help = 'symbols separated by comma: SPY,VXX',default='all')
     parser.add_argument("--end", help= "timestamp from where to start download.\
                          Defaults to last trading date", default=None)
 

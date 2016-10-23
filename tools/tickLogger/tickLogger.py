@@ -7,11 +7,11 @@
   file through command line parameter.
 * ticks are logged to a rotating csv file, new file will start on midnight
 
-.. :note:
+.. note::
+    
     If you need to run this program for longer time periods, it is advisable
-    to use IB Gateway instead of IB TWS. The latter, will automatically log off at
+    to use IB Gateway instead of IB TWS. The latter will automatically log off at
     the end of each day.
-
 
 
 Running script

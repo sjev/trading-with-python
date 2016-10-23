@@ -1,0 +1,8 @@
+dataRoot: tickLogs
+subscriptions:
+  VXX: {currency: USD, exchange: SMART, secType: STK}
+  SPY: {currency: USD, exchange: SMART, secType: STK}
+  TICK-NYSE: {currency: USD, exchange: NYSE, secType: IND}
+  VIX: {currency: USD, exchange: CBOE, secType: IND}
+  VXV: {currency: USD, exchange: CBOE, secType: IND}
+  

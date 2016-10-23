@@ -1,10 +1,10 @@
 
 =======================
-Getting historic data
+Getting data
 =======================
 
-Interactive Brokers
-=====================
+Interactive Brokers historic data
+===================================
 
 Interactive Brokers provides *free* historic data (only for clients) up to 6 month in the past, with a maximum resolution 
 of 1 second bars.  This is great of course, but to prevent abuse, IB imposed all kinds of download limitations.
@@ -14,9 +14,13 @@ is limited.
 
 The script ``tools/getData.py`` is designed to download large datasets while respecting the rules.
 
-
-
 .. automodule:: getData
+
+
+Interactive Brokers tick data
+================================
+
+.. automodule:: tickLogger
 
 
 

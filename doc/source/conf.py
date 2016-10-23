@@ -26,7 +26,7 @@ import tradingWithPython as twp
 
 
 
-for p in ['..','../../lib','../../tools/getHistData']:
+for p in ['..','../../lib','../../tools/getHistData','../../tools/tickLogger']:
 	sys.path.insert(0,os.path.abspath(p))
 
 print('Path:')

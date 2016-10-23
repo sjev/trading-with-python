@@ -1,9 +1,6 @@
 """
- 
-tickLogger
-============
 
-Program to log tick events to a file.
+``tickLogger.py`` is a script to log tick events to a file.
 
 * symbols to log and data location are stored in a `yml` config file
 * default configuration is read from ``settings.yml`` , you can provide different

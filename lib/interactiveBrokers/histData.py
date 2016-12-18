@@ -72,11 +72,12 @@ class Downloader(object):
         startTime = time.time()
         timeout = 5
         while not self._dataHandler.dataReady and (time.time()-startTime < timeout):
-            sleep(2)
+            sleep(1)
         
         if not self._dataHandler.dataReady:
             self._log.error('Data timeout')    
-         
+            
+        assert self._dataHandler.dataReady, 'Data timeout' 
         #print((self._dataHandler.data))
         
         return self._dataHandler.data  

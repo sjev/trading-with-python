@@ -19,7 +19,10 @@ dateTimeFormat = "%Y%m%d%H%M%S"
 def fileName2date(fName):
     '''convert filename to date'''
     name = os.path.splitext(fName)[0]
-    return dt.datetime.strptime(name.split('_')[1],dateTimeFormat) 
+    try:
+        return dt.datetime.strptime(name.split('_')[1],dateTimeFormat) 
+    except ValueError:
+        return dt.datetime.strptime(name.split('_')[1],dateFormat) 
     
 def parseDateTime(dateTimeStr):
     return dt.datetime.strptime(dateTimeStr,dateTimeFormat)

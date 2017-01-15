@@ -19,12 +19,12 @@ tws.connect() # connect to API
 tws.reqAccountUpdates(True, '') # request account & portfolio updates. Parameters (subscibe,acctCode)
 
 #-------wait for data, stop after timeout
-print 'Waiting for data'
+print('Waiting for data')
 
 timeout = 10 # timout in seconds
 t= 0 # time counter
 while (not acct.dataReady) & (t < timeout):
-    print '.',
+    print('.', end=' ')
     sleep(1)
     t+=1
   
@@ -33,6 +33,6 @@ assert t<timeout, 'Timeout occured while waiting for data'
 acct.to_csv('accountData.csv')  
 port.to_csv('portfolio.csv')            
             
-print 'done'
+print('done')
    
 tws.disconnect()

@@ -54,7 +54,7 @@ class Account(object):
     def to_csv(self,fName):
         """ save data to csv """
         assert self.dataReady , "No data received yet "
-        self.data().to_csv(fName,header = True, mode='wb')
+        self.data().to_csv(fName)
         
 class Portfolio(object):
     """ class for keeping track of portfolio data """

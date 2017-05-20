@@ -11,11 +11,20 @@ Module includes functions for easy access to YahooFinance data
 """
 
 
-from datetime import datetime, date
+
 import urllib.request
 from pandas import DataFrame, Index, HDFStore, Panel
 import numpy as np
 import os
+
+import requests # interaction with the web
+import os  #  file system operations
+import yaml # human-friendly data format
+import re  # regular expressions
+import pandas as pd # pandas... the best time series library out there
+import datetime as dt # date and time functions
+import io 
+
 from .extra import ProgressBar
 
 
@@ -157,7 +166,7 @@ def getQuote(symbols):
     
     return DataFrame(data,index=idx)
 
-def _historicDataUrll(symbol, sDate=(1990,1,1),eDate=date.today().timetuple()[0:3]):
+def _historicDataUrll(symbol, sDate=(1990,1,1),eDate=dt.date.today().timetuple()[0:3]):
     """ 
     generate url
 
@@ -232,7 +241,7 @@ def getSymbolData(symbol, sDate=(1990,1,1), eDate=None, adjust=False, verbose=Tr
     """
 
     
-    if eDate is None: eDate = date.today().timetuple()[0:3]
+    if eDate is None: eDate = dt.date.today().timetuple()[0:3]
     
 
     urlStr = 'http://ichart.finance.yahoo.com/table.csv?s={0}&a={1}&b={2}&c={3}&d={4}&e={5}&f={6}'.\
@@ -253,7 +262,7 @@ def getSymbolData(symbol, sDate=(1990,1,1), eDate=None, adjust=False, verbose=Tr
     for line in lines[1:]:
         #print line
         fields = line.decode().rstrip().split(',')
-        dates.append(datetime.strptime( fields[0],'%Y-%m-%d'))
+        dates.append(dt.datetime.strptime( fields[0],'%Y-%m-%d'))
         for i,field in enumerate(fields[1:]):
             data[i].append(float(field))
        
@@ -288,17 +297,35 @@ def _adjust(df, removeOrig=False):
     
     return df
     
-def getScreenerSymbols(fileName):
-    ''' read symbols from a .csv saved by yahoo stock screener '''
+
+def _getToken():
+    """ get cookie and crumb from APPL page """
+
+    url = 'https://uk.finance.yahoo.com/quote/AAPL/history' # url for a ticker symbol, with a download link
+    r = requests.get(url)  # download page
     
-    with open(fileName,'r') as fid:
-        lines = fid.readlines()
+    txt = r.text # extract html
+    
+    
+    cookie = r.cookies['B'] # the cooke we're looking for is named 'B'
+    
+    
+    pattern = re.compile('.*"CrumbStore":\{"crumb":"(?P<crumb>[^"]+)"\}')
+    
+    for line in txt.splitlines():
+        m = pattern.match(line)
+        if m is not None:
+            crumb = m.groupdict()['crumb']    
+    
+    return {'crumb': crumb, 'cookie':cookie, 'status_code':r.status_code}
 
-    symbols = []   
-    for line in lines[3:]:
-        fields = line.strip().split(',')
-        field = fields[0].strip()
-        if len(field) > 0:
-            symbols.append(field) 
-    return symbols
+#--------------tests------------
+# to be executed with pytest
 
+def test_request():
+    
+    result = _getToken()
+    assert result['status_code'] == 200
+    
+def test_bar():
+    assert True

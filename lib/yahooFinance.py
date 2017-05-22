@@ -162,7 +162,7 @@ def getSymbolData(symbol, sDate=(2000,1,1), adjust=False, verbose=True):
     data = requests.get(url, cookies={'B':_token['cookie']})
     
     buf = io.StringIO(data.text) # create a buffer
-    df = pd.read_csv(buf,index_col=0) # convert to pandas DataFrame
+    df = pd.read_csv(buf,index_col=0,parse_dates=True) # convert to pandas DataFrame
     
     # rename columns
     newNames = [c.lower().replace(' ','_') for c in df.columns]    

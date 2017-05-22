@@ -13,9 +13,7 @@ Module includes functions for easy access to YahooFinance data
 
 
 import urllib.request
-from pandas import DataFrame, Index, HDFStore, Panel
 import numpy as np
-import os
 
 import requests # interaction with the web
 import os  #  file system operations
@@ -25,7 +23,7 @@ import pandas as pd # pandas... the best time series library out there
 import datetime as dt # date and time functions
 import io 
 
-#from .extra import ProgressBar
+from .extra import ProgressBar
 
 dateTimeFormat = "%Y%m%d %H:%M:%S"
 
@@ -49,38 +47,7 @@ def parseStr(s):
         except ValueError: # failed, return original string
             return s
 
-class HistData(object):
-    ''' a class for working with yahoo finance data '''
-    def __init__(self):
-       
-                
-        token = loadToken() # get token from disk or yahoo
-        self._cookie = token['cookie']
-        self._crumb = token['crumb']
-        
-        
-    def getSymbol(self,symbol, startDate = (2008,1,1)):
-        """ download a single symbol. """
-        
-        period1 = int(dt.datetime(*startDate).timestamp()) # convert to seconds since epoch
-        period2 = int(dt.datetime.now().timestamp())
-        
-        params = (symbol, period1, period2, self._crumb)
-        
-        url = "https://query1.finance.yahoo.com/v7/finance/download/{0}?period1={1}&period2={2}&interval=1d&events=history&crumb={3}".format(*params)
-
-        data = requests.get(url, cookies={'B':self._cookie})
-        
-        buf = io.StringIO(data.text) # create a buffer
-        df = pd.read_csv(buf,index_col=0) # convert to pandas DataFrame
-        
-        # rename columns
-        newNames = [c.lower().replace(' ','_') for c in df.columns]    
-        renames = dict(zip(df.columns,newNames))    
-        df = df.rename(columns=renames)
-        
-        return df
-    
+   
 
 def getQuote(symbols):
     """ 
@@ -126,21 +93,8 @@ def getQuote(symbols):
     idx = data.pop('symbol')
     
     
-    return DataFrame(data,index=idx)
+    return pd.DataFrame(data,index=idx)
 
-def _historicDataUrll(symbol, sDate=(1990,1,1),eDate=dt.date.today().timetuple()[0:3]):
-    """ 
-    generate url
-
-    symbol: Yahoo finanance symbol
-    sDate: start date (y,m,d)
-    eDate: end date (y,m,d)
-    """
-
-    urlStr = 'http://ichart.finance.yahoo.com/table.csv?s={0}&a={1}&b={2}&c={3}&d={4}&e={5}&f={6}'.\
-    format(symbol.upper(),sDate[1]-1,sDate[2],sDate[0],eDate[1]-1,eDate[2],eDate[0])
-    
-    return urlStr
 
 def getHistoricData(symbols, **options):
     ''' 
@@ -154,8 +108,6 @@ def getHistoricData(symbols, **options):
         Yahoo finanance symbol or a list of symbols
     sDate : tuple  (optional)
         start date (y,m,d)
-    eDate : tuple  (optional)
-        end date (y,m,d) 
     adjust : bool
         T/[F] adjust data based on adj_close
     
@@ -177,9 +129,9 @@ def getHistoricData(symbols, **options):
             p.animate(idx+1)
             data[symbol] = getSymbolData(symbol,verbose=False,**options)
         
-        return Panel(data)
+        return pd.Panel(data)
 
-def getSymbolData(symbol, sDate=(1990,1,1), eDate=None, adjust=False, verbose=True):
+def getSymbolData(symbol, sDate=(2000,1,1), adjust=False, verbose=True):
     """ 
     get data from Yahoo finance and return pandas dataframe
 
@@ -189,8 +141,6 @@ def getSymbolData(symbol, sDate=(1990,1,1), eDate=None, adjust=False, verbose=Tr
         Yahoo finanance symbol
     sDate : tuple , optional
         start date (y,m,d), defaults to 1 jan 1990
-    eDate : tuple , optional
-        end date (y,m,d), defaults to current date
     adjust : bool , optional
         use adjusted close values to correct OHLC. adj_close will be ommited
     verbose : bool , optional
@@ -201,38 +151,23 @@ def getSymbolData(symbol, sDate=(1990,1,1), eDate=None, adjust=False, verbose=Tr
         DataFrame
             
     """
-
     
-    if eDate is None: eDate = dt.date.today().timetuple()[0:3]
+    period1 = int(dt.datetime(*sDate).timestamp()) # convert to seconds since epoch
+    period2 = int(dt.datetime.now().timestamp())
     
-
-    urlStr = 'http://ichart.finance.yahoo.com/table.csv?s={0}&a={1}&b={2}&c={3}&d={4}&e={5}&f={6}'.\
-    format(symbol.upper(),sDate[1]-1,sDate[2],sDate[0],eDate[1]-1,eDate[2],eDate[0])
-
+    params = (symbol, period1, period2, _token['crumb'])
     
-    try:
-        lines = urllib.request.urlopen(urlStr).readlines()
-    except Exception as e:
-        s = "Failed to download:\n{0}".format(e);
-        print(s)
-        return None
+    url = "https://query1.finance.yahoo.com/v7/finance/download/{0}?period1={1}&period2={2}&interval=1d&events=history&crumb={3}".format(*params)
 
-    dates = []
-    data = [[] for i in range(6)]
-    #high
-    # header : Date,Open,High,Low,Close,Volume,Adj Close
-    for line in lines[1:]:
-        #print line
-        fields = line.decode().rstrip().split(',')
-        dates.append(dt.datetime.strptime( fields[0],'%Y-%m-%d'))
-        for i,field in enumerate(fields[1:]):
-            data[i].append(float(field))
-       
-    idx = Index(dates)
-    data = dict(list(zip(['open','high','low','close','volume','adj_close'],data)))
+    data = requests.get(url, cookies={'B':_token['cookie']})
     
-    # create a pandas dataframe structure   
-    df = DataFrame(data,index=idx).sort_index()
+    buf = io.StringIO(data.text) # create a buffer
+    df = pd.read_csv(buf,index_col=0) # convert to pandas DataFrame
+    
+    # rename columns
+    newNames = [c.lower().replace(' ','_') for c in df.columns]    
+    renames = dict(zip(df.columns,newNames))    
+    df = df.rename(columns=renames)
     
     if verbose:
         print(('Got %i days of data' % len(df)))
@@ -274,12 +209,9 @@ def loadToken():
     try : # load file from disk
         
         data = yaml.load(open(dataFile,'r'))
-    
         age = (dt.datetime.now()- dt.datetime.strptime(  data['timestamp'], dateTimeFormat) ).days
-                      
         assert age < refreshDays, 'cookie too old'
             
-                         
     except (AssertionError,FileNotFoundError):     # file not found
         
         if not os.path.exists(dataDir):
@@ -287,9 +219,6 @@ def loadToken():
         
         data = getToken(dataFile)
         
-               
-        
-    
     return data
 
 
@@ -322,20 +251,16 @@ def getToken(fName = None):
     return data
 
 
-#-------------- create downloader class 
-    
-downloader = HistData()
-
+#-------------- get token
+_token = loadToken() # get token from disk or yahoo
 
 #--------------tests------------
 # to be executed with pytest
 
 
-
-
 def test_getToken():
     ''' download token '''
-    result = getToken()   
+    getToken()   
     
     
 def test_initToken():
@@ -350,3 +275,8 @@ def test_initToken():
     
     assert os.path.exists(dataFile)
     
+def test_download():
+    
+    vxx = getSymbolData('SPY')
+    
+    assert len(vxx) > 4000

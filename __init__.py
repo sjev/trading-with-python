@@ -1,7 +1,7 @@
 __docformat__ = 'restructuredtext'
 
 # python ver, major ,  minor, bugfix
-__version__ = '3.1.0.0'
+__version__ = '3.1.1.0'
 
 from .lib import extra
 from .lib import yahooFinance

@@ -25,7 +25,7 @@ import pandas as pd # pandas... the best time series library out there
 import datetime as dt # date and time functions
 import io 
 
-from .extra import ProgressBar
+#from .extra import ProgressBar
 
 dateTimeFormat = "%Y%m%d %H:%M:%S"
 
@@ -51,74 +51,36 @@ def parseStr(s):
 
 class HistData(object):
     ''' a class for working with yahoo finance data '''
-    def __init__(self, autoAdjust=True):
+    def __init__(self):
        
-        self.startDate = (2008,1,1)
-        self.autoAdjust=autoAdjust
-        self.wp = Panel()
-        
-        
-    def load(self,dataFile):
-        """load data from HDF"""
-        if os.path.exists(dataFile):
-            store = HDFStore(dataFile)
-            symbols = [str(s).strip('/') for s in list(store.keys()) ]   
-            data = dict(list(zip(symbols,[store[symbol] for symbol in symbols])))
-            self.wp = Panel(data)
-            store.close()
-        else:
-            raise IOError('Data file does not exist')
-            
-        
-    def save(self,dataFile):
-        """ save data to HDF"""
-        print(('Saving data to', dataFile))
-        store = HDFStore(dataFile)
-        for symbol in self.wp.items:
-            store[symbol] = self.wp[symbol]
-            
-        store.close()
-                    
-            
-            
-    def downloadData(self,symbols='all'):
-        ''' get data from yahoo  '''
-        
-        if symbols == 'all':
-            symbols = self.symbols
-        
-        #store = HDFStore(self.dataFile)        
-        p = ProgressBar(len(symbols))
-        
-        for idx,symbol in enumerate(symbols):
-            
-            try:            
-                df = getSymbolData(symbol,sDate=self.startDate,verbose=False)
-                if self.autoAdjust:
-                    df =  _adjust(df,removeOrig=True)
                 
-                if len(self.symbols)==0:
-                    self.wp = Panel({symbol:df})
-                else:
-                    self.wp[symbol] = df
-            
-            except Exception as e:
-                print(e) 
-            p.animate(idx+1)
-    
-    def getDataFrame(self,field='close'):
-        ''' return a slice on wide panel for a given field '''
-        return self.wp.minor_xs(field)
-         
-    
-    @property
-    def symbols(self):
-        return self.wp.items.tolist()        
-           
-  
-    def __repr__(self):
-        return str(self.wp)
+        token = loadToken() # get token from disk or yahoo
+        self._cookie = token['cookie']
+        self._crumb = token['crumb']
+        
+        
+    def getSymbol(self,symbol, startDate = (2008,1,1)):
+        """ download a single symbol. """
+        
+        period1 = int(dt.datetime(*startDate).timestamp()) # convert to seconds since epoch
+        period2 = int(dt.datetime.now().timestamp())
+        
+        params = (symbol, period1, period2, self._crumb)
+        
+        url = "https://query1.finance.yahoo.com/v7/finance/download/{0}?period1={1}&period2={2}&interval=1d&events=history&crumb={3}".format(*params)
 
+        data = requests.get(url, cookies={'B':self._cookie})
+        
+        buf = io.StringIO(data.text) # create a buffer
+        df = pd.read_csv(buf,index_col=0) # convert to pandas DataFrame
+        
+        # rename columns
+        newNames = [c.lower().replace(' ','_') for c in df.columns]    
+        renames = dict(zip(df.columns,newNames))    
+        df = df.rename(columns=renames)
+        
+        return df
+    
 
 def getQuote(symbols):
     """ 
@@ -359,20 +321,16 @@ def getToken(fName = None):
     
     return data
 
+
+#-------------- create downloader class 
+    
+downloader = HistData()
+
+
 #--------------tests------------
 # to be executed with pytest
 
-def use_method():
-    tst.test()
 
-
-class testClass:
-    def __init__(self):
-        print('creating class')
-        pass
-    
-    def test(self):
-        print('foo')
 
 
 def test_getToken():
@@ -392,6 +350,3 @@ def test_initToken():
     
     assert os.path.exists(dataFile)
     
- 
-    
-#tst = testClass()

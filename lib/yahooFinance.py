@@ -27,7 +27,7 @@ import io
 
 from .extra import ProgressBar
 
-
+dateTimeFormat = "%Y%m%d %H:%M:%S"
 
 def parseStr(s):
     ''' convert string to a float or string '''
@@ -298,34 +298,100 @@ def _adjust(df, removeOrig=False):
     return df
     
 
-def _getToken():
-    """ get cookie and crumb from APPL page """
+def loadToken():
+    """ 
+    get cookie and crumb from APPL page or disk. 
+    force = overwrite disk data
+    """
+    refreshDays = 30 # refreh cookie every x days
+    
+    # set destinatioin file
+    dataDir = os.path.expanduser('~')+'/twpData'
+    dataFile = dataFile = os.path.join(dataDir,'yahoo_cookie.yml')
+    
+    try : # load file from disk
+        
+        data = yaml.load(open(dataFile,'r'))
+    
+        age = (dt.datetime.now()- dt.datetime.strptime(  data['timestamp'], dateTimeFormat) ).days
+                      
+        assert age < refreshDays, 'cookie too old'
+            
+                         
+    except (AssertionError,FileNotFoundError):     # file not found
+        
+        if not os.path.exists(dataDir):
+            os.mkdir(dataDir)
+        
+        data = getToken(dataFile)
+        
+               
+        
+    
+    return data
 
+
+def getToken(fName = None):
+    """ get cookie and crumb from yahoo """
+    
     url = 'https://uk.finance.yahoo.com/quote/AAPL/history' # url for a ticker symbol, with a download link
     r = requests.get(url)  # download page
     
     txt = r.text # extract html
     
-    
     cookie = r.cookies['B'] # the cooke we're looking for is named 'B'
-    
     
     pattern = re.compile('.*"CrumbStore":\{"crumb":"(?P<crumb>[^"]+)"\}')
     
     for line in txt.splitlines():
         m = pattern.match(line)
         if m is not None:
-            crumb = m.groupdict()['crumb']    
+            crumb = m.groupdict()['crumb']   
     
-    return {'crumb': crumb, 'cookie':cookie, 'status_code':r.status_code}
+    assert r.status_code == 200 # check for succesful download
+            
+    # save to disk
+    data = {'crumb': crumb, 'cookie':cookie, 'timestamp':dt.datetime.now().strftime(dateTimeFormat)}
+
+    if fName  is not None: # save to file
+        with open(fName,'w') as fid:
+            yaml.dump(data,fid)
+    
+    return data
 
 #--------------tests------------
 # to be executed with pytest
 
-def test_request():
+def use_method():
+    tst.test()
+
+
+class testClass:
+    def __init__(self):
+        print('creating class')
+        pass
     
-    result = _getToken()
-    assert result['status_code'] == 200
+    def test(self):
+        print('foo')
+
+
+def test_getToken():
+    ''' download token '''
+    result = getToken()   
     
-def test_bar():
-    assert True
+    
+def test_initToken():
+    ''' remove and get token '''
+    dataDir = os.path.expanduser('~')+'/twpData'
+    dataFile = dataFile = os.path.join(dataDir,'yahoo_cookie.yml')
+    
+    if os.path.exists(dataFile):
+        os.remove(dataFile)
+    
+    loadToken()
+    
+    assert os.path.exists(dataFile)
+    
+ 
+    
+#tst = testClass()

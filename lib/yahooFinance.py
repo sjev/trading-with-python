@@ -160,6 +160,8 @@ def getSymbolData(symbol, sDate=(2000,1,1), adjust=False, verbose=True):
     url = "https://query1.finance.yahoo.com/v7/finance/download/{0}?period1={1}&period2={2}&interval=1d&events=history&crumb={3}".format(*params)
 
     data = requests.get(url, cookies={'B':_token['cookie']})
+    data.raise_for_status() # raise error in case of bad request
+
     
     buf = io.StringIO(data.text) # create a buffer
     df = pd.read_csv(buf,index_col=0,parse_dates=True) # convert to pandas DataFrame
@@ -280,3 +282,4 @@ def test_download():
     vxx = getSymbolData('SPY')
     
     assert len(vxx) > 4000
+              

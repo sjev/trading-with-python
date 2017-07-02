@@ -113,7 +113,7 @@ def getHistoricData(symbols, **options):
     
     Returns
     ---------
-    Panel
+    DataFrame, multi-index
     
     '''
     
@@ -129,7 +129,7 @@ def getHistoricData(symbols, **options):
             p.animate(idx+1)
             data[symbol] = getSymbolData(symbol,verbose=False,**options)
         
-        return pd.Panel(data)
+        return pd.concat(data,axis=1)
 
 def getSymbolData(symbol, sDate=(2000,1,1), adjust=False, verbose=True):
     """ 

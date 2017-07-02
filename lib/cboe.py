@@ -8,7 +8,7 @@ Licence: BSD
 from datetime import datetime, date
 import urllib.request, urllib.error, urllib.parse
 from pandas import DataFrame, Index
-from pandas.core import datetools 
+from pandas.tseries import offsets 
 import numpy as np
 import pandas as pd
 
@@ -35,16 +35,16 @@ def vixExpiration(year,month):
     """
     expriration date of a VX future
     """
-    t = datetime(year,month,1)+datetools.relativedelta(months=1)
+    t = datetime(year,month,1)+offsets.relativedelta(months=1)
     
     
-    offset = datetools.Week(weekday=4)
+    offset = offsets.Week(weekday=4)
     if t.weekday()!=4:
         t_new = t+3*offset
     else:
         t_new = t+2*offset    
     
-    t_exp = t_new-datetools.relativedelta(days=30)
+    t_exp = t_new-offsets.relativedelta(days=30)
     return t_exp
 
 def getPutCallRatio():

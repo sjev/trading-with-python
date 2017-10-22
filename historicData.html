@@ -1,0 +1,401 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Getting data &#8212; Trading With Python  documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Backtesting" href="backtest.html" />
+    <link rel="prev" title="Welcome to TradingWithPython documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="backtest.html" title="Backtesting"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to TradingWithPython documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Trading With Python  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="getting-data">
+<h1>Getting data<a class="headerlink" href="#getting-data" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="interactive-brokers-historic-data">
+<h2>Interactive Brokers historic data<a class="headerlink" href="#interactive-brokers-historic-data" title="Permalink to this headline">¶</a></h2>
+<p>Interactive Brokers provides <em>free</em> historic data (only for clients) up to 6 month in the past, with a maximum resolution
+of 1 second bars.  This is great of course, but to prevent abuse, IB imposed all kinds of download limitations.
+You are not allowed to make more than 60 data requests per 10 minutes for example and the number of bars per request
+is limited.</p>
+<p>The script <code class="docutils literal"><span class="pre">tools/getData.py</span></code> is designed to download large datasets while respecting the rules.</p>
+<span class="target" id="module-getData"></span><p>This script downloads historic data for single or multiple securities through the
+Interactive brokers API.</p>
+<ul class="simple">
+<li>the tool is run from the command line (see parameters below)</li>
+<li><dl class="first docutils">
+<dt>configuration is done in <code class="docutils literal"><span class="pre">settings.yml</span></code>. Here a list of security definitions is kept</dt>
+<dd>together with data destination folder</dd>
+</dl>
+</li>
+<li>the data is saved as <code class="docutils literal"><span class="pre">.csv</span></code> files in a directory structure.</li>
+</ul>
+<div class="section" id="running-script">
+<h3>Running script<a class="headerlink" href="#running-script" title="Permalink to this headline">¶</a></h3>
+<p>Download historic data</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">getData</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">symbols</span> <span class="n">SYMBOLS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">end</span> <span class="n">END</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline">¶</a></h4>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>--symbols</kbd></td>
+<td><p class="first">symbols separated by comma: SPY,VXX</p>
+<p class="last">Default: “all”</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--end</kbd></td>
+<td>timestamp from where to start download.                         Defaults to last trading date</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="section" id="module-tickLogger">
+<span id="interactive-brokers-tick-data"></span><h2>Interactive Brokers tick data<a class="headerlink" href="#module-tickLogger" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">tickLogger.py</span></code> is a script to log tick events to a file.</p>
+<ul class="simple">
+<li>symbols to log and data location are stored in a <cite>yml</cite> config file</li>
+<li>default configuration is read from <code class="docutils literal"><span class="pre">settings.yml</span></code> , you can provide different
+file through command line parameter.</li>
+<li>ticks are logged to a rotating csv file, new file will start on midnight</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you need to run this program for longer time periods, it is advisable
+to use IB Gateway instead of IB TWS. The latter will automatically log off at
+the end of each day.</p>
+</div>
+<div class="section" id="id1">
+<h3>Running script<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Log ticks for a set of stocks</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">tickLogger</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">settings</span> <span class="n">SETTINGS</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline">¶</a></h4>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>--settings</kbd></td>
+<td><p class="first">ini file containing settings</p>
+<p class="last">Default: “settings.yml”</p>
+</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<span class="target" id="module-yahooFinance"></span><div class="section" id="yahoo-finance">
+<h3>Yahoo Finance<a class="headerlink" href="#yahoo-finance" title="Permalink to this headline">¶</a></h3>
+<p>This module enables easy access to data provided by Yahoo Finance.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This service may stop without notice, Yahoo does not seem to like people accessing their
+data automatically. Breaking the service already happened in early 2017. This module includes 
+a workaround that works … for now.</p>
+</div>
+<div class="section" id="getting-historic-data">
+<h4>Getting historic data<a class="headerlink" href="#getting-historic-data" title="Permalink to this headline">¶</a></h4>
+<p>The module is usually imported as follows:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">tradingWithPython</span> <span class="kn">import</span> <span class="n">yahooFinance</span> <span class="k">as</span> <span class="n">yf</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="singe-symbol">
+<h4>Singe symbol<a class="headerlink" href="#singe-symbol" title="Permalink to this headline">¶</a></h4>
+<p>Then, to get raw yahoo finance data for a symbol use <code class="xref py py-func docutils literal"><span class="pre">getSymbolData()</span></code></p>
+<div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [2]: </span><span class="n">df</span> <span class="o">=</span> <span class="n">yf</span><span class="o">.</span><span class="n">getSymbolData</span><span class="p">(</span><span class="s2">&quot;SPY&quot;</span><span class="p">)</span>
+<span class="go">Got 4481 days of data</span>
+
+<span class="gp">In [3]: </span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="go">                      Out[3]: </span>
+<span class="go">              open    high     low   close  adj_close    volume</span>
+<span class="go">Date                                                           </span>
+<span class="go">1999-12-31  146.84  147.50  146.25  146.88     105.37   3172700</span>
+<span class="go">2000-01-03  148.25  148.25  143.88  145.44     104.34   8164300</span>
+<span class="go">2000-01-04  143.53  144.06  139.64  139.75     100.26   8089800</span>
+<span class="go">2000-01-05  139.94  141.53  137.25  140.00     100.44  12177900</span>
+<span class="go">2000-01-06  139.62  141.50  137.75  137.75      98.82   6227200</span>
+</pre></div>
+</div>
+<p>We can also normalize OHLC with the <em>adj_close</em> data column. After normalization,
+the <em>close</em> column will be equal to <em>adj_close</em> , so the latter is omitted from the result.</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="n">df</span> <span class="o">=</span> <span class="n">yf</span><span class="o">.</span><span class="n">getSymbolData</span><span class="p">(</span><span class="s2">&quot;SPY&quot;</span><span class="p">,</span><span class="n">adjust</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="go">Got 4481 days of data</span>
+
+<span class="gp">In [5]: </span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="go">                      Out[5]: </span>
+<span class="go">             close    volume    open    high     low</span>
+<span class="go">Date                                                </span>
+<span class="go">1999-12-31  105.37   3172700  105.35  105.82  104.92</span>
+<span class="go">2000-01-03  104.34   8164300  106.36  106.36  103.22</span>
+<span class="go">2000-01-04  100.26   8089800  102.97  103.35  100.18</span>
+<span class="go">2000-01-05  100.44  12177900  100.39  101.54   98.46</span>
+<span class="go">2000-01-06   98.82   6227200  100.17  101.51   98.82</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="multiple-symbols">
+<h4>Multiple symbols<a class="headerlink" href="#multiple-symbols" title="Permalink to this headline">¶</a></h4>
+<p><code class="xref py py-func docutils literal"><span class="pre">getHistoricData()</span></code> will accept one ore more symbols and download them
+while displaying a progress bar.</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;XLE&#39;</span><span class="p">,</span><span class="s1">&#39;USO&#39;</span><span class="p">,</span><span class="s1">&#39;SPY&#39;</span><span class="p">]</span>
+
+<span class="gp">In [7]: </span><span class="n">data</span> <span class="o">=</span> <span class="n">yf</span><span class="o">.</span><span class="n">getHistoricData</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span>
+<span class="go">Downloading data:</span>
+
+<span class="go"> [                       0%                       ]</span>
+<span class="go"> [**********************67%*******                ]  2 of 3 complete</span>
+<span class="go"> [*********************100%***********************]  3 of 3 complete</span>
+</pre></div>
+</div>
+<p>The data will be a multi-index DataFrame:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+<span class="gh">Out[8]: </span><span class="go"></span>
+<span class="go">MultiIndex(levels=[[&#39;SPY&#39;, &#39;USO&#39;, &#39;XLE&#39;], [&#39;open&#39;, &#39;high&#39;, &#39;low&#39;, &#39;close&#39;, &#39;adj_close&#39;, &#39;volume&#39;]],</span>
+<span class="go">           labels=[[0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2], [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5]],</span>
+<span class="go">           names=[&#39;symbol&#39;, &#39;ohlcv&#39;])</span>
+</pre></div>
+</div>
+<p>To select  a symbol, simply use</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;SPY&#39;</span><span class="p">]</span>
+<span class="gh">Out[9]: </span><span class="go"></span>
+<span class="go">ohlcv         open    high     low   close  adj_close    volume</span>
+<span class="go">Date                                                           </span>
+<span class="go">1999-12-31  146.84  147.50  146.25  146.88     105.37   3172700</span>
+<span class="go">2000-01-03  148.25  148.25  143.88  145.44     104.34   8164300</span>
+<span class="go">2000-01-04  143.53  144.06  139.64  139.75     100.26   8089800</span>
+<span class="go">...            ...     ...     ...     ...        ...       ...</span>
+<span class="go">2017-10-18  255.90  255.95  255.50  255.72     255.72  40888300</span>
+<span class="go">2017-10-19  254.83  255.83  254.35  255.79     255.79  61903800</span>
+<span class="go">2017-10-20  256.70  257.14  255.77  257.11     257.11  82477300</span>
+
+<span class="go">[4481 rows x 6 columns]</span>
+</pre></div>
+</div>
+<p>Or with cross-section (see <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/advanced.html">Advanced indexing</a>)</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">data</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="s1">&#39;close&#39;</span><span class="p">,</span><span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gh">Out[10]: </span><span class="go"></span>
+<span class="go">symbol         SPY    USO    XLE</span>
+<span class="go">Date                            </span>
+<span class="go">1999-12-31  146.88    NaN  27.09</span>
+<span class="go">2000-01-03  145.44    NaN  26.56</span>
+<span class="go">2000-01-04  139.75    NaN  26.06</span>
+<span class="go">...            ...    ...    ...</span>
+<span class="go">2017-10-18  255.72  10.48  67.85</span>
+<span class="go">2017-10-19  255.79  10.35  67.64</span>
+<span class="go">2017-10-20  257.11  10.43  67.77</span>
+
+<span class="go">[4481 rows x 3 columns]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="getting-current-quotes">
+<h4>Getting current quotes<a class="headerlink" href="#getting-current-quotes" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="xref py py-func docutils literal"><span class="pre">getQuote()</span></code> is used to get current quote</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">quote</span> <span class="o">=</span> <span class="n">yf</span><span class="o">.</span><span class="n">getQuote</span><span class="p">([</span><span class="s1">&#39;SPY&#39;</span><span class="p">,</span><span class="s1">&#39;XLE&#39;</span><span class="p">,</span><span class="s1">&#39;QQQ&#39;</span><span class="p">])</span>
+
+<span class="gp">In [12]: </span><span class="n">quote</span>
+<span class="gh">Out[12]: </span><span class="go"></span>
+<span class="go">     PE change_pct    eps    last  market_cap  prev_close  short_ratio    time</span>
+<span class="go">SPY NaN     +0.52%  27.45  257.11         NaN      255.79          NaN  4:00pm</span>
+<span class="go">XLE NaN     +0.19%  11.33   67.77         NaN       67.64          NaN  4:00pm</span>
+<span class="go">QQQ NaN     +0.27%  17.77  148.71         NaN      148.31          NaN  4:00pm</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">YahooFinance quotes may be delayed for more than 15 minutes</p>
+</div>
+</div>
+</div>
+<div class="section" id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="tradingWithPython.lib.yahooFinance.getSymbolData">
+<code class="descclassname">tradingWithPython.lib.yahooFinance.</code><code class="descname">getSymbolData</code><span class="sig-paren">(</span><em>symbol</em>, <em>sDate=(2000</em>, <em>1</em>, <em>1)</em>, <em>adjust=False</em>, <em>verbose=True</em>, <em>dumpDest=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tradingWithPython/lib/yahooFinance.html#getSymbolData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tradingWithPython.lib.yahooFinance.getSymbolData" title="Permalink to this definition">¶</a></dt>
+<dd><p>get data from Yahoo finance and return pandas dataframe</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>symbol</strong> : str</p>
+<blockquote>
+<div><p>Yahoo finanance symbol</p>
+</div></blockquote>
+<p><strong>sDate</strong> : tuple , default (2000,1,1)</p>
+<blockquote>
+<div><p>start date (y,m,d)</p>
+</div></blockquote>
+<p><strong>adjust</strong> : bool , default False</p>
+<blockquote>
+<div><p>use adjusted close values to correct OHLC. adj_close will be ommited</p>
+</div></blockquote>
+<p><strong>verbose</strong> : bool , default True</p>
+<blockquote>
+<div><p>print output</p>
+</div></blockquote>
+<p><strong>dumpDest</strong> : str, default None</p>
+<blockquote>
+<div><p>dump raw data for debugging</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataFrame</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tradingWithPython.lib.yahooFinance.getHistoricData">
+<code class="descclassname">tradingWithPython.lib.yahooFinance.</code><code class="descname">getHistoricData</code><span class="sig-paren">(</span><em>symbols</em>, <em>**options</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tradingWithPython/lib/yahooFinance.html#getHistoricData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tradingWithPython.lib.yahooFinance.getHistoricData" title="Permalink to this definition">¶</a></dt>
+<dd><p>get data from Yahoo finance and return pandas dataframe
+Will get OHLCV data frame if sinle symbol is provided.
+If many symbols are provided, it will return a wide panel</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>symbols</strong> : str or list</p>
+<blockquote>
+<div><p>Yahoo finanance symbol or a list of symbols</p>
+</div></blockquote>
+<p><strong>sDate</strong> : tuple  (optional)</p>
+<blockquote>
+<div><p>start date (y,m,d)</p>
+</div></blockquote>
+<p><strong>adjust</strong> : bool</p>
+<blockquote>
+<div><p>T/[F] adjust data based on adj_close</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataFrame, multi-index</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#interactive-brokers-historic-data">Interactive Brokers historic data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#running-script">Running script</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-tickLogger">Interactive Brokers tick data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Running script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#yahoo-finance">Yahoo Finance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="backtest.html">Backtesting</a></li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/historicData.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="backtest.html" title="Backtesting"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to TradingWithPython documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Trading With Python  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Jev Kuznetsov.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

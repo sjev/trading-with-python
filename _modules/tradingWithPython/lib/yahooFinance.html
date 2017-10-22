@@ -1,0 +1,481 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>tradingWithPython.lib.yahooFinance &#8212; Trading With Python  documentation</title>
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Trading With Python  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tradingWithPython.lib.yahooFinance</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1"># Author: Jev Kuznetsov &lt;jev.kuznetsov@gmail.com&gt;</span>
+<span class="c1"># License: BSD</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">.. ipython:: python</span>
+<span class="sd">    :suppress:</span>
+<span class="sd">        </span>
+<span class="sd">    import pandas as pd</span>
+<span class="sd">    np.set_printoptions(precision=2, suppress=True)</span>
+<span class="sd">    pd.options.display.max_rows= 6</span>
+
+
+<span class="sd">Yahoo Finance </span>
+<span class="sd">====================</span>
+
+
+<span class="sd">This module enables easy access to data provided by Yahoo Finance.</span>
+
+<span class="sd">.. note::</span>
+<span class="sd">    </span>
+<span class="sd">    This service may stop without notice, Yahoo does not seem to like people accessing their</span>
+<span class="sd">    data automatically. Breaking the service already happened in early 2017. This module includes </span>
+<span class="sd">    a workaround that works ... for now. </span>
+
+
+<span class="sd">Getting historic data</span>
+<span class="sd">-----------------------</span>
+
+<span class="sd">The module is usually imported as follows:</span>
+
+<span class="sd">.. ipython:: python</span>
+
+<span class="sd">   from tradingWithPython import yahooFinance as yf</span>
+
+<span class="sd">Singe symbol</span>
+<span class="sd">---------------------</span>
+<span class="sd">   </span>
+<span class="sd">Then, to get raw yahoo finance data for a symbol use :func:`~lib.yahooFinance.getSymbolData`</span>
+
+<span class="sd">.. ipython:: python</span>
+
+<span class="sd">   df = yf.getSymbolData(&quot;SPY&quot;)</span>
+<span class="sd">   df.head()</span>
+<span class="sd">   </span>
+<span class="sd">We can also normalize OHLC with the *adj_close* data column. After normalization,</span>
+<span class="sd">the *close* column will be equal to *adj_close* , so the latter is omitted from the result.</span>
+
+<span class="sd">.. ipython:: python</span>
+
+<span class="sd">    df = yf.getSymbolData(&quot;SPY&quot;,adjust=True)</span>
+<span class="sd">    df.head()</span>
+<span class="sd">    </span>
+<span class="sd">Multiple symbols</span>
+<span class="sd">-------------------------</span>
+
+<span class="sd">:func:`~lib.yahooFinance.getHistoricData` will accept one ore more symbols and download them</span>
+<span class="sd">while displaying a progress bar.</span>
+
+<span class="sd">.. ipython:: python</span>
+<span class="sd">    </span>
+<span class="sd">    symbols = [&#39;XLE&#39;,&#39;USO&#39;,&#39;SPY&#39;]</span>
+<span class="sd">    data = yf.getHistoricData(symbols)</span>
+<span class="sd">    </span>
+<span class="sd">The data will be a multi-index DataFrame:</span>
+
+<span class="sd">.. ipython:: python</span>
+
+<span class="sd">    data.columns</span>
+
+<span class="sd">To select  a symbol, simply use</span>
+
+<span class="sd">.. ipython:: python</span>
+<span class="sd">    </span>
+<span class="sd">    data[&#39;SPY&#39;]</span>
+<span class="sd">    </span>
+
+<span class="sd">Or with cross-section (see `Advanced indexing &lt;https://pandas.pydata.org/pandas-docs/stable/advanced.html&gt;`_)</span>
+<span class="sd">    </span>
+<span class="sd">.. ipython:: python</span>
+
+<span class="sd">    data.xs(&#39;close&#39;,level=1,axis=1)</span>
+<span class="sd">    </span>
+
+<span class="sd">    </span>
+<span class="sd">Getting current quotes</span>
+<span class="sd">-----------------------</span>
+
+<span class="sd">The :func:`~lib.yahooFinance.getQuote` is used to get current quote </span>
+
+<span class="sd">.. ipython:: python</span>
+
+<span class="sd">    quote = yf.getQuote([&#39;SPY&#39;,&#39;XLE&#39;,&#39;QQQ&#39;])</span>
+<span class="sd">    quote</span>
+<span class="sd">    </span>
+<span class="sd">.. note::</span>
+
+<span class="sd">    YahooFinance quotes may be delayed for more than 15 minutes</span>
+
+<span class="sd">  </span>
+<span class="sd">   </span>
+<span class="sd">Functions</span>
+<span class="sd">==========</span>
+
+<span class="sd">.. autofunction:: tradingWithPython.lib.yahooFinance.getSymbolData</span>
+<span class="sd">.. autofunction:: tradingWithPython.lib.yahooFinance.getHistoricData</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">requests</span> <span class="c1"># interaction with the web</span>
+<span class="kn">import</span> <span class="nn">os</span>  <span class="c1">#  file system operations</span>
+<span class="kn">import</span> <span class="nn">yaml</span> <span class="c1"># human-friendly data format</span>
+<span class="kn">import</span> <span class="nn">re</span>  <span class="c1"># regular expressions</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span> <span class="c1"># pandas... the best time series library out there</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="k">as</span> <span class="nn">dt</span> <span class="c1"># date and time functions</span>
+<span class="kn">import</span> <span class="nn">io</span>
+
+<span class="kn">from</span> <span class="nn">tradingWithPython.lib.extra</span> <span class="k">import</span> <span class="n">ProgressBar</span>
+
+<span class="n">dateTimeFormat</span> <span class="o">=</span> <span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span>
+
+<span class="k">def</span> <span class="nf">parseStr</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; convert string to a float or string &#39;&#39;&#39;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">f</span><span class="o">==</span><span class="s1">&#39;N/A&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span> <span class="c1"># try float conversion</span>
+            <span class="n">prefixes</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;M&#39;</span><span class="p">:</span><span class="mf">1e6</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="mf">1e9</span><span class="p">}</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span> <span class="c1"># do we have a Billion/Million character?</span>
+                <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">f</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">*</span><span class="n">prefixes</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>                       <span class="c1"># no, convert to float directly</span>
+                <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span> <span class="c1"># failed, return original string</span>
+            <span class="k">return</span> <span class="n">s</span>
+
+
+
+<span class="k">def</span> <span class="nf">getQuote</span><span class="p">(</span><span class="n">symbols</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    get current yahoo quote</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -----------</span>
+<span class="sd">    symbols : list of str</span>
+<span class="sd">        list of ticker symbols</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -----------</span>
+<span class="sd">    DataFrame , data is row-wise</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># for codes see: http://www.gummy-stuff.org/Yahoo-data.htm</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="n">symbols</span><span class="p">]</span>
+
+
+    <span class="n">header</span> <span class="o">=</span>               <span class="p">[</span><span class="s1">&#39;symbol&#39;</span><span class="p">,</span><span class="s1">&#39;last&#39;</span><span class="p">,</span><span class="s1">&#39;change_pct&#39;</span><span class="p">,</span><span class="s1">&#39;PE&#39;</span><span class="p">,</span><span class="s1">&#39;time&#39;</span><span class="p">,</span><span class="s1">&#39;short_ratio&#39;</span><span class="p">,</span><span class="s1">&#39;prev_close&#39;</span><span class="p">,</span><span class="s1">&#39;eps&#39;</span><span class="p">,</span><span class="s1">&#39;market_cap&#39;</span><span class="p">]</span>
+    <span class="n">request</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">,</span>     <span class="s1">&#39;l1&#39;</span><span class="p">,</span>     <span class="s1">&#39;p2&#39;</span>  <span class="p">,</span>   <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;t1&#39;</span><span class="p">,</span>     <span class="s1">&#39;s7&#39;</span><span class="p">,</span>        <span class="s1">&#39;p&#39;</span><span class="p">,</span>       <span class="s1">&#39;e&#39;</span>     <span class="p">,</span> <span class="s1">&#39;j1&#39;</span><span class="p">])</span>
+
+
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">header</span><span class="p">,[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">))])))</span>
+
+    <span class="n">urlStr</span> <span class="o">=</span> <span class="s1">&#39;http://finance.yahoo.com/d/quotes.csv?s=</span><span class="si">%s</span><span class="s1">&amp;f=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="n">symbols</span><span class="p">),</span> <span class="n">request</span><span class="p">)</span>
+
+    
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">urlStr</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="c1">#print fields, len(fields)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">field</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fields</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">header</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">parseStr</span><span class="p">(</span><span class="n">field</span><span class="p">))</span>
+
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;symbol&#39;</span><span class="p">)</span>
+
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="getHistoricData"><a class="viewcode-back" href="../../../yahooFinance.html#tradingWithPython.lib.yahooFinance.getHistoricData">[docs]</a><span class="k">def</span> <span class="nf">getHistoricData</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    get data from Yahoo finance and return pandas dataframe</span>
+<span class="sd">    Will get OHLCV data frame if sinle symbol is provided.</span>
+<span class="sd">    If many symbols are provided, it will return a wide panel</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ------------</span>
+<span class="sd">    symbols : str or list</span>
+<span class="sd">        Yahoo finanance symbol or a list of symbols</span>
+<span class="sd">    sDate : tuple  (optional)</span>
+<span class="sd">        start date (y,m,d)</span>
+<span class="sd">    adjust : bool</span>
+<span class="sd">        T/[F] adjust data based on adj_close</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ---------</span>
+<span class="sd">    DataFrame, multi-index</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">symbols</span><span class="p">,(</span><span class="nb">list</span><span class="p">,</span><span class="nb">str</span><span class="p">)),</span> <span class="s1">&#39;Input must be a string symbol or a list of symbols&#39;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">getSymbolData</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Downloading data:&#39;</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">ProgressBar</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">symbols</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span><span class="n">symbol</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">symbols</span><span class="p">):</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="n">getSymbolData</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;symbol&#39;</span><span class="p">,</span><span class="s1">&#39;ohlcv&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="getSymbolData"><a class="viewcode-back" href="../../../yahooFinance.html#tradingWithPython.lib.yahooFinance.getSymbolData">[docs]</a><span class="k">def</span> <span class="nf">getSymbolData</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">sDate</span><span class="o">=</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">adjust</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dumpDest</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    get data from Yahoo finance and return pandas dataframe</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -----------</span>
+<span class="sd">    symbol : str</span>
+<span class="sd">        Yahoo finanance symbol</span>
+<span class="sd">    sDate : tuple , default (2000,1,1)</span>
+<span class="sd">        start date (y,m,d)</span>
+<span class="sd">    adjust : bool , default False</span>
+<span class="sd">        use adjusted close values to correct OHLC. adj_close will be ommited</span>
+<span class="sd">    verbose : bool , default True</span>
+<span class="sd">        print output</span>
+<span class="sd">    dumpDest : str, default None</span>
+<span class="sd">        dump raw data for debugging</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ---------</span>
+<span class="sd">        DataFrame</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">period1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="o">*</span><span class="n">sDate</span><span class="p">)</span><span class="o">.</span><span class="n">timestamp</span><span class="p">())</span> <span class="c1"># convert to seconds since epoch</span>
+    <span class="n">period2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">())</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">period1</span><span class="p">,</span> <span class="n">period2</span><span class="p">,</span> <span class="n">_token</span><span class="p">[</span><span class="s1">&#39;crumb&#39;</span><span class="p">])</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://query1.finance.yahoo.com/v7/finance/download/</span><span class="si">{0}</span><span class="s2">?period1=</span><span class="si">{1}</span><span class="s2">&amp;period2=</span><span class="si">{2}</span><span class="s2">&amp;interval=1d&amp;events=history&amp;crumb=</span><span class="si">{3}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">cookies</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;B&#39;</span><span class="p">:</span><span class="n">_token</span><span class="p">[</span><span class="s1">&#39;cookie&#39;</span><span class="p">]})</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span> <span class="c1"># raise error in case of bad request</span>
+
+    <span class="k">if</span> <span class="n">dumpDest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fName</span> <span class="o">=</span> <span class="n">symbol</span><span class="o">+</span><span class="s1">&#39;_dump.csv&#39;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dumpDest</span><span class="p">,</span> <span class="n">fName</span><span class="p">),</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="n">buf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="c1"># create a buffer</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span><span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">na_values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;null&#39;</span><span class="p">])</span> <span class="c1"># convert to pandas DataFrame</span>
+
+    <span class="c1"># rename columns</span>
+    <span class="n">newNames</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="n">renames</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span><span class="n">newNames</span><span class="p">))</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">renames</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">((</span><span class="s1">&#39;Got </span><span class="si">%i</span><span class="s1"> days of data&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)))</span>
+
+    <span class="k">if</span> <span class="n">adjust</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_adjust</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">removeOrig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">_adjust</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">removeOrig</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">  _adjustust hist data based on adj_close field</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;close&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;adj_close&#39;</span><span class="p">]</span>
+
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;adj_open&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;open&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">c</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;adj_high&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;high&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">c</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;adj_low&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;low&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">c</span>
+
+    <span class="k">if</span> <span class="n">removeOrig</span><span class="p">:</span>
+        <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;open&#39;</span><span class="p">,</span><span class="s1">&#39;close&#39;</span><span class="p">,</span><span class="s1">&#39;high&#39;</span><span class="p">,</span><span class="s1">&#39;low&#39;</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">renames</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;adj_open&#39;</span><span class="p">,</span><span class="s1">&#39;adj_close&#39;</span><span class="p">,</span><span class="s1">&#39;adj_high&#39;</span><span class="p">,</span><span class="s1">&#39;adj_low&#39;</span><span class="p">],[</span><span class="s1">&#39;open&#39;</span><span class="p">,</span><span class="s1">&#39;close&#39;</span><span class="p">,</span><span class="s1">&#39;high&#39;</span><span class="p">,</span><span class="s1">&#39;low&#39;</span><span class="p">])))</span>
+        <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">renames</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span> <span class="nf">loadToken</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    get cookie and crumb from APPL page or disk.</span>
+<span class="sd">    force = overwrite disk data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">refreshDays</span> <span class="o">=</span> <span class="mi">30</span> <span class="c1"># refreh cookie every x days</span>
+
+    <span class="c1"># set destinatioin file</span>
+    <span class="n">dataDir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/twpData&#39;</span>
+    <span class="n">dataFile</span> <span class="o">=</span> <span class="n">dataFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataDir</span><span class="p">,</span><span class="s1">&#39;yahoo_cookie.yml&#39;</span><span class="p">)</span>
+
+    <span class="k">try</span> <span class="p">:</span> <span class="c1"># load file from disk</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">dataFile</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">))</span>
+        <span class="n">age</span> <span class="o">=</span> <span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">-</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span>  <span class="n">data</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">],</span> <span class="n">dateTimeFormat</span><span class="p">)</span> <span class="p">)</span><span class="o">.</span><span class="n">days</span>
+        <span class="k">assert</span> <span class="n">age</span> <span class="o">&lt;</span> <span class="n">refreshDays</span><span class="p">,</span> <span class="s1">&#39;cookie too old&#39;</span>
+
+    <span class="k">except</span> <span class="p">(</span><span class="ne">AssertionError</span><span class="p">,</span><span class="ne">FileNotFoundError</span><span class="p">):</span>     <span class="c1"># file not found</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dataDir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">dataDir</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">getToken</span><span class="p">(</span><span class="n">dataFile</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span> <span class="nf">getToken</span><span class="p">(</span><span class="n">fName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; get cookie and crumb from yahoo &quot;&quot;&quot;</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://uk.finance.yahoo.com/quote/AAPL/history&#39;</span> <span class="c1"># url for a ticker symbol, with a download link</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>  <span class="c1"># download page</span>
+
+    <span class="n">txt</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">text</span> <span class="c1"># extract html</span>
+
+    <span class="n">cookie</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">cookies</span><span class="p">[</span><span class="s1">&#39;B&#39;</span><span class="p">]</span> <span class="c1"># the cooke we&#39;re looking for is named &#39;B&#39;</span>
+
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;.*&quot;CrumbStore&quot;:\{&quot;crumb&quot;:&quot;(?P&lt;crumb&gt;[^&quot;]+)&quot;\}&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">txt</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">crumb</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">groupdict</span><span class="p">()[</span><span class="s1">&#39;crumb&#39;</span><span class="p">]</span>
+
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span> <span class="c1"># check for succesful download</span>
+
+    <span class="c1"># save to disk</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;crumb&#39;</span><span class="p">:</span> <span class="n">crumb</span><span class="p">,</span> <span class="s1">&#39;cookie&#39;</span><span class="p">:</span><span class="n">cookie</span><span class="p">,</span> <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">dateTimeFormat</span><span class="p">)}</span>
+
+    <span class="k">if</span> <span class="n">fName</span>  <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># save to file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fName</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+            <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">fid</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="c1">#-------------- get token</span>
+<span class="n">_token</span> <span class="o">=</span> <span class="n">loadToken</span><span class="p">()</span> <span class="c1"># get token from disk or yahoo</span>
+
+<span class="c1">#--------------tests------------</span>
+<span class="c1"># to be executed with pytest</span>
+
+
+<span class="k">def</span> <span class="nf">test_getToken</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; download token &#39;&#39;&#39;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;getting token&#39;</span><span class="p">)</span>
+    <span class="n">getToken</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">test_initToken</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; remove and get token &#39;&#39;&#39;</span>
+    <span class="n">dataDir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/twpData&#39;</span>
+    <span class="n">dataFile</span> <span class="o">=</span> <span class="n">dataFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataDir</span><span class="p">,</span><span class="s1">&#39;yahoo_cookie.yml&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dataFile</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">dataFile</span><span class="p">)</span>
+
+    <span class="n">loadToken</span><span class="p">()</span>
+
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dataFile</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">test_download</span><span class="p">():</span>
+
+    <span class="n">vxx</span> <span class="o">=</span> <span class="n">getSymbolData</span><span class="p">(</span><span class="s1">&#39;SPY&#39;</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">vxx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">4000</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../historicData.html">Getting data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../backtest.html">Backtesting</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Trading With Python  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Jev Kuznetsov.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

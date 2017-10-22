@@ -1,0 +1,216 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Backtesting &#8212; Trading With Python  documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Getting data" href="historicData.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="historicData.html" title="Getting data"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Trading With Python  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="backtesting">
+<h1>Backtesting<a class="headerlink" href="#backtesting" title="Permalink to this headline">¶</a></h1>
+<p>Strategy simulation often includes going through same steps : determining entry and exit moments, calculating number of shares capital and pnl. To limit the number of lines of code needed to perform a backtest, the <em>twp</em> library includes a simple backtesting module.</p>
+<p>The <em>backtest</em> module is a very simple version of a vectorized backtester. It can be used as a stand-alone module without the rest of the <em>tradingWithPython</em> library.</p>
+<p>All of the functionality is accessible through the <em>Backtest</em> class, which will be demonstrated here.</p>
+<p>The backtester needs an instrument price and entry/exit signals to do its job. Let’s start by creating simple data series to test it.</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">import</span> <span class="nn">tradingWithPython</span> <span class="kn">as</span> <span class="nn">twp</span>
+
+<span class="gp">In [2]: </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+
+<span class="gp">In [3]: </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</pre></div>
+</div>
+<div class="section" id="backtest-class">
+<h2>Backtest class<a class="headerlink" href="#backtest-class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="tradingWithPython.lib.backtest.Backtest">
+<em class="property">class </em><code class="descclassname">tradingWithPython.lib.backtest.</code><code class="descname">Backtest</code><span class="sig-paren">(</span><em>price</em>, <em>signal</em>, <em>signalType='capital'</em>, <em>initialCash=0</em>, <em>roundShares=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tradingWithPython/lib/backtest.html#Backtest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tradingWithPython.lib.backtest.Backtest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simple vectorized backtester. Works with pandas objects.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="34%" />
+<col width="66%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>trades</strong></td>
+<td>(Series) trade data</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">plotTrades</span></code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="tradingWithPython.lib.backtest.Backtest.plotTrades">
+<code class="descname">plotTrades</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tradingWithPython/lib/backtest.html#Backtest.plotTrades"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tradingWithPython.lib.backtest.Backtest.plotTrades" title="Permalink to this definition">¶</a></dt>
+<dd><p>visualise trades on the price chart 
+long entry : green triangle up
+short entry : red triangle down
+exit : black circle</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tradingWithPython.lib.backtest.Backtest.pnl">
+<code class="descname">pnl</code><a class="headerlink" href="#tradingWithPython.lib.backtest.Backtest.pnl" title="Permalink to this definition">¶</a></dt>
+<dd><p>easy access to pnl data column</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tradingWithPython.lib.backtest.Backtest.sharpe">
+<code class="descname">sharpe</code><a class="headerlink" href="#tradingWithPython.lib.backtest.Backtest.sharpe" title="Permalink to this definition">¶</a></dt>
+<dd><p>return annualized sharpe ratio of the pnl</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="tradingWithPython.lib.backtest.tradeBracket">
+<code class="descclassname">tradingWithPython.lib.backtest.</code><code class="descname">tradeBracket</code><span class="sig-paren">(</span><em>price</em>, <em>entryBar</em>, <em>upper=None</em>, <em>lower=None</em>, <em>timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tradingWithPython/lib/backtest.html#tradeBracket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tradingWithPython.lib.backtest.tradeBracket" title="Permalink to this definition">¶</a></dt>
+<dd><p>trade a  bracket on price series, return price delta and exit bar #</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>price</strong> : np.array</p>
+<blockquote>
+<div><p>array of price values</p>
+</div></blockquote>
+<p><strong>entryBar</strong> : int</p>
+<blockquote>
+<div><p>entry bar number, <em>determines entry price</em></p>
+</div></blockquote>
+<p><strong>upper</strong> : float</p>
+<blockquote>
+<div><p>high stop</p>
+</div></blockquote>
+<p><strong>lower</strong> : float</p>
+<blockquote>
+<div><p>low stop</p>
+</div></blockquote>
+<p><strong>timeout</strong> : int</p>
+<blockquote>
+<div><p>max number of periods to hold</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">exit price  and number of bars held</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="historicData.html">Getting data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Backtesting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#backtest-class">Backtest class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/backtest.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="historicData.html" title="Getting data"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Trading With Python  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Jev Kuznetsov.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

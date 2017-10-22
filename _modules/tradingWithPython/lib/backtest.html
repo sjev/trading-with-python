@@ -1,0 +1,456 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>tradingWithPython.lib.backtest &#8212; Trading With Python  documentation</title>
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Trading With Python  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tradingWithPython.lib.backtest</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">#-------------------------------------------------------------------------------</span>
+<span class="sd"># Name:        backtest</span>
+<span class="sd"># Purpose:     perform routine backtesting  tasks. </span>
+<span class="sd">#              This module should be useable as a stand-alone library outide of the TWP package.</span>
+<span class="sd">#</span>
+<span class="sd"># Author:      Jev Kuznetsov</span>
+<span class="sd">#</span>
+<span class="sd"># Created:     03/07/2014</span>
+<span class="sd"># Copyright:   (c) Jev Kuznetsov 2013</span>
+<span class="sd"># Licence:     BSD</span>
+<span class="sd">#-------------------------------------------------------------------------------</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+
+
+<div class="viewcode-block" id="tradeBracket"><a class="viewcode-back" href="../../../backtest.html#tradingWithPython.lib.backtest.tradeBracket">[docs]</a><span class="k">def</span> <span class="nf">tradeBracket</span><span class="p">(</span><span class="n">price</span><span class="p">,</span><span class="n">entryBar</span><span class="p">,</span><span class="n">upper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    trade a  bracket on price series, return price delta and exit bar #</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    --------------</span>
+<span class="sd">    price : np.array </span>
+<span class="sd">        array of price values</span>
+<span class="sd">    entryBar : int</span>
+<span class="sd">        entry bar number, *determines entry price*</span>
+<span class="sd">    upper : float </span>
+<span class="sd">        high stop</span>
+<span class="sd">    lower : float </span>
+<span class="sd">        low stop</span>
+<span class="sd">    timeout : int </span>
+<span class="sd">        max number of periods to hold</span>
+
+<span class="sd">    Returns </span>
+<span class="sd">    ------------    </span>
+<span class="sd">    exit price  and number of bars held</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">price</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="p">,</span> <span class="s1">&#39;price must be a numpy array&#39;</span>
+    
+    
+    <span class="c1"># create list of exit indices and add max trade duration. Exits are relative to entry bar</span>
+    <span class="k">if</span> <span class="n">timeout</span><span class="p">:</span> <span class="c1"># set trade length to timeout or series length</span>
+        <span class="n">exits</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">price</span><span class="p">)</span><span class="o">-</span><span class="n">entryBar</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">exits</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">price</span><span class="p">)</span><span class="o">-</span><span class="n">entryBar</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> 
+        
+    <span class="n">p</span> <span class="o">=</span> <span class="n">price</span><span class="p">[</span><span class="n">entryBar</span><span class="p">:</span><span class="n">entryBar</span><span class="o">+</span><span class="n">exits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="c1"># subseries of price</span>
+    
+    <span class="c1"># extend exits list with conditional exits</span>
+    <span class="c1"># check upper bracket</span>
+    <span class="k">if</span> <span class="n">upper</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">upper</span><span class="o">&gt;</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">,</span> <span class="s1">&#39;Upper bracket must be higher than entry price &#39;</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">p</span><span class="o">&gt;</span><span class="n">upper</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># find where price is higher than the upper bracket</span>
+        <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">any</span><span class="p">():</span> 
+            <span class="n">exits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="c1"># append first occurence</span>
+    <span class="c1"># same for lower bracket</span>
+    <span class="k">if</span> <span class="n">lower</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">lower</span><span class="o">&lt;</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">,</span> <span class="s1">&#39;Lower bracket must be lower than entry price &#39;</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">p</span><span class="o">&lt;</span><span class="n">lower</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">any</span><span class="p">():</span> 
+            <span class="n">exits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> 
+   
+    
+    <span class="n">exitBar</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">exits</span><span class="p">)</span> <span class="c1"># choose first exit    </span>
+  
+    
+
+    <span class="k">return</span> <span class="n">p</span><span class="p">[</span><span class="n">exitBar</span><span class="p">],</span> <span class="n">exitBar</span></div>
+
+
+<div class="viewcode-block" id="Backtest"><a class="viewcode-back" href="../../../backtest.html#tradingWithPython.lib.backtest.Backtest">[docs]</a><span class="k">class</span> <span class="nc">Backtest</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple vectorized backtester. Works with pandas objects.</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes</span>
+<span class="sd">    -----------</span>
+<span class="sd">    trades : Series</span>
+<span class="sd">        trade data</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">price</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">signalType</span><span class="o">=</span><span class="s1">&#39;capital&#39;</span><span class="p">,</span><span class="n">initialCash</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">roundShares</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        price :  Series </span>
+<span class="sd">            instrument price.</span>
+<span class="sd">        signal : Series </span>
+<span class="sd">            capital to invest (long+,short-) or number of shares. </span>
+<span class="sd">        sitnalType : &#39;capital&#39; or &#39;shares&#39;</span>
+<span class="sd">            capital to bet or number of shares &#39;capital&#39; mode is default.</span>
+<span class="sd">        initialCash : float</span>
+<span class="sd">            starting cash. </span>
+<span class="sd">        roundShares : bool </span>
+<span class="sd">            round off number of shares to integers</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1">#TODO: add auto rebalancing</span>
+        
+        <span class="c1"># check for correct input</span>
+        <span class="k">assert</span> <span class="n">signalType</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;capital&#39;</span><span class="p">,</span><span class="s1">&#39;shares&#39;</span><span class="p">],</span> <span class="s2">&quot;Wrong signal type provided, must be &#39;capital&#39; or &#39;shares&#39;&quot;</span>
+        
+        <span class="c1">#save internal settings to a dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;signalType&#39;</span><span class="p">:</span><span class="n">signalType</span><span class="p">}</span>
+        
+        <span class="c1"># first thing to do is to clean up the signal, removing nans and duplicate entries or exits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        
+        <span class="c1"># now find dates with a trade</span>
+        <span class="n">tradeIdx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">!=</span><span class="mi">0</span> <span class="c1"># days with trades are set to True</span>
+        <span class="k">if</span> <span class="n">signalType</span> <span class="o">==</span> <span class="s1">&#39;shares&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trades</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal</span><span class="p">[</span><span class="n">tradeIdx</span><span class="p">]</span> <span class="c1"># selected rows where tradeDir changes value. trades are in Shares</span>
+        <span class="k">elif</span> <span class="n">signalType</span> <span class="o">==</span><span class="s1">&#39;capital&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trades</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal</span><span class="p">[</span><span class="n">tradeIdx</span><span class="p">]</span><span class="o">/</span><span class="n">price</span><span class="p">[</span><span class="n">tradeIdx</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">roundShares</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">trades</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trades</span><span class="o">.</span><span class="n">round</span><span class="p">()</span>
+        
+        <span class="c1"># now create internal data structure </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">price</span><span class="o">.</span><span class="n">index</span> <span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">,</span><span class="s1">&#39;shares&#39;</span><span class="p">,</span><span class="s1">&#39;value&#39;</span><span class="p">,</span><span class="s1">&#39;cash&#39;</span><span class="p">,</span><span class="s1">&#39;pnl&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">price</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;shares&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trades</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;shares&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">]</span>
+       
+        <span class="n">delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;shares&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span> <span class="c1"># shares bought sold</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;cash&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">delta</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span><span class="o">+</span><span class="n">initialCash</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;pnl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;cash&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">initialCash</span>
+      
+      
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sharpe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; return annualized sharpe ratio of the pnl &quot;&quot;&quot;</span>
+        <span class="n">pnl</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;pnl&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">diff</span><span class="p">())</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;shares&#39;</span><span class="p">]</span><span class="o">!=</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># use only days with position.</span>
+        <span class="k">return</span> <span class="n">sharpe</span><span class="p">(</span><span class="n">pnl</span><span class="p">)</span>  <span class="c1"># need the diff here as sharpe works on daily returns.</span>
+        
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pnl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; easy access to pnl data column &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;pnl&#39;</span><span class="p">]</span>
+    
+<div class="viewcode-block" id="Backtest.plotTrades"><a class="viewcode-back" href="../../../backtest.html#tradingWithPython.lib.backtest.Backtest.plotTrades">[docs]</a>    <span class="k">def</span> <span class="nf">plotTrades</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        visualise trades on the price chart </span>
+<span class="sd">        long entry : green triangle up</span>
+<span class="sd">        short entry : red triangle down</span>
+<span class="sd">        exit : black circle</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">]</span>
+        
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">]</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s1">&#39;x-&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># ---plot markers</span>
+        <span class="c1"># this works, but I rather prefer colored markers for each day of position rather than entry-exit signals</span>
+<span class="c1">#         indices = {&#39;g^&#39;: self.trades[self.trades &gt; 0].index , </span>
+<span class="c1">#                    &#39;ko&#39;:self.trades[self.trades == 0].index, </span>
+<span class="c1">#                    &#39;rv&#39;:self.trades[self.trades &lt; 0].index}</span>
+<span class="c1">#        </span>
+<span class="c1">#         </span>
+<span class="c1">#         for style, idx in indices.iteritems():</span>
+<span class="c1">#             if len(idx) &gt; 0:</span>
+<span class="c1">#                 p[idx].plot(style=style)</span>
+        
+        <span class="c1"># --- plot trades</span>
+        <span class="c1">#colored line for long positions</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;shares&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;shares&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> 
+        <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">p</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s1">&#39;go&#39;</span><span class="p">)</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;long&#39;</span><span class="p">)</span>
+        
+        <span class="c1">#colored line for short positions    </span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;shares&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;shares&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> 
+        <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">p</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s1">&#39;ro&#39;</span><span class="p">)</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;short&#39;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">p</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span> <span class="c1"># show full axis</span>
+        
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">l</span><span class="p">,</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;trades&#39;</span><span class="p">)</span></div></div>
+        
+        
+<span class="k">class</span> <span class="nc">ProgressBar</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span> <span class="o">=</span> <span class="n">iterations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_bar</span> <span class="o">=</span> <span class="s1">&#39;[]&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fill_char</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mi">50</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__update_amount</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iteration</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&#39;</span><span class="p">,</span><span class="bp">self</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_iteration</span><span class="p">(</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elapsed_iter</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__update_amount</span><span class="p">((</span><span class="n">elapsed_iter</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="p">))</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_bar</span> <span class="o">+=</span> <span class="s1">&#39;  </span><span class="si">%d</span><span class="s1"> of </span><span class="si">%s</span><span class="s1"> complete&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">elapsed_iter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__update_amount</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_amount</span><span class="p">):</span>
+        <span class="n">percent_done</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="n">new_amount</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">))</span>
+        <span class="n">all_full</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="mi">2</span>
+        <span class="n">num_hashes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="n">percent_done</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">all_full</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_bar</span> <span class="o">=</span> <span class="s1">&#39;[&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fill_char</span> <span class="o">*</span> <span class="n">num_hashes</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">all_full</span> <span class="o">-</span> <span class="n">num_hashes</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;]&#39;</span>
+        <span class="n">pct_place</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_bar</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">percent_done</span><span class="p">))</span>
+        <span class="n">pct_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">percent_done</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_bar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_bar</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">pct_place</span><span class="p">]</span> <span class="o">+</span> \
+            <span class="p">(</span><span class="n">pct_string</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_bar</span><span class="p">[</span><span class="n">pct_place</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">pct_string</span><span class="p">):])</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_bar</span><span class="p">)</span>
+    
+<span class="k">def</span> <span class="nf">sharpe</span><span class="p">(</span><span class="n">pnl</span><span class="p">):</span>
+    <span class="k">return</span>  <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">250</span><span class="p">)</span><span class="o">*</span><span class="n">pnl</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">/</span><span class="n">pnl</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+
+<span class="c1">#-------------dummy class</span>
+<span class="k">class</span> <span class="nc">ExampleClass</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The summary line for a class docstring should fit on one line.</span>
+
+<span class="sd">    If the class has public attributes, they may be documented here</span>
+<span class="sd">    in an ``Attributes`` section and follow the same formatting as a</span>
+<span class="sd">    function&#39;s ``Args`` section. Alternatively, attributes may be documented</span>
+<span class="sd">    inline with the attribute&#39;s declaration (see __init__ method below).</span>
+
+<span class="sd">    Properties created with the ``@property`` decorator should be documented</span>
+<span class="sd">    in the property&#39;s getter method.</span>
+
+<span class="sd">    Attribute and property types -- if given -- should be specified according</span>
+<span class="sd">    to `PEP 484`_, though `PEP 484`_ conformance isn&#39;t required or enforced.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    attr1 : str</span>
+<span class="sd">        Description of `attr1`.</span>
+<span class="sd">    attr2 : Optional[int]</span>
+<span class="sd">        Description of `attr2`.</span>
+
+
+<span class="sd">    .. _PEP 484:</span>
+<span class="sd">       https://www.python.org/dev/peps/pep-0484/</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">,</span> <span class="n">param3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Example of docstring on the __init__ method.</span>
+
+<span class="sd">        The __init__ method may be documented in either the class level</span>
+<span class="sd">        docstring, or as a docstring on the __init__ method itself.</span>
+
+<span class="sd">        Either form is acceptable, but the two should not be mixed. Choose one</span>
+<span class="sd">        convention to document the __init__ method and be consistent with it.</span>
+
+<span class="sd">        Note</span>
+<span class="sd">        ----</span>
+<span class="sd">        Do not include the `self` parameter in the ``Parameters`` section.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        param1 : str</span>
+<span class="sd">            Description of `param1`.</span>
+<span class="sd">        param2 : List[str]</span>
+<span class="sd">            Description of `param2`. Multiple</span>
+<span class="sd">            lines are supported.</span>
+<span class="sd">        param3 : Optional[int]</span>
+<span class="sd">            Description of `param3`.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attr1</span> <span class="o">=</span> <span class="n">param1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attr2</span> <span class="o">=</span> <span class="n">param2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attr3</span> <span class="o">=</span> <span class="n">param3</span>  <span class="c1">#: Doc comment *inline* with attribute</span>
+
+        <span class="c1">#: List[str]: Doc comment *before* attribute, with type specified</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attr4</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;attr4&quot;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">attr5</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="sd">&quot;&quot;&quot;Optional[str]: Docstring *after* attribute, with type specified.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">readonly_property</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;str: Properties should be documented in their getter method.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;readonly_property&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">readwrite_property</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List[str]: Properties with both a getter and setter should only</span>
+<span class="sd">        be documented in their getter method.</span>
+
+<span class="sd">        If the setter method contains notable behavior, it should be</span>
+<span class="sd">        mentioned here.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;readwrite_property&quot;</span><span class="p">]</span>
+
+    <span class="nd">@readwrite_property</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">readwrite_property</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">example_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Class methods are similar to regular functions.</span>
+
+<span class="sd">        Note</span>
+<span class="sd">        ----</span>
+<span class="sd">        Do not include the `self` parameter in the ``Parameters`` section.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        param1</span>
+<span class="sd">            The first parameter.</span>
+<span class="sd">        param2</span>
+<span class="sd">            The second parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if successful, False otherwise.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">__special__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;By default special members with docstrings are included.</span>
+
+<span class="sd">        Special members are any methods or attributes that start with and</span>
+<span class="sd">        end with a double underscore. Any special member with a docstring</span>
+<span class="sd">        will be included in the output.</span>
+
+<span class="sd">        This behavior can be disabled by changing the following setting in</span>
+<span class="sd">        Sphinx&#39;s conf.py::</span>
+
+<span class="sd">            napoleon_include_special_with_doc = False</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">__special_without_docstring__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_private</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;By default private members are not included.</span>
+
+<span class="sd">        Private members are any methods or attributes that start with an</span>
+<span class="sd">        underscore and are *not* special. By default they are not included</span>
+<span class="sd">        in the output.</span>
+
+<span class="sd">        This behavior can be changed such that private members *are* included</span>
+<span class="sd">        by changing the following setting in Sphinx&#39;s conf.py::</span>
+
+<span class="sd">            napoleon_include_private_with_doc = True</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_private_without_docstring</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../historicData.html">Getting data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../backtest.html">Backtesting</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Trading With Python  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Jev Kuznetsov.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

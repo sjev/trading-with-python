@@ -5,8 +5,108 @@
 
 
 """
-Toolset working with yahoo finance data
-Module includes functions for easy access to YahooFinance data
+
+.. ipython:: python
+    :suppress:
+        
+    import pandas as pd
+    np.set_printoptions(precision=2, suppress=True)
+    pd.options.display.max_rows= 6
+
+
+Yahoo Finance 
+====================
+
+
+This module enables easy access to data provided by Yahoo Finance.
+
+.. note::
+    
+    This service may stop without notice, Yahoo does not seem to like people accessing their
+    data automatically. Breaking the service already happened in early 2017. This module includes 
+    a workaround that works ... for now. 
+
+
+Getting historic data
+-----------------------
+
+The module is usually imported as follows:
+
+.. ipython:: python
+
+   from tradingWithPython import yahooFinance as yf
+
+Singe symbol
+---------------------
+   
+Then, to get raw yahoo finance data for a symbol use :func:`~lib.yahooFinance.getSymbolData`
+
+.. ipython:: python
+
+   df = yf.getSymbolData("SPY")
+   df.head()
+   
+We can also normalize OHLC with the *adj_close* data column. After normalization,
+the *close* column will be equal to *adj_close* , so the latter is omitted from the result.
+
+.. ipython:: python
+
+    df = yf.getSymbolData("SPY",adjust=True)
+    df.head()
+    
+Multiple symbols
+-------------------------
+
+:func:`~lib.yahooFinance.getHistoricData` will accept one ore more symbols and download them
+while displaying a progress bar.
+
+.. ipython:: python
+    
+    symbols = ['XLE','USO','SPY']
+    data = yf.getHistoricData(symbols)
+    
+The data will be a multi-index DataFrame:
+
+.. ipython:: python
+
+    data.columns
+
+To select  a symbol, simply use
+
+.. ipython:: python
+    
+    data['SPY']
+    
+
+Or with cross-section (see `Advanced indexing <https://pandas.pydata.org/pandas-docs/stable/advanced.html>`_)
+    
+.. ipython:: python
+
+    data.xs('close',level=1,axis=1)
+    
+
+    
+Getting current quotes
+-----------------------
+
+The :func:`~lib.yahooFinance.getQuote` is used to get current quote 
+
+.. ipython:: python
+
+    quote = yf.getQuote(['SPY','XLE','QQQ'])
+    quote
+    
+.. note::
+
+    YahooFinance quotes may be delayed for more than 15 minutes
+
+  
+   
+Functions
+==========
+
+.. autofunction:: tradingWithPython.lib.yahooFinance.getSymbolData
+.. autofunction:: tradingWithPython.lib.yahooFinance.getHistoricData
 
 """
 
@@ -23,7 +123,7 @@ import pandas as pd # pandas... the best time series library out there
 import datetime as dt # date and time functions
 import io
 
-from .extra import ProgressBar
+from tradingWithPython.lib.extra import ProgressBar
 
 dateTimeFormat = "%Y%m%d %H:%M:%S"
 
@@ -126,7 +226,7 @@ def getHistoricData(symbols, **options):
             p.animate(idx+1)
             data[symbol] = getSymbolData(symbol,verbose=False,**options)
 
-        return pd.concat(data,axis=1)
+        return pd.concat(data,axis=1, names=['symbol','ohlcv'])
 
 def getSymbolData(symbol, sDate=(2000,1,1), adjust=False, verbose=True, dumpDest=None):
     """
@@ -178,9 +278,9 @@ def getSymbolData(symbol, sDate=(2000,1,1), adjust=False, verbose=True, dumpDest
         print(('Got %i days of data' % len(df)))
 
     if adjust:
-        return _adjust(df,removeOrig=True)
+        return _adjust(df,removeOrig=True).round(2)
     else:
-        return df
+        return df.round(2)
 
 def _adjust(df, removeOrig=False):
     '''

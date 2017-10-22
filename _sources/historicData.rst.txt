@@ -25,6 +25,7 @@ Interactive Brokers tick data
 
 
 
-
+Yahoo Finance data
+=======================
 
 .. automodule:: yahooFinance

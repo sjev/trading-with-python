@@ -8,7 +8,11 @@ tests for yahooFinance module
 
 import tradingWithPython.lib.yahooFinance as yf
 
-symbols = ['SPY','XLE','VXX']
+symbols = ['COP','SPY','VXX']
+
+import os
+if not os.path.exists('debug'):
+    os.mkdir('debug')
 
 
 def test_quote():
@@ -16,3 +20,17 @@ def test_quote():
     print(quote)
     
     assert quote.shape == (3,8)
+
+
+def test_histData():
+
+    # one symbol
+    hData = yf.getHistoricData(symbols[0], dumpDest='debug')
+    hData.pct_change() # try a calculation. Will result in an error if data is rotten.
+    
+    
+    assert hData.shape[1] == 6 
+    assert hData.shape[0] > 100
+       
+    hData = yf.getHistoricData(symbols)
+    

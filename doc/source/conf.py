@@ -32,7 +32,7 @@ for p in ['..','../../lib','../../tools/getHistData','../../tools/tickLogger']:
 print('Path:')
 print(sys.path)
 
-import getData 
+import getData
 
 # -- General configuration ------------------------------------------------
 
@@ -45,7 +45,7 @@ import getData
 
 
 #extensions = ['sphinx.ext.autodoc','sphinx.ext.napoleon','sphinx.ext.viewcode','sphinx.ext.autosummary']
-# 
+#
 #extensions = [  'sphinx.ext.viewcode','sphinx.ext.autodoc','numpydoc', 'sphinx.ext.autosummary' ]
 
 extensions = [
@@ -59,7 +59,7 @@ extensions = [
     'sphinxarg.ext'
 ]
 
-# supress warnings during toctree generation. 
+# supress warnings during toctree generation.
 numpydoc_class_members_toctree = False
 
 

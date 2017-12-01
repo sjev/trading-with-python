@@ -133,21 +133,7 @@
 <span class="sd">    </span>
 
 <span class="sd">    </span>
-<span class="sd">Getting current quotes</span>
-<span class="sd">-----------------------</span>
 
-<span class="sd">The :func:`~lib.yahooFinance.getQuote` is used to get current quote </span>
-
-<span class="sd">.. ipython:: python</span>
-
-<span class="sd">    quote = yf.getQuote([&#39;SPY&#39;,&#39;XLE&#39;,&#39;QQQ&#39;])</span>
-<span class="sd">    quote</span>
-<span class="sd">    </span>
-<span class="sd">.. note::</span>
-
-<span class="sd">    YahooFinance quotes may be delayed for more than 15 minutes</span>
-
-<span class="sd">  </span>
 <span class="sd">   </span>
 <span class="sd">Functions</span>
 <span class="sd">==========</span>
@@ -196,51 +182,10 @@
 
 
 
-<span class="k">def</span> <span class="nf">getQuote</span><span class="p">(</span><span class="n">symbols</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    get current yahoo quote</span>
+<span class="c1">#def getQuote(symbols): has been disabled by Yahoo :-(</span>
+ 
 
-<span class="sd">    Parameters</span>
-<span class="sd">    -----------</span>
-<span class="sd">    symbols : list of str</span>
-<span class="sd">        list of ticker symbols</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -----------</span>
-<span class="sd">    DataFrame , data is row-wise</span>
-
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># for codes see: http://www.gummy-stuff.org/Yahoo-data.htm</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
-        <span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="n">symbols</span><span class="p">]</span>
-
-
-    <span class="n">header</span> <span class="o">=</span>               <span class="p">[</span><span class="s1">&#39;symbol&#39;</span><span class="p">,</span><span class="s1">&#39;last&#39;</span><span class="p">,</span><span class="s1">&#39;change_pct&#39;</span><span class="p">,</span><span class="s1">&#39;PE&#39;</span><span class="p">,</span><span class="s1">&#39;time&#39;</span><span class="p">,</span><span class="s1">&#39;short_ratio&#39;</span><span class="p">,</span><span class="s1">&#39;prev_close&#39;</span><span class="p">,</span><span class="s1">&#39;eps&#39;</span><span class="p">,</span><span class="s1">&#39;market_cap&#39;</span><span class="p">]</span>
-    <span class="n">request</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">,</span>     <span class="s1">&#39;l1&#39;</span><span class="p">,</span>     <span class="s1">&#39;p2&#39;</span>  <span class="p">,</span>   <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;t1&#39;</span><span class="p">,</span>     <span class="s1">&#39;s7&#39;</span><span class="p">,</span>        <span class="s1">&#39;p&#39;</span><span class="p">,</span>       <span class="s1">&#39;e&#39;</span>     <span class="p">,</span> <span class="s1">&#39;j1&#39;</span><span class="p">])</span>
-
-
-    <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">header</span><span class="p">,[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">))])))</span>
-
-    <span class="n">urlStr</span> <span class="o">=</span> <span class="s1">&#39;http://finance.yahoo.com/d/quotes.csv?s=</span><span class="si">%s</span><span class="s1">&amp;f=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="n">symbols</span><span class="p">),</span> <span class="n">request</span><span class="p">)</span>
-
-    
-    <span class="n">lines</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">urlStr</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
-
-    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
-        <span class="n">fields</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
-        <span class="c1">#print fields, len(fields)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">field</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fields</span><span class="p">):</span>
-            <span class="n">data</span><span class="p">[</span><span class="n">header</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">parseStr</span><span class="p">(</span><span class="n">field</span><span class="p">))</span>
-
-    <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;symbol&#39;</span><span class="p">)</span>
-
-
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="getHistoricData"><a class="viewcode-back" href="../../../historicData.html#tradingWithPython.lib.yahooFinance.getHistoricData">[docs]</a><span class="k">def</span> <span class="nf">getHistoricData</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+<div class="viewcode-block" id="getHistoricData"><a class="viewcode-back" href="../../../yahooFinance.html#tradingWithPython.lib.yahooFinance.getHistoricData">[docs]</a><span class="k">def</span> <span class="nf">getHistoricData</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    get data from Yahoo finance and return pandas dataframe</span>
 <span class="sd">    Will get OHLCV data frame if sinle symbol is provided.</span>
@@ -275,7 +220,7 @@
 
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;symbol&#39;</span><span class="p">,</span><span class="s1">&#39;ohlcv&#39;</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="getSymbolData"><a class="viewcode-back" href="../../../historicData.html#tradingWithPython.lib.yahooFinance.getSymbolData">[docs]</a><span class="k">def</span> <span class="nf">getSymbolData</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">sDate</span><span class="o">=</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">adjust</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dumpDest</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="getSymbolData"><a class="viewcode-back" href="../../../yahooFinance.html#tradingWithPython.lib.yahooFinance.getSymbolData">[docs]</a><span class="k">def</span> <span class="nf">getSymbolData</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">sDate</span><span class="o">=</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">adjust</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dumpDest</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    get data from Yahoo finance and return pandas dataframe</span>
 

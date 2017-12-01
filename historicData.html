@@ -24,7 +24,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Backtesting" href="backtest.html" />
-    <link rel="prev" title="Welcome to TradingWithPython documentation!" href="index.html" /> 
+    <link rel="prev" title="Plotting" href="plotting.html" /> 
   </head>
   <body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -40,7 +40,7 @@
           <a href="backtest.html" title="Backtesting"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="Welcome to TradingWithPython documentation!"
+          <a href="plotting.html" title="Plotting"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Trading With Python  documentation</a> &#187;</li> 
       </ul>
@@ -155,7 +155,7 @@ a workaround that works … for now.</p>
 <h4>Singe symbol<a class="headerlink" href="#singe-symbol" title="Permalink to this headline">¶</a></h4>
 <p>Then, to get raw yahoo finance data for a symbol use <code class="xref py py-func docutils literal"><span class="pre">getSymbolData()</span></code></p>
 <div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [2]: </span><span class="n">df</span> <span class="o">=</span> <span class="n">yf</span><span class="o">.</span><span class="n">getSymbolData</span><span class="p">(</span><span class="s2">&quot;SPY&quot;</span><span class="p">)</span>
-<span class="go">Got 4481 days of data</span>
+<span class="go">Got 4510 days of data</span>
 
 <span class="gp">In [3]: </span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="go">                      Out[3]: </span>
@@ -171,7 +171,7 @@ a workaround that works … for now.</p>
 <p>We can also normalize OHLC with the <em>adj_close</em> data column. After normalization,
 the <em>close</em> column will be equal to <em>adj_close</em> , so the latter is omitted from the result.</p>
 <div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="n">df</span> <span class="o">=</span> <span class="n">yf</span><span class="o">.</span><span class="n">getSymbolData</span><span class="p">(</span><span class="s2">&quot;SPY&quot;</span><span class="p">,</span><span class="n">adjust</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="go">Got 4481 days of data</span>
+<span class="go">Got 4510 days of data</span>
 
 <span class="gp">In [5]: </span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="go">                      Out[5]: </span>
@@ -210,17 +210,17 @@ while displaying a progress bar.</p>
 <p>To select  a symbol, simply use</p>
 <div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;SPY&#39;</span><span class="p">]</span>
 <span class="gh">Out[9]: </span><span class="go"></span>
-<span class="go">ohlcv         open    high     low   close  adj_close    volume</span>
-<span class="go">Date                                                           </span>
-<span class="go">1999-12-31  146.84  147.50  146.25  146.88     105.37   3172700</span>
-<span class="go">2000-01-03  148.25  148.25  143.88  145.44     104.34   8164300</span>
-<span class="go">2000-01-04  143.53  144.06  139.64  139.75     100.26   8089800</span>
-<span class="go">...            ...     ...     ...     ...        ...       ...</span>
-<span class="go">2017-10-18  255.90  255.95  255.50  255.72     255.72  40888300</span>
-<span class="go">2017-10-19  254.83  255.83  254.35  255.79     255.79  61903800</span>
-<span class="go">2017-10-20  256.70  257.14  255.77  257.11     257.11  82477300</span>
+<span class="go">ohlcv         open    high     low   close  adj_close     volume</span>
+<span class="go">Date                                                            </span>
+<span class="go">1999-12-31  146.84  147.50  146.25  146.88     105.37    3172700</span>
+<span class="go">2000-01-03  148.25  148.25  143.88  145.44     104.34    8164300</span>
+<span class="go">2000-01-04  143.53  144.06  139.64  139.75     100.26    8089800</span>
+<span class="go">...            ...     ...     ...     ...        ...        ...</span>
+<span class="go">2017-11-29  263.02  263.63  262.20  262.71     262.71   77512100</span>
+<span class="go">2017-11-30  263.76  266.05  263.67  265.01     265.01  122980900</span>
+<span class="go">2017-12-01  264.76  265.31  260.79  264.46     264.46  147858445</span>
 
-<span class="go">[4481 rows x 6 columns]</span>
+<span class="go">[4510 rows x 6 columns]</span>
 </pre></div>
 </div>
 <p>Or with cross-section (see <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/advanced.html">Advanced indexing</a>)</p>
@@ -232,30 +232,12 @@ while displaying a progress bar.</p>
 <span class="go">2000-01-03  145.44    NaN  26.56</span>
 <span class="go">2000-01-04  139.75    NaN  26.06</span>
 <span class="go">...            ...    ...    ...</span>
-<span class="go">2017-10-18  255.72  10.48  67.85</span>
-<span class="go">2017-10-19  255.79  10.35  67.64</span>
-<span class="go">2017-10-20  257.11  10.43  67.77</span>
+<span class="go">2017-11-29  262.71  11.47  68.08</span>
+<span class="go">2017-11-30  265.01  11.47  69.10</span>
+<span class="go">2017-12-01  264.46  11.67  69.68</span>
 
-<span class="go">[4481 rows x 3 columns]</span>
+<span class="go">[4510 rows x 3 columns]</span>
 </pre></div>
-</div>
-</div>
-<div class="section" id="getting-current-quotes">
-<h4>Getting current quotes<a class="headerlink" href="#getting-current-quotes" title="Permalink to this headline">¶</a></h4>
-<p>The <code class="xref py py-func docutils literal"><span class="pre">getQuote()</span></code> is used to get current quote</p>
-<div class="highlight-ipython"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">quote</span> <span class="o">=</span> <span class="n">yf</span><span class="o">.</span><span class="n">getQuote</span><span class="p">([</span><span class="s1">&#39;SPY&#39;</span><span class="p">,</span><span class="s1">&#39;XLE&#39;</span><span class="p">,</span><span class="s1">&#39;QQQ&#39;</span><span class="p">])</span>
-
-<span class="gp">In [12]: </span><span class="n">quote</span>
-<span class="gh">Out[12]: </span><span class="go"></span>
-<span class="go">     PE change_pct    eps    last  market_cap  prev_close  short_ratio    time</span>
-<span class="go">SPY NaN     +0.52%  27.45  257.11         NaN      255.79          NaN  4:00pm</span>
-<span class="go">XLE NaN     +0.19%  11.33   67.77         NaN       67.64          NaN  4:00pm</span>
-<span class="go">QQQ NaN     +0.27%  17.77  148.71         NaN      148.31          NaN  4:00pm</span>
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">YahooFinance quotes may be delayed for more than 15 minutes</p>
 </div>
 </div>
 </div>
@@ -341,6 +323,7 @@ If many symbols are provided, it will return a wide panel</p>
         <div class="sphinxsidebarwrapper">
 <h3><a href="index.html">Table Of Contents</a></h3>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Getting data</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#interactive-brokers-historic-data">Interactive Brokers historic data</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#running-script">Running script</a></li>
@@ -394,7 +377,7 @@ If many symbols are provided, it will return a wide panel</p>
           <a href="backtest.html" title="Backtesting"
              >next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="Welcome to TradingWithPython documentation!"
+          <a href="plotting.html" title="Plotting"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Trading With Python  documentation</a> &#187;</li> 
       </ul>

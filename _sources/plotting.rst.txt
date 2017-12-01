@@ -1,0 +1,8 @@
+==================
+Plotting
+==================
+
+.. automodule:: plotting
+
+
+.. autoclass:: tradingWithPython.lib.plotting.Plot

@@ -13,14 +13,15 @@ Welcome to TradingWithPython documentation!
 
 .. note::
 
-    This documentation corresponds to the master branch on the github. 
-    Please clone from `git` instead of installing from `PyPi` 
+    This documentation corresponds to the master branch on the github.
+    Please clone from `git` instead of installing from `PyPi`
 
 Contents:
 
 .. toctree::
     :maxdepth: 3
-   
+
+    plotting
     historicData
     backtest
 
@@ -35,4 +36,3 @@ Indices and tables
     * :ref:`genindex`
     * :ref:`modindex`
     * :ref:`search`
-

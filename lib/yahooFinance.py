@@ -86,21 +86,7 @@ Or with cross-section (see `Advanced indexing <https://pandas.pydata.org/pandas-
     
 
     
-Getting current quotes
------------------------
 
-The :func:`~lib.yahooFinance.getQuote` is used to get current quote 
-
-.. ipython:: python
-
-    quote = yf.getQuote(['SPY','XLE','QQQ'])
-    quote
-    
-.. note::
-
-    YahooFinance quotes may be delayed for more than 15 minutes
-
-  
    
 Functions
 ==========
@@ -149,49 +135,8 @@ def parseStr(s):
 
 
 
-def getQuote(symbols):
-    """
-    get current yahoo quote
-
-    Parameters
-    -----------
-    symbols : list of str
-        list of ticker symbols
-
-    Returns
-    -----------
-    DataFrame , data is row-wise
-
-
-    """
-
-    # for codes see: http://www.gummy-stuff.org/Yahoo-data.htm
-    if not isinstance(symbols,list):
-        symbols = [symbols]
-
-
-    header =               ['symbol','last','change_pct','PE','time','short_ratio','prev_close','eps','market_cap']
-    request = str.join('', ['s',     'l1',     'p2'  ,   'r', 't1',     's7',        'p',       'e'     , 'j1'])
-
-
-    data = dict(list(zip(header,[[] for i in range(len(header))])))
-
-    urlStr = 'http://finance.yahoo.com/d/quotes.csv?s=%s&f=%s' % (str.join('+',symbols), request)
-
-    
-    lines = urllib.request.urlopen(urlStr).readlines()
-
-    for line in lines:
-        fields = line.decode().strip().split(',')
-        #print fields, len(fields)
-        for i,field in enumerate(fields):
-            data[header[i]].append( parseStr(field))
-
-    idx = data.pop('symbol')
-
-
-    return pd.DataFrame(data,index=idx)
-
+#def getQuote(symbols): has been disabled by Yahoo :-(
+ 
 
 def getHistoricData(symbols, **options):
     '''

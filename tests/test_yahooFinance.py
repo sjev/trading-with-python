@@ -14,12 +14,10 @@ import os
 if not os.path.exists('debug'):
     os.mkdir('debug')
 
-
-def test_quote():
-    quote = yf.getQuote(symbols)
-    print(quote)
+def test_token():
     
-    assert quote.shape == (3,8)
+    data = yf.getToken()
+    
 
 
 def test_histData():
@@ -33,4 +31,5 @@ def test_histData():
     assert hData.shape[0] > 100
        
     hData = yf.getHistoricData(symbols)
-    
+   
+

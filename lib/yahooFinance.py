@@ -98,7 +98,6 @@ Functions
 
 
 
-import urllib.request
 import numpy as np
 
 import requests # interaction with the web
@@ -108,6 +107,7 @@ import re  # regular expressions
 import pandas as pd # pandas... the best time series library out there
 import datetime as dt # date and time functions
 import io
+from time import sleep
 
 from tradingWithPython.lib.extra import ProgressBar
 
@@ -138,7 +138,7 @@ def parseStr(s):
 #def getQuote(symbols): has been disabled by Yahoo :-(
  
 
-def getHistoricData(symbols, **options):
+def getHistoricData(symbols, delay=0.5, **options):
     '''
     get data from Yahoo finance and return pandas dataframe
     Will get OHLCV data frame if sinle symbol is provided.
@@ -170,6 +170,7 @@ def getHistoricData(symbols, **options):
         for idx,symbol in enumerate(symbols):
             p.animate(idx+1)
             data[symbol] = getSymbolData(symbol,verbose=False,**options)
+            sleep(delay)
 
         return pd.concat(data,axis=1, names=['symbol','ohlcv'])
 

@@ -63,7 +63,7 @@ def getPutCallRatio():
         
     
 
-def getHistoricData(symbols =  ['VIX','VXV','VXMT','VVIX']):
+def getHistoricData(symbols =  ['VIX','VIX3M','VXMT','VVIX']):
     ''' get historic data from CBOE
        
         return dataframe
@@ -72,12 +72,13 @@ def getHistoricData(symbols =  ['VIX','VXV','VXMT','VVIX']):
         symbols = [symbols]
     
     urls = {'VIX':'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/vixcurrent.csv',
-            'VXV':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/vxvdailyprices.csv',
+            'VXV':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/vix3mdailyprices.csv', # VXV has been replaced by VIX3M
             'VXMT':'http://www.cboe.com/publish/ScheduledTask/MktData/datahouse/vxmtdailyprices.csv',
-            'VVIX':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/VVIXtimeseries.csv'}
+            'VVIX':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/VVIXtimeseries.csv',
+            'VIX3M':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/vix3mdailyprices.csv'}
     
-    startLines = {'VIX':1,'VXV':2,'VXMT':2,'VVIX':1}
-    cols = {'VIX':'VIX Close','VXV':'CLOSE','VXMT':'Close','VVIX':'VVIX'}
+    startLines = {'VIX':1,'VXV':2,'VIX3M':2,'VXMT':2,'VVIX':1}
+    cols = {'VIX':'VIX Close','VXV':'CLOSE','VXMT':'Close','VVIX':'VVIX','VIX3M':'CLOSE'}
     
     data = {}
   

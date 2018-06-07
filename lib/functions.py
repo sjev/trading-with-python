@@ -428,6 +428,34 @@ def getDataSources(fName = None):
 
     return dataSources
 
+def extractFuture(signal,trigger, n=10):
+    """
+    Extract future series based on trigger signal.
+    Parameters
+    ------------
+    signal : pd.Series 
+        input time series
+    trigger : pd.Series
+        trigger signal, 0-1 values
+    
+    Returns
+    ----------
+    pd.DataFrame
+        rows - future samples, colums - trigger occurences
+    """
+    
+    edges = np.where(trigger.diff() == 1)[0]
+    
+    out = np.zeros((n,len(edges))) # init data
+    out[:] = np.nan
+    
+    for idx, iStart in enumerate(edges):
+        vec = signal.iloc[iStart:min(iStart+n,len(signal))]
+        out[:len(vec),idx] = vec
+    
+
+    return pd.DataFrame(out,columns=edges)
+
 if __name__ == '__main__':
     df = DataFrame({'open':[1,2,3],'high':[5,6,7],'low':[-2,-1,0],'close':[2,1,4]})
     plt.clf()

@@ -24,7 +24,7 @@ def copyFiles(sourceDir,targetDir,includes=None):
 
 sourceDir = 'lib'
 targetDir = 'dist/tradingWithPython/lib'
-includes = ['__init__','cboe','csvDatabase','functions','yahooFinance','extra','bats','backtest']
+includes = ['__init__','cboe','csvDatabase','functions','yahooFinance','extra','bats','backtest','plotting']
 
 DEST = 'dist/tradingWithPython'
 

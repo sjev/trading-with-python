@@ -168,6 +168,9 @@ class VixFuture(object):
             return self.data[attr]
         else:
             raise AttributeError('Unknown attribute '+attr)
+            
+    def __dir__(self):
+        return self.data.keys()
     
     def __repr__(self):
         return 'VX future [%i-%i %s] Exprires: %s' % (self.year,self.month,monthCode(self.month),

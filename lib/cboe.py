@@ -11,6 +11,7 @@ from pandas.tseries import offsets
 import numpy as np
 import pandas as pd
 import os
+from urllib import request
 
 def _loadExpirationDates():
     """ load expiration dates from file """
@@ -121,20 +122,52 @@ class VixFuture(object):
     Class for easy handling of futures data.
     """    
     
-    def __init__(self,year,month):
+    def __init__(self,year,month,data=None):
         self.year = year
         self.month = month
+        self.data = data
     
     @property
     def expirationDate(self):
         return vixExpiration(self.year,self.month)
     
-    def daysLeft(self,date):
-        """ business days to expiration date """
-        from pandas import  DateRange # this will cause a problem with pandas 0.14 and higher... Method is depreciated and replaced by DatetimeIndex
-
-        r = DateRange(date,self.expirationDate)
-        return len(r)
+    @classmethod
+    def from_file(cls,fName):
+        """ load cboe csv file """
+        data = pd.read_csv(fName,index_col = 0)#.drop('Futures',axis=1)
+        
+        s = fName.stem.split('_')[1]
+        year = 2000+int(s[-2:]) 
+        month = monthCode(s[0])
+        return cls(year,month,data)
+        
+    def getData(self):
+        """ download data from cboe """
+            
+        fName = "CFE_{0}{1}_VX.csv".format(monthCode(self.month),str(self.year)[-2:])
+        urlStr = "http://cfe.cboe.com/Publish/ScheduledTask/MktData/datahouse/{0}".format(fName)
+        
+        # some files have a disclaimer on the first line, so some extra code 
+        # is needed here
+        
+        # find first line with header
+        url = request.urlopen(urlStr)
+        lines = url.readlines()
+        for iLine in range(3):
+            if lines[iLine].split()[0] == b'Trade':
+                break
+        # create stream from bytes
+        from io import BytesIO
+        stream = BytesIO(b''.join(lines[iLine:]))
+        self.data = pd.read_csv(stream,index_col=0)
+        
+        return self.data
+       
+    def __getattr__(self,attr):
+        if attr in self.data.keys():
+            return self.data[attr]
+        else:
+            raise AttributeError('Unknown attribute '+attr)
     
     def __repr__(self):
         return 'VX future [%i-%i %s] Exprires: %s' % (self.year,self.month,monthCode(self.month),

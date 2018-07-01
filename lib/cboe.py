@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import os
 
-def expirationDates():
+def _loadExpirationDates():
     """ load expiration dates from file """
     path = os.path.split(__file__)[0]
     fName=os.path.join(path,'data','vix_expiration.txt')
@@ -26,7 +26,10 @@ def expirationDates():
             s = line.strip().strip('*').strip()
             dates.append(pd.Timestamp.strptime(s,"%d %B %Y"))
 
-    return dates
+    # repack to {(year,month):timestamp}
+    yearmonth = [(d.year,d.month) for d in dates]
+
+    return dict(zip(yearmonth,dates))
 
 
 def monthCode(month):
@@ -47,20 +50,24 @@ def monthCode(month):
         raise ValueError('Function accepts int or str')
     
     
-def vixExpiration(year,month):
+def vixExpiration(year,month,precise=True):
     """
-    expriration date of a VX future
+    expriration date of a VX future. 
+    precise option loads data from file, but is limited
     """
-    t = datetime(year,month,1)+offsets.relativedelta(months=1)
     
-    
-    offset = offsets.Week(weekday=4)
-    if t.weekday()!=4:
-        t_new = t+3*offset
+    if not precise:
+        t = datetime(year,month,1)+offsets.relativedelta(months=1)
+        offset = offsets.Week(weekday=4)
+        if t.weekday()!=4:
+            t_new = t+3*offset
+        else:
+            t_new = t+2*offset    
+        
+        t_exp = t_new-offsets.relativedelta(days=30)
     else:
-        t_new = t+2*offset    
-    
-    t_exp = t_new-offsets.relativedelta(days=30)
+        t_exp =  vixExpirations[(year,month)]
+        
     return t_exp
 
 def getPutCallRatio():
@@ -145,7 +152,10 @@ def testExpiration():
     for month in range(1,13):
         d = vixExpiration(2011,month)
         print(d.strftime("%B, %d %Y (%A)"))    
-
+        
+        
+# variables
+vixExpirations = _loadExpirationDates()
 
 
 if __name__ == '__main__':

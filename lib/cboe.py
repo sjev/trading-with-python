@@ -11,6 +11,22 @@ from pandas import DataFrame, Index
 from pandas.tseries import offsets 
 import numpy as np
 import pandas as pd
+import os
+
+def expirationDates():
+    """ load expiration dates from file """
+    path = os.path.split(__file__)[0]
+    fName=os.path.join(path,'data','vix_expiration.txt')
+    with open(fName,'r') as fid:
+        lines = fid.readlines()
+    
+    dates = []
+    for line in lines:
+        if line[0] != '#':
+            s = line.strip().strip('*').strip()
+            dates.append(pd.Timestamp.strptime(s,"%d %B %Y"))
+
+    return dates
 
 
 def monthCode(month):

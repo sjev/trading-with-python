@@ -5,9 +5,8 @@ toolset working with cboe data
 @author: Jev Kuznetsov
 Licence: BSD
 """
-from datetime import datetime, date
+from datetime import datetime
 import urllib.request, urllib.error, urllib.parse
-from pandas import DataFrame, Index
 from pandas.tseries import offsets 
 import numpy as np
 import pandas as pd
@@ -122,12 +121,11 @@ class VixFuture(object):
     Class for easy handling of futures data.
     """    
     
-        
-    
     def __init__(self,year,month):
         self.year = year
         self.month = month
-        
+    
+    @property
     def expirationDate(self):
         return vixExpiration(self.year,self.month)
     
@@ -135,12 +133,12 @@ class VixFuture(object):
         """ business days to expiration date """
         from pandas import  DateRange # this will cause a problem with pandas 0.14 and higher... Method is depreciated and replaced by DatetimeIndex
 
-        r = DateRange(date,self.expirationDate())
+        r = DateRange(date,self.expirationDate)
         return len(r)
     
     def __repr__(self):
         return 'VX future [%i-%i %s] Exprires: %s' % (self.year,self.month,monthCode(self.month),
-                                                        self.expirationDate())
+                                                        self.expirationDate)
 #-------------------test functions---------------------------------------
 def testDownload():
     vix = getHistoricData('VIX')

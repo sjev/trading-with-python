@@ -114,7 +114,22 @@ def getHistoricData(symbols =  ['VIX','VIX3M','VXMT','VVIX']):
     
     return pd.DataFrame(data)
     
- 
+def parseFutureCsv(stream):
+    """ 
+    parse cboe future csv data
+    input : string object
+    output: DataFrame
+    """
+    lines = stream.readlines()
+    for iLine in range(3):
+        if lines[iLine].split()[0] == b'Trade':
+            break
+    # create stream from bytes
+    from io import BytesIO
+    stream = BytesIO(b''.join(lines[iLine:]))
+    data = pd.read_csv(stream,index_col=0)
+    
+    return data
 
 #---------------------classes--------------------------------------------
 class VixFuture(object):
@@ -134,7 +149,8 @@ class VixFuture(object):
     @classmethod
     def from_file(cls,fName):
         """ load cboe csv file """
-        data = pd.read_csv(fName,index_col = 0)#.drop('Futures',axis=1)
+        
+        data = parseFutureCsv(open(fName,'rb'))
         
         s = fName.stem.split('_')[1]
         year = 2000+int(s[-2:]) 
@@ -143,7 +159,7 @@ class VixFuture(object):
         
     def getData(self):
         """ download data from cboe """
-            
+        print('getting data')   
         fName = "CFE_{0}{1}_VX.csv".format(monthCode(self.month),str(self.year)[-2:])
         urlStr = "http://cfe.cboe.com/Publish/ScheduledTask/MktData/datahouse/{0}".format(fName)
         
@@ -152,16 +168,15 @@ class VixFuture(object):
         
         # find first line with header
         url = request.urlopen(urlStr)
-        lines = url.readlines()
-        for iLine in range(3):
-            if lines[iLine].split()[0] == b'Trade':
-                break
-        # create stream from bytes
-        from io import BytesIO
-        stream = BytesIO(b''.join(lines[iLine:]))
-        self.data = pd.read_csv(stream,index_col=0)
+        self.data = parseFutureCsv(url)
         
         return self.data
+    
+    def _parseData(self, stream):
+        """ load data from stream. used by getData and from_file """
+        
+        
+        
        
     def __getattr__(self,attr):
         if attr in self.data.keys():

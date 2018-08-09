@@ -42,6 +42,8 @@ def monthCode(month):
     """
     codes = ('F','G','H','J','K','M','N','Q','U','V','X','Z')
     
+    assert month>0 , 'Month number must be positive and >0'
+    
     if isinstance(month,int):
         return codes[month-1]
     elif isinstance(month,str):
@@ -146,6 +148,10 @@ class VixFuture(object):
     def expirationDate(self):
         return vixExpiration(self.year,self.month)
     
+    @property 
+    def _filename(self):
+        return 'VX_%d_%02d.csv' % (self.year,self.month)
+    
     @classmethod
     def from_file(cls,fName):
         """ load cboe csv file """
@@ -156,10 +162,32 @@ class VixFuture(object):
         year = 2000+int(s[-2:]) 
         month = monthCode(s[0])
         return cls(year,month,data)
+    
+   
+    def dataExists(self, dataDir):
+        """ check if data file exists """
+        return os.path.exists(os.path.join(dataDir,self._filename))
+    
+    
+    def saveData(self,dataDir):
+        """ save data to csv in given directory. 
+        filename will be generated automatically """
         
+        dest = os.path.join(dataDir,self._filename)
+        self.data.to_csv(dest)
+        
+        return dest
+        
+    def loadData(self,dataDir):
+        """ load data from csv in data directory. 
+        filename will be generated automatically """
+        src = os.path.join(dataDir,self._filename)
+        self.data = pd.read_csv(src, index_col=0)
+        return self.data
+        
+    
     def getData(self):
         """ download data from cboe """
-        print('getting data')   
         fName = "CFE_{0}{1}_VX.csv".format(monthCode(self.month),str(self.year)[-2:])
         urlStr = "http://cfe.cboe.com/Publish/ScheduledTask/MktData/datahouse/{0}".format(fName)
         

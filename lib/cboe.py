@@ -182,12 +182,14 @@ class VixFuture(object):
         """ load data from csv in data directory. 
         filename will be generated automatically """
         src = os.path.join(dataDir,self._filename)
-        self.data = pd.read_csv(src, index_col=0)
+        self.data = pd.read_csv(src, index_col=0,parse_dates=True)
         return self.data
         
     
     def getData(self):
         """ download data from cboe """
+        
+        # TODO: switch to new location: https://markets.cboe.com/us/futures/market_statistics/historical_data/
         fName = "CFE_{0}{1}_VX.csv".format(monthCode(self.month),str(self.year)[-2:])
         urlStr = "http://cfe.cboe.com/Publish/ScheduledTask/MktData/datahouse/{0}".format(fName)
         
@@ -202,9 +204,11 @@ class VixFuture(object):
     
     def _parseData(self, stream):
         """ load data from stream. used by getData and from_file """
-        
-        
-        
+    
+    @property
+    def id(self):
+        """ string id in form YYYY_MM """
+        return '%i_%02d' %( self.year,self.month)
        
     def __getattr__(self,attr):
         if attr in self.data.keys():

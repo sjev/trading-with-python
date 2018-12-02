@@ -169,7 +169,7 @@ def getHistoricData(symbols, delay=0.5, **options):
     else:
         data = {}
         print('Downloading data:')
-        p = IntProgress(min=0,max=len(symbols))
+        p = IntProgress(min=0,max=len(symbols)-1)
         display(p)
         for idx,symbol in enumerate(symbols):
             p.value = idx

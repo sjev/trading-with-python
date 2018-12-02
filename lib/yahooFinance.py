@@ -169,7 +169,12 @@ def getHistoricData(symbols, delay=0.5, **options):
         p = ProgressBar(len(symbols))
         for idx,symbol in enumerate(symbols):
             p.animate(idx+1)
-            data[symbol] = getSymbolData(symbol,verbose=False,**options)
+            try:
+                data[symbol] = getSymbolData(symbol,verbose=False,**options)
+            except Exception as e:
+                print('Failed downloading '+symbol)
+                print(e)
+                
             sleep(delay)
 
         return pd.concat(data,axis=1, names=['symbol','ohlcv'])

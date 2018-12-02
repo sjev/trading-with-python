@@ -110,6 +110,9 @@ import io
 from time import sleep
 
 from tradingWithPython.lib.extra import ProgressBar
+from ipywidgets import IntProgress
+from IPython.display import display
+
 
 dateTimeFormat = "%Y%m%d %H:%M:%S"
 
@@ -166,9 +169,10 @@ def getHistoricData(symbols, delay=0.5, **options):
     else:
         data = {}
         print('Downloading data:')
-        p = ProgressBar(len(symbols))
+        p = IntProgress(min=0,max=len(symbols))
+        display(p)
         for idx,symbol in enumerate(symbols):
-            p.animate(idx+1)
+            p.value = idx
             try:
                 data[symbol] = getSymbolData(symbol,verbose=False,**options)
             except Exception as e:

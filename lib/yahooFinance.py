@@ -224,14 +224,17 @@ def getSymbolData(symbol, sDate=(2000,1,1), adjust=False, verbose=True, dumpDest
     newNames = [c.lower().replace(' ','_') for c in df.columns]
     renames = dict(zip(df.columns,newNames))
     df = df.rename(columns=renames)
-
+    
+    # remove duplicates
+    df = df[~df.index.duplicated(keep='first')] 
+    
     if verbose:
         print(('Got %i days of data' % len(df)))
 
     if adjust:
-        return _adjust(df,removeOrig=True).round(2)
-    else:
-        return df.round(2)
+        df =  _adjust(df,removeOrig=True)
+    
+    return df
 
 def _adjust(df, removeOrig=False):
     '''

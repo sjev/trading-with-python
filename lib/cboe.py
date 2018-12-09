@@ -5,7 +5,7 @@ toolset working with cboe data
 @author: Jev Kuznetsov
 Licence: BSD
 """
-from datetime import datetime
+import datetime as dt
 import urllib.request, urllib.error, urllib.parse
 from pandas.tseries import offsets 
 from dateutil.relativedelta import relativedelta
@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import os
 from urllib import request
+from tradingWithPython import calendar
 
 def _loadExpirationDates():
     """ load expiration dates from file """
@@ -63,7 +64,7 @@ def vixExpiration(year,month):
         t_exp =  vixExpirations[(year,month)]
     except KeyError: # no data present
 
-        t = datetime(year,month,1)+ relativedelta(months=1)
+        t = dt.datetime(year,month,1)+ relativedelta(months=1)
         offset = offsets.Week(weekday=4)
         if t.weekday()!=4:
             t_new = t+3*offset
@@ -165,7 +166,14 @@ class VixFuture(object):
         month = monthCode(s[0])
         return cls(year,month,data)
     
+    def ttl(self,date=None):
+        """ trading days remaining. If date is None, use today """
+        
+        if date is None:
+            date = dt.datetime.now().date()
    
+        return calendar.busday_count(date,self.expirationDate)
+    
     def dataExists(self, dataDir):
         """ check if data file exists """
         return os.path.exists(os.path.join(dataDir,self._filename))
@@ -241,12 +249,6 @@ def testExpiration():
 vixExpirations = _loadExpirationDates()
 
 
-if __name__ == '__main__':
-    
-    #testExpiration()
-    v = VixFuture(2011,11)
-    print(v)
-    
-    print(v.daysLeft(datetime(2011,11,10)))
+
         
     

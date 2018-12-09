@@ -8,6 +8,7 @@ Licence: BSD
 from datetime import datetime
 import urllib.request, urllib.error, urllib.parse
 from pandas.tseries import offsets 
+from dateutil.relativedelta import relativedelta
 import numpy as np
 import pandas as pd
 import os
@@ -52,23 +53,24 @@ def monthCode(month):
         raise ValueError('Function accepts int or str')
     
     
-def vixExpiration(year,month,precise=True):
+def vixExpiration(year,month):
     """
     expriration date of a VX future. 
-    precise option loads data from file, but is limited
+    it first tries to load data from file and if it fails, falls back to calculation
     """
     
-    if not precise:
-        t = datetime(year,month,1)+offsets.relativedelta(months=1)
+    try:
+        t_exp =  vixExpirations[(year,month)]
+    except KeyError: # no data present
+
+        t = datetime(year,month,1)+ relativedelta(months=1)
         offset = offsets.Week(weekday=4)
         if t.weekday()!=4:
             t_new = t+3*offset
         else:
             t_new = t+2*offset    
         
-        t_exp = t_new-offsets.relativedelta(days=30)
-    else:
-        t_exp =  vixExpirations[(year,month)]
+        t_exp = t_new-relativedelta(days=30)
         
     return t_exp
 

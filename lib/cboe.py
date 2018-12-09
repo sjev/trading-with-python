@@ -170,7 +170,7 @@ class VixFuture(object):
         """ trading days remaining. If date is None, use today """
         
         if date is None:
-            date = dt.datetime.now().date()
+            date = pd.Timestamp(dt.datetime.now())
    
         return calendar.busday_count(date,self.expirationDate)
     

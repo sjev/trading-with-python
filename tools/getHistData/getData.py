@@ -149,7 +149,7 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
     print(args)
     # load settings, using global var here
-    SETTINGS = yaml.load(open('settings.yml','r'))
+    SETTINGS = yaml.load(open('settings.yml','r'),Loader=yaml.FullLoader)
     SETTINGS['getSymbols'] = SETTINGS['subscriptions'].keys() if args['symbols']=='all' else args['symbols'].split(',')
     
     SETTINGS['end'] =  args['end'] 

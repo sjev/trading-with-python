@@ -271,7 +271,7 @@ def loadToken():
 
     try : # load file from disk
 
-        data = yaml.load(open(dataFile,'r'))
+        data = yaml.load(open(dataFile,'r'),Loader=yaml.FullLoader)
         age = (dt.datetime.now()- dt.datetime.strptime(  data['timestamp'], dateTimeFormat) ).days
         assert age < refreshDays, 'cookie too old'
 

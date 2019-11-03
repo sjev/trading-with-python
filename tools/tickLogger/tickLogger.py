@@ -165,7 +165,7 @@ if __name__ == '__main__':
     parser = getParser()
     args = parser.parse_args()
  
-    settings = yaml.load(open(args.settings,'r'))
+    settings = yaml.load(open(args.settings,'r'),Loader=yaml.FullLoader)
     
     symbols = list(settings['subscriptions'].keys())
    

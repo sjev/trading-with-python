@@ -24,7 +24,7 @@ def copyFiles(sourceDir,targetDir,includes=None):
 
 sourceDir = 'lib'
 targetDir = 'dist/tradingWithPython/lib'
-includes = ['__init__','cboe','csvDatabase','functions','yahooFinance','extra','bats','backtest','plotting']
+includes = ['__init__','cboe','csvDatabase','functions','yahooFinance','extra','bats','backtest','plotting','calendar']
 
 DEST = 'dist/tradingWithPython'
 
@@ -40,5 +40,8 @@ shutil.copyfile('__init__.py',os.path.join(DEST,'__init__.py'))
 print('-----------lib files---------')
 copyFiles(sourceDir,targetDir,includes)
 print('-----------IB files----------')
-copyFiles(sourceDir+'/interactiveBrokers',targetDir+'/interactiveBrokers')     
+copyFiles(sourceDir+'/interactiveBrokers',targetDir+'/interactiveBrokers')
+print('-----------data files -------')
+os.mkdir('dist/tradingWithPython/lib/data') 
+shutil.copyfile('lib/data/vix_expiration.txt',os.path.join(DEST,'lib/data/vix_expiration.txt'))
 

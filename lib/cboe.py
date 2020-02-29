@@ -26,7 +26,7 @@ def _loadExpirationDates():
     for line in lines:
         if line[0] != '#':
             s = line.strip().strip('*').strip()
-            dates.append(pd.Timestamp.strptime(s,"%d %B %Y"))
+            dates.append(pd.to_datetime(s,format="%d %B %Y"))
 
     # repack to {(year,month):timestamp}
     yearmonth = [(d.year,d.month) for d in dates]

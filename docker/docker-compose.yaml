@@ -6,6 +6,9 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
+      args:
+        - USER_UID=${USER_ID:-1000}
+        - USER_GID=${GROUP_ID:-1000}
     volumes:
       - ../notebooks:/workspaces/notebooks
 

@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  notebook-server:
+    container_name: notebook-server
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+      - ../notebooks:/workspaces/notebooks
+
+    ports:
+      - "8888:8888" # notebook server port
+
+    command: >
+      bash -c "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=/workspaces/notebooks --allow-root"

@@ -44,7 +44,11 @@ RUN chown -R $USERNAME:$USERNAME /notebooks
 # Set the default user. Omit if you want to keep the default as root.
 USER $USERNAME
 
-WORKDIR /notebooks
+# copy notebook settings
+RUN mkdir -p /home/$USERNAME/.jupyter
+COPY jupyter_notebook_config.py /home/$USERNAME/.jupyter/jupyter_notebook_config.py
 
+# finalize
+WORKDIR /notebooks
 
 CMD ["jupyter", "notebook", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root", "--notebook-dir=/notebooks" ]

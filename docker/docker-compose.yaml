@@ -10,10 +10,10 @@ services:
         - USER_UID=${USER_ID:-1000}
         - USER_GID=${GROUP_ID:-1000}
     volumes:
-      - ../notebooks:/workspaces/notebooks
+      - ../notebooks:/notebooks
 
     ports:
       - "8888:8888" # notebook server port
 
-    command: >
-      bash -c "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=/workspaces/notebooks --allow-root"
+    # command: >
+    #   bash -c "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=/notebooks --allow-root"

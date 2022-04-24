@@ -51,4 +51,4 @@ COPY jupyter_notebook_config.py /home/$USERNAME/.jupyter/jupyter_notebook_config
 # finalize
 WORKDIR /notebooks
 
-CMD ["jupyter", "notebook", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root", "--notebook-dir=/notebooks" ]
+CMD ["jupyter", "lab", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root", "--notebook-dir=/notebooks" ]

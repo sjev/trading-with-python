@@ -35,6 +35,10 @@ RUN groupadd --gid $USER_GID $USERNAME \
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
+# create notebook mount point
+RUN mkdir -p /notebooks
+RUN chown -R $USERNAME:$USERNAME /notebooks
+
 
 #  -------------local user -----------------------
 # Set the default user. Omit if you want to keep the default as root.
@@ -43,4 +47,4 @@ USER $USERNAME
 WORKDIR /notebooks
 
 
-CMD ["jupyter", "notebook", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root"]
+CMD ["jupyter", "notebook", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root", "--notebook-dir=/notebooks" ]

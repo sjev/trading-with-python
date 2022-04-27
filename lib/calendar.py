@@ -11,28 +11,36 @@ and pandas docs: https://pandas.pydata.org/pandas-docs/stable/timeseries.html?hi
 
 import numpy as np
 
-from pandas.tseries.holiday import AbstractHolidayCalendar, Holiday, nearest_workday, \
-    USMartinLutherKingJr, USPresidentsDay, GoodFriday, USMemorialDay, \
-    USLaborDay, USThanksgivingDay
+from pandas.tseries.holiday import (
+    AbstractHolidayCalendar,
+    Holiday,
+    nearest_workday,
+    USMartinLutherKingJr,
+    USPresidentsDay,
+    GoodFriday,
+    USMemorialDay,
+    USLaborDay,
+    USThanksgivingDay,
+)
 
 
 class USTradingCalendar(AbstractHolidayCalendar):
     rules = [
-        Holiday('NewYearsDay', month=1, day=1, observance=nearest_workday),
+        Holiday("NewYearsDay", month=1, day=1, observance=nearest_workday),
         USMartinLutherKingJr,
         USPresidentsDay,
         GoodFriday,
         USMemorialDay,
-        Holiday('USIndependenceDay', month=7, day=4, observance=nearest_workday),
+        Holiday("USIndependenceDay", month=7, day=4, observance=nearest_workday),
         USLaborDay,
         USThanksgivingDay,
-        Holiday('Christmas', month=12, day=25, observance=nearest_workday)
+        Holiday("Christmas", month=12, day=25, observance=nearest_workday),
     ]
 
 
 holidays = [d.date() for d in USTradingCalendar().holidays().to_pydatetime()]
 
-def busday_count(startTs,endTs):
-    """ calculate number of business days between two timestamsp """
-    return np.busday_count(startTs.date(),endTs.date(),holidays=holidays)
-    
+
+def busday_count(startTs, endTs):
+    """calculate number of business days between two timestamsp"""
+    return np.busday_count(startTs.date(), endTs.date(), holidays=holidays)

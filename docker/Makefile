@@ -1,9 +1,9 @@
-.PHONY: build launch
+.PHONY: build launch push shell
 
 SHELL := /bin/bash
 
 DOCKERFILE=Dockerfile
-IMG=twp_notebooks
+IMG=sjev/python-dev
 
 USER_UID := $(shell id -u)
 USER_GID := $(shell id -g)
@@ -13,3 +13,9 @@ build:
 
 launch: build
 	docker run -it -p 8888:8888 $(IMG)
+
+push: build
+	docker push $(IMG)
+
+shell: build
+	docker run -it $(IMG) bash

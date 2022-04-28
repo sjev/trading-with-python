@@ -1,4 +1,11 @@
+autopep8
+black
+mypy
+pre-commit
+pylint
 numpy
+scipy
+sklearn
 matplotlib
 pandas
 jupyter

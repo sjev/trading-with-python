@@ -39,12 +39,16 @@ RUN pip3 install -r requirements.txt
 RUN mkdir -p /notebooks
 RUN chown -R $USERNAME:$USERNAME /notebooks
 
-
+# copy start scripts
+COPY files/start_jupyter_lab.sh  /
+RUN chmod 777 /start_jupyter_lab.sh
 #  -------------local user -----------------------
 # Set the default user. Omit if you want to keep the default as root.
 USER $USERNAME
 
 RUN echo 'export PS1="🤓  \[\033[1;36m\]\h \[\e[33m\]\W\[\e[m\] \[\033[1;36m\]# \[\033[0m\]"' >> ~/.bashrc
+
+
 
 # copy notebook settings
 RUN mkdir -p /home/$USERNAME/.jupyter
@@ -53,4 +57,5 @@ COPY jupyter_notebook_config.py /home/$USERNAME/.jupyter/jupyter_notebook_config
 # finalize
 WORKDIR /notebooks
 
-CMD ["jupyter", "lab", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root", "--notebook-dir=/notebooks" ]
+EXPOSE 8888
+CMD ["/start_jupyter_lab.sh" ]

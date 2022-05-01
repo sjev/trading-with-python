@@ -11,9 +11,10 @@ services:
         - USER_GID=${GROUP_ID:-1000}
     volumes:
       - ../notebooks:/notebooks
+      - ../:/workspaces/twp
 
     ports:
       - "8888:8888" # notebook server port
-    # command: >
-    #   bash -c "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=/notebooks --allow-root"
+    command: >
+      bash -c "pip install -e /workspaces/twp && /start_jupyter_lab.sh"
 

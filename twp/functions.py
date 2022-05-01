@@ -293,44 +293,11 @@ def sharpe(pnl):
     return np.sqrt(250) * pnl.mean() / pnl.std()
 
 
-def drawdown(s):
-    """
-    calculate max drawdown and duration
-
-    Input:
-        s, price or cumulative pnl curve $
-    Returns:
-        drawdown : vector of drawdwon values
-        duration : vector of drawdown duration
-
-
-    """
-    # convert to array if got pandas series, 10x speedup
-    if isinstance(s, pd.Series):
-        idx = s.index
-        s = s.values
-        returnSeries = True
-    else:
-        returnSeries = False
-
-    if s.min() < 0:  # offset if signal minimum is less than zero
-        s = s - s.min()
-
-    highwatermark = np.zeros(len(s))
-    drawdown = np.zeros(len(s))
-    drawdowndur = np.zeros(len(s))
-
-    for t in range(1, len(s)):
-        highwatermark[t] = max(highwatermark[t - 1], s[t])
-        drawdown[t] = highwatermark[t] - s[t]
-        drawdowndur[t] = 0 if drawdown[t] == 0 else drawdowndur[t - 1] + 1
-
-    if returnSeries:
-        return pd.Series(index=idx, data=drawdown), pd.Series(
-            index=idx, data=drawdowndur
-        )
-    else:
-        return drawdown, drawdowndur
+def drawdown(log_ret):
+    """calculate drawdown curve of returns"""
+    s = log_ret.cumsum()
+    dd = s - s.cummax()
+    return dd
 
 
 def profitRatio(pnl):

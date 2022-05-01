@@ -6,20 +6,34 @@ Interface to interactive brokers together with gui widgets
 
 """
 import sys
+
 # import os
 from time import sleep
-from PyQt4.QtCore import (SIGNAL, SLOT)
-from PyQt4.QtGui import (QApplication, QFileDialog, QDialog, QVBoxLayout, QHBoxLayout, QDialogButtonBox,
-                         QTableView, QPushButton, QWidget, QLabel, QLineEdit, QGridLayout, QHeaderView)
+from PyQt4.QtCore import SIGNAL, SLOT
+from PyQt4.QtGui import (
+    QApplication,
+    QFileDialog,
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QDialogButtonBox,
+    QTableView,
+    QPushButton,
+    QWidget,
+    QLabel,
+    QLineEdit,
+    QGridLayout,
+    QHeaderView,
+)
 
 import ib
 from ib.ext.Contract import Contract
 from ib.opt import ibConnection, message
 from ib.ext.Order import Order
 
-import logger as logger
-from qtpandas import DataFrameModel, TableView
-from eventSystem import Sender
+from . import logger as logger
+from .qtpandas import DataFrameModel, TableView
+from .eventSystem import Sender
 import numpy as np
 
 import pandas
@@ -29,13 +43,21 @@ import os
 import datetime as dt
 import time
 
-priceTicks = {1: 'bid', 2: 'ask', 4: 'last', 6: 'high', 7: 'low', 9: 'close', 14: 'open'}
+priceTicks = {
+    1: "bid",
+    2: "ask",
+    4: "last",
+    6: "high",
+    7: "low",
+    9: "close",
+    14: "open",
+}
 timeFormat = "%Y%m%d %H:%M:%S"
 dateFormat = "%Y%m%d"
 
 
-def createContract(symbol, secType='STK', exchange='SMART', currency='USD'):
-    """ contract factory function """
+def createContract(symbol, secType="STK", exchange="SMART", currency="USD"):
+    """contract factory function"""
     contract = Contract()
     contract.m_symbol = symbol
     contract.m_secType = secType
@@ -46,46 +68,46 @@ def createContract(symbol, secType='STK', exchange='SMART', currency='USD'):
 
 
 def _str2datetime(s):
-    """ convert string to datetime """
-    return datetime.strptime(s, '%Y%m%d')
+    """convert string to datetime"""
+    return datetime.strptime(s, "%Y%m%d")
 
 
 def readActivityFlex(fName):
     """
     parse trade log in a csv file produced by IB 'Activity Flex Query'
     the file should contain these columns:
-    ['Symbol','TradeDate','Quantity','TradePrice','IBCommission']    
-    
+    ['Symbol','TradeDate','Quantity','TradePrice','IBCommission']
+
     Returns:
         A DataFrame with parsed trade data
-    
+
     """
     import csv
 
     rows = []
 
-    with open(fName, 'rb') as f:
+    with open(fName, "rb") as f:
         reader = csv.reader(f)
         for row in reader:
             rows.append(row)
 
-    header = ['TradeDate', 'Symbol', 'Quantity', 'TradePrice', 'IBCommission']
+    header = ["TradeDate", "Symbol", "Quantity", "TradePrice", "IBCommission"]
 
-    types = dict(zip(header, [_str2datetime, str, int, float, float]))
-    idx = dict(zip(header, [rows[0].index(h) for h in header]))
-    data = dict(zip(header, [[] for h in header]))
+    types = dict(list(zip(header, [_str2datetime, str, int, float, float])))
+    idx = dict(list(zip(header, [rows[0].index(h) for h in header])))
+    data = dict(list(zip(header, [[] for h in header])))
 
     for row in rows[1:]:
-        print row
+        print(row)
         for col in header:
             val = types[col](row[idx[col]])
             data[col].append(val)
 
-    return DataFrame(data)[header].sort(column='TradeDate')
+    return DataFrame(data)[header].sort(column="TradeDate")
 
 
 class Subscriptions(DataFrameModel, Sender):
-    """ a data table containing price & subscription data """
+    """a data table containing price & subscription data"""
 
     def __init__(self, tws=None):
 
@@ -94,13 +116,18 @@ class Subscriptions(DataFrameModel, Sender):
 
         self._nextId = 1
         self._id2symbol = {}  # id-> symbol lookup dict
-        self._header = ['id', 'position', 'bid', 'ask', 'last']  # columns of the _data table
+        self._header = [
+            "id",
+            "position",
+            "bid",
+            "ask",
+            "last",
+        ]  # columns of the _data table
 
         # register callbacks
         if tws is not None:
             tws.register(self.priceHandler, message.TickPrice)
             tws.register(self.accountHandler, message.UpdatePortfolio)
-
 
     def add(self, symbol, subId=None):
         """
@@ -111,10 +138,12 @@ class Subscriptions(DataFrameModel, Sender):
         if subId is None:
             subId = self._nextId
 
-        data = dict(zip(self._header, [subId, 0, np.nan, np.nan, np.nan]))
+        data = dict(list(zip(self._header, [subId, 0, np.nan, np.nan, np.nan])))
         row = DataFrame(data, index=Index([symbol]))
 
-        self.df = self.df.append(row[self._header])  # append data and set correct column order
+        self.df = self.df.append(
+            row[self._header]
+        )  # append data and set correct column order
 
         self._nextId = subId + 1
         self._rebuildIndex()
@@ -124,14 +153,16 @@ class Subscriptions(DataFrameModel, Sender):
         return subId
 
     def priceHandler(self, msg):
-        """ handler function for price updates. register this with ibConnection class """
+        """handler function for price updates. register this with ibConnection class"""
 
-        if priceTicks[msg.field] not in self._header:  # do nothing for ticks that are not in _data table
+        if (
+            priceTicks[msg.field] not in self._header
+        ):  # do nothing for ticks that are not in _data table
             return
 
         self.df[priceTicks[msg.field]][self._id2symbol[msg.tickerId]] = msg.price
 
-        #notify viewer
+        # notify viewer
         col = self._header.index(priceTicks[msg.field])
         row = self.df.index.tolist().index(self._id2symbol[msg.tickerId])
 
@@ -140,34 +171,33 @@ class Subscriptions(DataFrameModel, Sender):
 
     def accountHandler(self, msg):
         if msg.contract.m_symbol in self.df.index.tolist():
-            self.df['position'][msg.contract.m_symbol] = msg.position
+            self.df["position"][msg.contract.m_symbol] = msg.position
 
     def _rebuildIndex(self):
-        """ udate lookup dictionary id-> symbol """
+        """udate lookup dictionary id-> symbol"""
         symbols = self.df.index.tolist()
-        ids = self.df['id'].values.tolist()
-        self._id2symbol = dict(zip(ids, symbols))
-
+        ids = self.df["id"].values.tolist()
+        self._id2symbol = dict(list(zip(ids, symbols)))
 
     def __repr__(self):
         return str(self.df)
 
 
 class Broker(object):
-    """ 
+    """
     Broker class acts as a wrapper around ibConnection
     from ibPy. It tracks current subscriptions and provides
     data models to viewiers .
     """
 
-    def __init__(self, name='broker'):
-        """ initialize broker class
-
-        """
+    def __init__(self, name="broker"):
+        """initialize broker class"""
         self.name = name
         self.log = logger.getLogger(self.name)
 
-        self.log.debug('Initializing broker. Pandas version={0}'.format(pandas.__version__))
+        self.log.debug(
+            "Initializing broker. Pandas version={0}".format(pandas.__version__)
+        )
         self.contracts = {}  # a dict to keep track of subscribed contracts
 
         self.tws = ibConnection()  # tws interface
@@ -176,16 +206,16 @@ class Broker(object):
         self.dataModel = Subscriptions(self.tws)  # data container
 
         self.tws.registerAll(self.defaultHandler)
-        #self.tws.register(self.debugHandler,message.TickPrice)
-        self.tws.register(self.nextValidIdHandler, 'NextValidId')
-        self.log.debug('Connecting to tws')
+        # self.tws.register(self.debugHandler,message.TickPrice)
+        self.tws.register(self.nextValidIdHandler, "NextValidId")
+        self.log.debug("Connecting to tws")
         self.tws.connect()
 
-        self.tws.reqAccountUpdates(True, '')
+        self.tws.reqAccountUpdates(True, "")
 
-    def subscribeStk(self, symbol, secType='STK', exchange='SMART', currency='USD'):
-        """  subscribe to stock data """
-        self.log.debug('Subscribing to ' + symbol)
+    def subscribeStk(self, symbol, secType="STK", exchange="SMART", currency="USD"):
+        """subscribe to stock data"""
+        self.log.debug("Subscribing to " + symbol)
         #        if symbol in self.data.symbols:
         #            print 'Already subscribed to {0}'.format(symbol)
         #            return
@@ -197,7 +227,7 @@ class Broker(object):
         c.m_currency = currency
 
         subId = self.dataModel.add(symbol)
-        self.tws.reqMktData(subId, c, '', False)
+        self.tws.reqMktData(subId, c, "", False)
 
         self.contracts[symbol] = c
 
@@ -207,15 +237,14 @@ class Broker(object):
     def data(self):
         return self.dataModel.df
 
+    def placeOrder(self, symbol, shares, limit=None, exchange="SMART", transmit=0):
+        """place an order on already subscribed contract"""
 
-    def placeOrder(self, symbol, shares, limit=None, exchange='SMART', transmit=0):
-        """ place an order on already subscribed contract """
-
-        if symbol not in self.contracts.keys():
+        if symbol not in list(self.contracts.keys()):
             self.log.error("Can't place order, not subscribed to %s" % symbol)
             return
 
-        action = {-1: 'SELL', 1: 'BUY'}
+        action = {-1: "SELL", 1: "BUY"}
 
         o = Order()
         o.m_orderId = self.getOrderId()
@@ -224,45 +253,46 @@ class Broker(object):
         o.m_transmit = transmit
 
         if limit is not None:
-            o.m_orderType = 'LMT'
+            o.m_orderType = "LMT"
             o.m_lmtPrice = limit
 
-        self.log.debug('Placing %s order for %i %s (id=%i)' % (o.m_action, o.m_totalQuantity, symbol, o.m_orderId))
+        self.log.debug(
+            "Placing %s order for %i %s (id=%i)"
+            % (o.m_action, o.m_totalQuantity, symbol, o.m_orderId)
+        )
 
         self.tws.placeOrder(o.m_orderId, self.contracts[symbol], o)
-
 
     def getOrderId(self):
         self.nextValidOrderId += 1
         return self.nextValidOrderId - 1
 
     def unsubscribeStk(self, symbol):
-        self.log.debug('Function not implemented')
+        self.log.debug("Function not implemented")
 
     def disconnect(self):
         self.tws.disconnect()
 
     def __del__(self):
-        """destructor, clean up """
-        print 'Broker is cleaning up after itself.'
+        """destructor, clean up"""
+        print("Broker is cleaning up after itself.")
         self.tws.disconnect()
 
     def debugHandler(self, msg):
-        print msg
+        print(msg)
 
     def defaultHandler(self, msg):
-        """ default message handler """
-        #print msg.typeName
-        if msg.typeName == 'Error':
+        """default message handler"""
+        # print msg.typeName
+        if msg.typeName == "Error":
             self.log.error(msg)
-
 
     def nextValidIdHandler(self, msg):
         self.nextValidOrderId = msg.orderId
-        self.log.debug('Next valid order id:{0}'.format(self.nextValidOrderId))
+        self.log.debug("Next valid order id:{0}".format(self.nextValidOrderId))
 
     def saveData(self, fname):
-        """ save current dataframe to csv """
+        """save current dataframe to csv"""
         self.log.debug("Saving data to {0}".format(fname))
         self.dataModel.df.to_csv(fname)
 
@@ -275,26 +305,33 @@ class Broker(object):
 #        return getattr(self.tws, name)
 
 
-
 class _HistDataHandler(object):
-    """ handles incoming messages """
+    """handles incoming messages"""
 
     def __init__(self, tws):
-        self._log = logger.getLogger('DH')
+        self._log = logger.getLogger("DH")
         tws.register(self.msgHandler, message.HistoricalData)
         self.reset()
 
     def reset(self):
-        self._log.debug('Resetting data')
+        self._log.debug("Resetting data")
         self.dataReady = False
         self._timestamp = []
-        self._data = {'open': [], 'high': [], 'low': [], 'close': [], 'volume': [], 'count': [], 'WAP': []}
+        self._data = {
+            "open": [],
+            "high": [],
+            "low": [],
+            "close": [],
+            "volume": [],
+            "count": [],
+            "WAP": [],
+        }
 
     def msgHandler(self, msg):
-        #print '[msg]', msg
+        # print '[msg]', msg
 
-        if msg.date[:8] == 'finished':
-            self._log.debug('Data recieved')
+        if msg.date[:8] == "finished":
+            self._log.debug("Data recieved")
             self.dataReady = True
             return
 
@@ -303,21 +340,24 @@ class _HistDataHandler(object):
         else:
             self._timestamp.append(dt.datetime.strptime(msg.date, dateFormat))
 
-        for k in self._data.keys():
+        for k in list(self._data.keys()):
             self._data[k].append(getattr(msg, k))
 
     @property
     def data(self):
-        """ return  downloaded data as a DataFrame """
+        """return  downloaded data as a DataFrame"""
         df = DataFrame(data=self._data, index=Index(self._timestamp))
         return df
 
 
 class Downloader(object):
     def __init__(self, debug=False):
-        self._log = logger.getLogger('DLD')
+        self._log = logger.getLogger("DLD")
         self._log.debug(
-            'Initializing data dwonloader. Pandas version={0}, ibpy version:{1}'.format(pandas.__version__, ib.version))
+            "Initializing data dwonloader. Pandas version={0}, ibpy version:{1}".format(
+                pandas.__version__, ib.version
+            )
+        )
 
         self.tws = ibConnection()
         self._dataHandler = _HistDataHandler(self.tws)
@@ -326,53 +366,69 @@ class Downloader(object):
             self.tws.registerAll(self._debugHandler)
             self.tws.unregister(self._debugHandler, message.HistoricalData)
 
-        self._log.debug('Connecting to tws')
+        self._log.debug("Connecting to tws")
         self.tws.connect()
 
         self._timeKeeper = TimeKeeper()  # keep track of past requests
         self._reqId = 1  # current request id
 
-
     def _debugHandler(self, msg):
-        print '[debug]', msg
+        print("[debug]", msg)
 
-
-    def requestData(self, contract, endDateTime, durationStr='1 D', barSizeSetting='30 secs', whatToShow='TRADES',
-                    useRTH=1, formatDate=1):
-        self._log.debug('Requesting data for %s end time %s.' % (contract.m_symbol, endDateTime))
+    def requestData(
+        self,
+        contract,
+        endDateTime,
+        durationStr="1 D",
+        barSizeSetting="30 secs",
+        whatToShow="TRADES",
+        useRTH=1,
+        formatDate=1,
+    ):
+        self._log.debug(
+            "Requesting data for %s end time %s." % (contract.m_symbol, endDateTime)
+        )
 
         while self._timeKeeper.nrRequests(timeSpan=600) > 59:
-            print 'Too many requests done. Waiting... '
+            print("Too many requests done. Waiting... ")
             time.sleep(10)
 
         self._timeKeeper.addRequest()
         self._dataHandler.reset()
-        self.tws.reqHistoricalData(self._reqId, contract, endDateTime, durationStr, barSizeSetting, whatToShow, useRTH,
-                                   formatDate)
+        self.tws.reqHistoricalData(
+            self._reqId,
+            contract,
+            endDateTime,
+            durationStr,
+            barSizeSetting,
+            whatToShow,
+            useRTH,
+            formatDate,
+        )
         self._reqId += 1
 
-        #wait for data
+        # wait for data
         startTime = time.time()
         timeout = 3
         while not self._dataHandler.dataReady and (time.time() - startTime < timeout):
             sleep(2)
 
         if not self._dataHandler.dataReady:
-            self._log.error('Data timeout')
+            self._log.error("Data timeout")
 
-        print self._dataHandler.data
+        print(self._dataHandler.data)
 
         return self._dataHandler.data
 
     def getIntradayData(self, contract, dateTuple):
-        """ get full day data on 1-s interval 
-            date: a tuple of (yyyy,mm,dd)
+        """get full day data on 1-s interval
+        date: a tuple of (yyyy,mm,dd)
         """
 
         openTime = dt.datetime(*dateTuple) + dt.timedelta(hours=16)
         closeTime = dt.datetime(*dateTuple) + dt.timedelta(hours=22)
 
-        timeRange = pandas.date_range(openTime, closeTime, freq='30min')
+        timeRange = pandas.date_range(openTime, closeTime, freq="30min")
 
         datasets = []
 
@@ -381,36 +437,34 @@ class Downloader(object):
 
         return pandas.concat(datasets)
 
-
     def disconnect(self):
         self.tws.disconnect()
 
 
 class TimeKeeper(object):
     def __init__(self):
-        self._log = logger.getLogger('TK')
-        dataDir = os.path.expanduser('~') + '/twpData'
+        self._log = logger.getLogger("TK")
+        dataDir = os.path.expanduser("~") + "/twpData"
 
         if not os.path.exists(dataDir):
             os.mkdir(dataDir)
 
         self._timeFormat = "%Y%m%d %H:%M:%S"
-        self.dataFile = os.path.normpath(os.path.join(dataDir, 'requests.txt'))
-        self._log.debug('Data file: {0}'.format(self.dataFile))
+        self.dataFile = os.path.normpath(os.path.join(dataDir, "requests.txt"))
+        self._log.debug("Data file: {0}".format(self.dataFile))
 
     def addRequest(self):
-        """ adds a timestamp of current request"""
-        with open(self.dataFile, 'a') as f:
-            f.write(dt.datetime.now().strftime(self._timeFormat) + '\n')
-
+        """adds a timestamp of current request"""
+        with open(self.dataFile, "a") as f:
+            f.write(dt.datetime.now().strftime(self._timeFormat) + "\n")
 
     def nrRequests(self, timeSpan=600):
-        """ return number of requests in past timespan (s) """
+        """return number of requests in past timespan (s)"""
         delta = dt.timedelta(seconds=timeSpan)
         now = dt.datetime.now()
         requests = 0
 
-        with open(self.dataFile, 'r') as f:
+        with open(self.dataFile, "r") as f:
             lines = f.readlines()
 
         for line in lines:
@@ -418,67 +472,67 @@ class TimeKeeper(object):
                 requests += 1
 
         if requests == 0:  # erase all contents if no requests are relevant
-            open(self.dataFile, 'w').close()
+            open(self.dataFile, "w").close()
 
-        self._log.debug('past requests: {0}'.format(requests))
+        self._log.debug("past requests: {0}".format(requests))
         return requests
 
 
-#---------------test functions-----------------
+# ---------------test functions-----------------
+
 
 def dummyHandler(msg):
-    print msg
+    print(msg)
 
 
 def testConnection():
-    """ a simple test to check working of streaming prices etc """
+    """a simple test to check working of streaming prices etc"""
     tws = ibConnection()
     tws.registerAll(dummyHandler)
 
     tws.connect()
 
-    c = createContract('SPY')
-    tws.reqMktData(1, c, '', False)
+    c = createContract("SPY")
+    tws.reqMktData(1, c, "", False)
     sleep(3)
 
-    print 'testConnection done.'
+    print("testConnection done.")
 
 
 def testSubscriptions():
     s = Subscriptions()
-    s.add('SPY')
-    #s.add('XLE')
+    s.add("SPY")
+    # s.add('XLE')
 
-    print s
+    print(s)
 
 
 def testBroker():
     b = Broker()
     sleep(2)
-    b.subscribeStk('SPY')
-    b.subscribeStk('XLE')
-    b.subscribeStk('GOOG')
+    b.subscribeStk("SPY")
+    b.subscribeStk("XLE")
+    b.subscribeStk("GOOG")
 
-    b.placeOrder('ABC', 125, 55.1)
+    b.placeOrder("ABC", 125, 55.1)
     sleep(3)
     return b
 
 
-#---------------------GUI stuff--------------------------------------------
+# ---------------------GUI stuff--------------------------------------------
 class AddSubscriptionDlg(QDialog):
     def __init__(self, parent=None):
         super(AddSubscriptionDlg, self).__init__(parent)
-        symbolLabel = QLabel('Symbol')
+        symbolLabel = QLabel("Symbol")
         self.symbolEdit = QLineEdit()
-        secTypeLabel = QLabel('secType')
-        self.secTypeEdit = QLineEdit('STK')
-        exchangeLabel = QLabel('exchange')
-        self.exchangeEdit = QLineEdit('SMART')
-        currencyLabel = QLabel('currency')
-        self.currencyEdit = QLineEdit('USD')
+        secTypeLabel = QLabel("secType")
+        self.secTypeEdit = QLineEdit("STK")
+        exchangeLabel = QLabel("exchange")
+        self.exchangeEdit = QLineEdit("SMART")
+        currencyLabel = QLabel("currency")
+        self.currencyEdit = QLineEdit("USD")
 
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok |
-                                     QDialogButtonBox.Cancel)
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
         lay = QGridLayout()
         lay.addWidget(symbolLabel, 0, 0)
@@ -493,10 +547,8 @@ class AddSubscriptionDlg(QDialog):
         lay.addWidget(buttonBox, 4, 0, 1, 2)
         self.setLayout(lay)
 
-        self.connect(buttonBox, SIGNAL("accepted()"),
-                     self, SLOT("accept()"))
-        self.connect(buttonBox, SIGNAL("rejected()"),
-                     self, SLOT("reject()"))
+        self.connect(buttonBox, SIGNAL("accepted()"), self, SLOT("accept()"))
+        self.connect(buttonBox, SIGNAL("rejected()"), self, SLOT("reject()"))
         self.setWindowTitle("Add subscription")
 
 
@@ -509,8 +561,8 @@ class BrokerWidget(QWidget):
         self.dataTable = TableView()
         self.dataTable.setModel(self.broker.dataModel)
         self.dataTable.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-        #self.dataTable.resizeColumnsToContents()
-        dataLabel = QLabel('Price Data')
+        # self.dataTable.resizeColumnsToContents()
+        dataLabel = QLabel("Price Data")
         dataLabel.setBuddy(self.dataTable)
 
         dataLayout = QVBoxLayout()
@@ -520,7 +572,7 @@ class BrokerWidget(QWidget):
 
         addButton = QPushButton("&Add Symbol")
         saveDataButton = QPushButton("&Save Data")
-        #deleteButton = QPushButton("&Delete")
+        # deleteButton = QPushButton("&Delete")
 
         buttonLayout = QVBoxLayout()
         buttonLayout.addWidget(addButton)
@@ -532,19 +584,27 @@ class BrokerWidget(QWidget):
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
 
-        self.connect(addButton, SIGNAL('clicked()'), self.addSubscription)
-        self.connect(saveDataButton, SIGNAL('clicked()'), self.saveData)
-        #self.connect(deleteButton,SIGNAL('clicked()'),self.deleteSubscription)
+        self.connect(addButton, SIGNAL("clicked()"), self.addSubscription)
+        self.connect(saveDataButton, SIGNAL("clicked()"), self.saveData)
+        # self.connect(deleteButton,SIGNAL('clicked()'),self.deleteSubscription)
 
     def addSubscription(self):
         dialog = AddSubscriptionDlg(self)
         if dialog.exec_():
-            self.broker.subscribeStk(str(dialog.symbolEdit.text()), str(dialog.secTypeEdit.text()),
-                                     str(dialog.exchangeEdit.text()), str(dialog.currencyEdit.text()))
+            self.broker.subscribeStk(
+                str(dialog.symbolEdit.text()),
+                str(dialog.secTypeEdit.text()),
+                str(dialog.exchangeEdit.text()),
+                str(dialog.currencyEdit.text()),
+            )
 
     def saveData(self):
-        """ save data to a .csv file """
-        fname = unicode(QFileDialog.getSaveFileName(self, caption="Save data to csv", filter='*.csv'))
+        """save data to a .csv file"""
+        fname = str(
+            QFileDialog.getSaveFileName(
+                self, caption="Save data to csv", filter="*.csv"
+            )
+        )
         if fname:
             self.broker.saveData(fname)
 
@@ -557,13 +617,13 @@ class Form(QDialog):
     def __init__(self, parent=None):
         super(Form, self).__init__(parent)
         self.resize(640, 480)
-        self.setWindowTitle('Broker test')
+        self.setWindowTitle("Broker test")
 
         self.broker = Broker()
 
-        self.broker.subscribeStk('SPY')
-        self.broker.subscribeStk('XLE')
-        self.broker.subscribeStk('GOOG')
+        self.broker.subscribeStk("SPY")
+        self.broker.subscribeStk("XLE")
+        self.broker.subscribeStk("GOOG")
 
         brokerWidget = BrokerWidget(self.broker, self)
         lay = QVBoxLayout()
@@ -581,12 +641,10 @@ def startGui():
 if __name__ == "__main__":
     import ib
 
-    print 'iby version:', ib.version
-    #testConnection()
-    #testBroker()
-    #testSubscriptions()
-    print message.messageTypeNames()
+    print("iby version:", ib.version)
+    # testConnection()
+    # testBroker()
+    # testSubscriptions()
+    print(message.messageTypeNames())
     startGui()
-    print 'All done'
-    
-    
+    print("All done")

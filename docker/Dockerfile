@@ -44,6 +44,8 @@ RUN chown -R $USERNAME:$USERNAME /notebooks
 # Set the default user. Omit if you want to keep the default as root.
 USER $USERNAME
 
+RUN echo 'export PS1="🤓  \[\033[1;36m\]\h \[\e[33m\]\W\[\e[m\] \[\033[1;36m\]# \[\033[0m\]"' >> ~/.bashrc
+
 # copy notebook settings
 RUN mkdir -p /home/$USERNAME/.jupyter
 COPY jupyter_notebook_config.py /home/$USERNAME/.jupyter/jupyter_notebook_config.py

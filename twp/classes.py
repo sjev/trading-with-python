@@ -8,7 +8,6 @@ Licence: GPL v2
 __docformat__ = "restructuredtext"
 
 import os
-from . import logger as logger
 from . import yahooFinance as yahoo
 from .functions import returns, rank
 from datetime import date
@@ -55,8 +54,6 @@ class Symbol(object):
 
     def __init__(self, name):
         self.name = name
-        self.log = logger.getLogger(self.name)
-        self.log.debug("class created.")
 
         self.dataDir = os.getenv("USERPROFILE") + "\\twpData\\symbols\\" + self.name
         self.log.debug("Data dir:" + self.dataDir)

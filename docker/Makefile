@@ -1,4 +1,4 @@
-.PHONY: build launch push shell
+.PHONY: list build launch push shell
 
 SHELL := /bin/bash
 
@@ -7,6 +7,9 @@ IMG=sjev/python-dev
 
 USER_UID := $(shell id -u)
 USER_GID := $(shell id -g)
+
+list:
+	@cat Makefile
 
 build:
 	docker build -t $(IMG) -f $(DOCKERFILE) --build-arg USER_UID=$(USER_UID) --build-arg USER_GID=$(USER_GID) .

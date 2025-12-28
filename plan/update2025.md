@@ -189,10 +189,15 @@ If/when adding notebooks:
 Run `inv lint` and `inv test` after each step.
 
 ### Phase 0 — Cleanup
-- [ ] 0.1 Remove or archive legacy IB examples from `examples/`
-- [ ] 0.2 Clean up `tools/` (keep useful, remove rest)
-- [ ] 0.3 Clean up `scratch/` (remove or archive)
-- [ ] 0.4 Review `lib/` — document what to port vs delete
+- [x] 0.1 Remove legacy IB examples from `examples/` — removed 6 ib_*.py files
+- [x] 0.2 Clean up `tools/` — removed (createDistribution.py, getHistData/, tickLogger/)
+- [x] 0.3 Clean up `scratch/` — removed (get_yahoo_data.ipynb)
+- [x] 0.4 Review `lib/` — kept as legacy; porting from `investing/` instead
+  - lib/yahooFinance.py: old cookie/crumb approach, replaced by yfinance
+  - lib/backtest.py: old Backtest class, building simpler KISS version
+  - lib/indicators.py: deprecated pd.rolling_apply, porting from investing/
+  - lib/interactiveBrokers/: IB-specific, not needed for v4
+  - Will delete lib/ after Phase 1-3 complete
 
 ### Phase 1 — Data + Indicators
 - [ ] 1.1 Create `src/twp/data/` package (protocol.py, __init__.py)

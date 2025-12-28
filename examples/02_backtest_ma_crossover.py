@@ -53,17 +53,17 @@ def main() -> None:
     print(f"Test period: {split.test_start} to {split.test_end}")
 
     # Backtest on test period
-    test_prices = split.slice_test(prices)
-    test_weights = split.slice_test(weights)
+    test_prices = pd.DataFrame(split.slice_test(prices))
+    test_weights = pd.DataFrame(split.slice_test(weights))
 
     result = backtest(test_prices, test_weights, cost_bps=5)
 
     # Print results
     print("\nBacktest Results (Test Period):")
     print(f"  Sharpe Ratio: {result.sharpe:.2f}")
-    print(f"  CAGR: {result.cagr*100:.1f}%")
-    print(f"  Volatility: {result.volatility*100:.1f}%")
-    print(f"  Max Drawdown: {result.max_drawdown*100:.1f}%")
+    print(f"  CAGR: {result.cagr * 100:.1f}%")
+    print(f"  Volatility: {result.volatility * 100:.1f}%")
+    print(f"  Max Drawdown: {result.max_drawdown * 100:.1f}%")
     print(f"  Turnover: {result.turnover:.2f}")
     print(f"  Final Equity: {result.equity.iloc[-1]:.2f}")
 

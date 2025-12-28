@@ -74,9 +74,9 @@ def main() -> None:
     print("Regime-Filtered Strategy Results:")
     print(f"  Period: {start} to {end}")
     print(f"  Sharpe Ratio: {result.sharpe:.2f}")
-    print(f"  CAGR: {result.cagr*100:.1f}%")
-    print(f"  Volatility: {result.volatility*100:.1f}%")
-    print(f"  Max Drawdown: {result.max_drawdown*100:.1f}%")
+    print(f"  CAGR: {result.cagr * 100:.1f}%")
+    print(f"  Volatility: {result.volatility * 100:.1f}%")
+    print(f"  Max Drawdown: {result.max_drawdown * 100:.1f}%")
     print(f"  Turnover: {result.turnover:.2f}")
     print(f"  Final Equity: {result.equity.iloc[-1]:.2f}")
 

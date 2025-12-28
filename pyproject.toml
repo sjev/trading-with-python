@@ -3,51 +3,34 @@ name = "twp"
 version = "4.0.0"
 description = "Open-source toolbox for quantitative trading strategy development"
 readme = "README.md"
-authors = [
-    { name = "Jev Kuznetsov", email = "jev.kuznetsov@gmail.com" }
-]
+authors = [{ name = "Jev Kuznetsov", email = "jev.kuznetsov@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
     "numpy>=2.0",
     "pandas>=2.0",
-]
-
-[project.optional-dependencies]
-yahoo = ["yfinance>=0.2.40"]
-fred = ["fredapi>=0.5.2"]
-plotting = ["plotly>=5.18"]
-all = [
     "yfinance>=0.2.40",
-    "fredapi>=0.5.2",
     "plotly>=5.18",
 ]
 
+[project.optional-dependencies]
+fred = ["fredapi>=0.5.2"]
 
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
-
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["twp*"]
-
+requires = ["uv_build>=0.8.8,<0.9.0"]
+build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
     "invoke>=2.2.0",
-    "pytest>=8.4.1",
-    "ruff>=0.12.8",
     "mypy>=1.17.1",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.1.0",
+    "ruff>=0.12.8",
 ]
-
 
 [tool.ruff.lint]
 extend-select = ["B", "I", "C4", "SIM", "PLE", "RUF"]
-ignore = [
-    "D100", "D101", "D102", "D103",
-]
-
+ignore = ["D100", "D101", "D102", "D103"]
 
 [tool.mypy]
 ignore_missing_imports = true

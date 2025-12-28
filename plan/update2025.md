@@ -181,3 +181,42 @@ If/when adding notebooks:
 - **Plotting**: recommend Plotly for interactive plots (HTML export, works in notebooks and scripts).
 - **Notebook tooling**: default to scripts; add Jupyter notebooks later; evaluate Marimo after v4 settles.
 - **Packaging**: `pyproject.toml` + `src/` layout from day 1 (already in place).
+
+---
+
+## Execution Task List
+
+Run `inv lint` and `inv test` after each step.
+
+### Phase 1 — Data + Indicators
+- [ ] 1.1 Create `src/twp/data/` package (protocol.py, __init__.py)
+- [ ] 1.2 Port yahoo.py
+- [ ] 1.3 Port fred.py
+- [ ] 1.4 Port local_csv.py
+- [ ] 1.5 Create `src/twp/indicators/` package (protocol.py, __init__.py)
+- [ ] 1.6 Port normalization.py
+- [ ] 1.7 Port vix.py
+- [ ] 1.8 Port momentum.py
+- [ ] 1.9 Port absorption_ratio.py
+- [ ] 1.10 Port mri.py
+
+### Phase 2 — Tests
+- [ ] 2.1 Create `tests/` with CSV fixtures
+- [ ] 2.2 Add test_data_sources.py
+- [ ] 2.3 Add test_indicators.py
+
+### Phase 3 — Backtest + Examples
+- [ ] 3.1 Create `src/twp/backtest/` with split.py
+- [ ] 3.2 Add metrics.py (sharpe, maxdd, CAGR)
+- [ ] 3.3 Add engine.py
+- [ ] 3.4 Add test_backtest.py
+- [ ] 3.5 Create `src/twp/plotting/` with plotly.py
+- [ ] 3.6 Example: 00_download_data.py
+- [ ] 3.7 Example: 01_indicators.py
+- [ ] 3.8 Example: 02_backtest_ma_crossover.py
+- [ ] 3.9 Example: 03_backtest_regime_filter.py
+
+### Phase 4 — Polish
+- [ ] 4.1 Update pyproject.toml with new deps
+- [ ] 4.2 Update src/twp/__init__.py exports
+- [ ] 4.3 Update README

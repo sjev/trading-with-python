@@ -22,42 +22,44 @@
 ## Restructuring plan (current state → desired structure)
 
 ### Current state (important constraints)
-- The repository contains legacy code under **`lib/`**, and a small installable package under **`twp/`**.
-- Legacy tests/docs referenced a `tradingWithPython` package path and were removed during initial cleanup.
-- `setup.py` has been removed; **`pyproject.toml`** is now the packaging source of truth.
+- The repository contains legacy code under **`lib/`**.
+- The installable package is now under **`src/twp/`** (standard `src/` layout).
+- Legacy tests/docs referenced a `tradingWithPython` import path and were removed during initial cleanup.
+- `setup.py` has been removed; **`pyproject.toml`** is the packaging source of truth.
 
 ### Desired structure (v4)
-Keep a clean installable library under `twp/` (later we can migrate to `src/` layout if desired).
+Keep the public library under **`src/twp/`** and treat `lib/` as legacy until fully ported.
 
 Proposed package layout:
 
 ```
 trading-with-python/
   pyproject.toml
-  twp/
-    __init__.py
-    data/
+  src/
+    twp/
       __init__.py
-      yahoo.py          # YahooSource (yfinance + caching)
-      fred.py           # FredSource (fredapi + caching)
-      local_csv.py      # LocalCsvSource for offline tests/examples
-      protocol.py       # DataSourceProtocol
-    indicators/
-      __init__.py
-      vix.py
-      momentum.py
-      absorption_ratio.py
-      mri.py
-      normalization.py
-      protocol.py       # IndicatorProtocol (optional)
-    backtest/
-      __init__.py
-      split.py          # train/test split helpers
-      engine.py         # minimal backtest engine
-      metrics.py        # sharpe, maxdd, CAGR, turnover
-    plotting/
-      __init__.py
-      plotly.py         # convenience wrappers (optional)
+      data/
+        __init__.py
+        yahoo.py          # YahooSource (yfinance + caching)
+        fred.py           # FredSource (fredapi + caching)
+        local_csv.py      # LocalCsvSource for offline tests/examples
+        protocol.py       # DataSourceProtocol
+      indicators/
+        __init__.py
+        vix.py
+        momentum.py
+        absorption_ratio.py
+        mri.py
+        normalization.py
+        protocol.py       # IndicatorProtocol (optional)
+      backtest/
+        __init__.py
+        split.py          # train/test split helpers
+        engine.py         # minimal backtest engine
+        metrics.py        # sharpe, maxdd, CAGR, turnover
+      plotting/
+        __init__.py
+        plotly.py         # convenience wrappers (optional)
   examples/
     00_download_data.py
     01_indicators.py
@@ -74,13 +76,13 @@ trading-with-python/
 ## What to ADD
 
 ### 1) Data tools
-- `twp/data/yahoo.py`
+- `src/twp/data/yahoo.py`
   - Port from `investing/src/folio/data_sources/yahoo.py`
   - Keep: file caching, safe ticker filenames, `get(ticker, start, end)` API
-- `twp/data/fred.py`
+- `src/twp/data/fred.py`
   - Port from `investing/src/folio/data_sources/fred.py`
   - Keep: caching, simple series retrieval API
-- `twp/data/local_csv.py` + `twp/data/protocol.py`
+- `src/twp/data/local_csv.py` + `src/twp/data/protocol.py`
   - Port from `investing/src/folio/data_sources/local_csv.py` and protocol
 
 ### 2) Indicators
@@ -96,7 +98,7 @@ Port these from `investing/src/folio/indicators/`:
 - Indicators should only depend on a `DataSourceProtocol`.
 
 ### 3) Backtesting (KISS)
-Add `twp/backtest/`:
+Add `src/twp/backtest/`:
 - `split.py`: a tiny utility to define train/test periods (date-based)
 - `engine.py`: minimal backtester
   - input: prices (or returns), weights/positions
@@ -129,7 +131,7 @@ If/when adding notebooks:
 ## What to KEEP
 
 ### Keep (core)
-- `twp/` package (as the installable library)
+- `src/twp/` package (as the installable library)
 - `examples/` (keep, but refresh content to match v4 APIs)
 - `tools/` and `scratch/` only if they are still useful; otherwise migrate important pieces into `examples/`.
 
@@ -137,7 +139,7 @@ If/when adding notebooks:
 - `lib/` (for now):
   - Treat it as legacy code (not part of the v4 public API)
   - Do not add new features here
-  - Gradually port useful pieces into `twp/` modules
+  - Gradually port useful pieces into `src/twp/` modules
 
 ---
 
@@ -148,7 +150,7 @@ If/when adding notebooks:
 - course-coupled docs/notebooks/docker scaffolding (removed)
 
 ### Deprecate (do not evolve; remove later)
-- `lib/` once the equivalent functionality exists under `twp/`
+- `lib/` once the equivalent functionality exists under `src/twp/`
 - any references to `tradingWithPython.*` import paths
 
 ---
@@ -156,7 +158,7 @@ If/when adding notebooks:
 ## Incremental execution plan (next steps)
 
 ### Phase 1 — Port data + indicators
-1. Create `twp/data/` and `twp/indicators/` packages.
+1. Create `src/twp/data/` and `src/twp/indicators/` packages.
 2. Port data sources + indicators from `investing`.
 3. Make sure everything works offline with `LocalCsvSource`.
 
@@ -165,7 +167,7 @@ If/when adding notebooks:
 2. Include local CSV fixtures for SPY, VIX and sector ETFs.
 
 ### Phase 3 — Backtest MVP
-1. Implement `twp/backtest/engine.py` with train/test split.
+1. Implement `src/twp/backtest/engine.py` with train/test split.
 2. Add 1–2 simple strategies.
 3. Add Plotly-based example scripts.
 
@@ -178,4 +180,4 @@ If/when adding notebooks:
 ## Notes / design decisions
 - **Plotting**: recommend Plotly for interactive plots (HTML export, works in notebooks and scripts).
 - **Notebook tooling**: default to scripts; add Jupyter notebooks later; evaluate Marimo after v4 settles.
-- **Packaging**: stay on `pyproject.toml`; optionally move to a `src/` layout later (not required immediately).
+- **Packaging**: `pyproject.toml` + `src/` layout from day 1 (already in place).

@@ -217,15 +217,15 @@ Run `inv lint` and `inv test` after each step.
 - [x] 2.3 Add test_indicators.py — 17 tests for VIX, Momentum, AR, MRI
 
 ### Phase 3 — Backtest + Examples
-- [ ] 3.1 Create `src/twp/backtest/` with split.py
-- [ ] 3.2 Add metrics.py (sharpe, maxdd, CAGR)
-- [ ] 3.3 Add engine.py
-- [ ] 3.4 Add test_backtest.py
-- [ ] 3.5 Create `src/twp/plotting/` with plotly.py
-- [ ] 3.6 Example: 00_download_data.py
-- [ ] 3.7 Example: 01_indicators.py
-- [ ] 3.8 Example: 02_backtest_ma_crossover.py
-- [ ] 3.9 Example: 03_backtest_regime_filter.py
+- [x] 3.1 Create `src/twp/backtest/` with split.py — train/test split utilities
+- [x] 3.2 Add metrics.py — sharpe, max_drawdown, cagr, volatility, turnover
+- [x] 3.3 Add engine.py — minimal backtester with BacktestResult
+- [x] 3.4 Add test_backtest.py — 14 tests for split, metrics, engine
+- [x] 3.5 Create `src/twp/plotting/` with plotly.py — plot_prices, plot_equity, plot_indicator
+- [x] 3.6 Example: 00_download_data.py — Yahoo data download
+- [x] 3.7 Example: 01_indicators.py — VIX, Momentum, MRI
+- [x] 3.8 Example: 02_backtest_ma_crossover.py — MA crossover strategy
+- [x] 3.9 Example: 03_backtest_regime_filter.py — regime-filtered strategy
 
 ### Phase 4 — Polish
 - [ ] 4.1 Update pyproject.toml with new deps

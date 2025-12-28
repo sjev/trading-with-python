@@ -63,9 +63,38 @@ def print_results(name: str, result) -> None:
     print(f"  Final Equity: {result.equity.iloc[-1]:.2f}")
 
 
+def compute_rebalanced_equity(
+    returns: pd.Series, weights: pd.Series, bh_equity: pd.Series
+) -> pd.Series:
+    """Compute equity that rebalances to B&H level on each entry.
+
+    When strategy re-enters (weight 0->1), equity is rebased to match B&H,
+    so returns during active periods track B&H exactly.
+    """
+    equity = pd.Series(index=returns.index, dtype=float)
+    equity.iloc[0] = bh_equity.iloc[0]
+
+    prev_weight = 0.0
+    for i in range(1, len(returns)):
+        curr_weight = weights.iloc[i - 1]  # weight used for this return (lagged)
+
+        # Detect re-entry: was out, now in
+        if prev_weight == 0 and curr_weight > 0:
+            # Rebase to B&H level at entry
+            equity.iloc[i] = bh_equity.iloc[i]
+        else:
+            # Normal compounding
+            equity.iloc[i] = equity.iloc[i - 1] * (1 + returns.iloc[i])
+
+        prev_weight = curr_weight
+
+    return equity
+
+
 def plot_backtest(
     prices: pd.Series,
-    strategy_equity: pd.Series,
+    strategy_returns: pd.Series,
+    strategy_weights: pd.Series,
     bh_equity: pd.Series,
     fast_window: int,
     slow_window: int,
@@ -75,20 +104,30 @@ def plot_backtest(
     fast_ma = prices.rolling(fast_window).mean()
     slow_ma = prices.rolling(slow_window).mean()
 
+    # Compute rebalanced equity that tracks B&H during active periods
+    strategy_equity = compute_rebalanced_equity(
+        strategy_returns, strategy_weights["SPY"], bh_equity
+    )
+
+    # Normalize both to start at 1.0 after warm-up
+    first_active = (strategy_weights["SPY"] > 0).idxmax()
+    norm_strategy = strategy_equity / strategy_equity.loc[first_active]
+    norm_bh = bh_equity / bh_equity.loc[first_active]
+
     fig = make_subplots(
         rows=2,
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.08,
         row_heights=[0.5, 0.5],
-        subplot_titles=("Equity Curve", "Price & Moving Averages"),
+        subplot_titles=("Equity (Normalized)", "Price & Moving Averages"),
     )
 
-    # Top: Equity curves
+    # Top: Equity curves (normalized)
     fig.add_trace(
         go.Scatter(
-            x=strategy_equity.index,
-            y=strategy_equity.values,
+            x=norm_strategy.index,
+            y=norm_strategy.values,
             name="Strategy",
             line={"color": "blue"},
         ),
@@ -97,8 +136,8 @@ def plot_backtest(
     )
     fig.add_trace(
         go.Scatter(
-            x=bh_equity.index,
-            y=bh_equity.values,
+            x=norm_bh.index,
+            y=norm_bh.values,
             name="Buy & Hold",
             line={"color": "gray", "dash": "dash"},
         ),
@@ -153,7 +192,7 @@ def plot_backtest(
         height=700,
         legend={"yanchor": "top", "y": 0.99, "xanchor": "left", "x": 0.01},
     )
-    fig.update_yaxes(title_text="Equity", row=1, col=1)
+    fig.update_yaxes(title_text="Equity (Normalized)", row=1, col=1)
     fig.update_yaxes(title_text="Price", row=2, col=1)
 
     return fig
@@ -211,7 +250,8 @@ def main() -> None:
     # Plot
     fig = plot_backtest(
         prices=prices["SPY"],
-        strategy_equity=full_result.equity,
+        strategy_returns=full_result.returns,
+        strategy_weights=full_weights,
         bh_equity=bh_full.equity,
         fast_window=fast,
         slow_window=slow,

@@ -12,6 +12,8 @@ from datetime import date
 from itertools import product
 
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from twp.backtest import Split, backtest
 from twp.data import YahooSource
@@ -61,6 +63,102 @@ def print_results(name: str, result) -> None:
     print(f"  Final Equity: {result.equity.iloc[-1]:.2f}")
 
 
+def plot_backtest(
+    prices: pd.Series,
+    strategy_equity: pd.Series,
+    bh_equity: pd.Series,
+    fast_window: int,
+    slow_window: int,
+    split_date: date,
+) -> go.Figure:
+    """Create backtest chart with equity curves and MA signals."""
+    fast_ma = prices.rolling(fast_window).mean()
+    slow_ma = prices.rolling(slow_window).mean()
+
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.08,
+        row_heights=[0.5, 0.5],
+        subplot_titles=("Equity Curve", "Price & Moving Averages"),
+    )
+
+    # Top: Equity curves
+    fig.add_trace(
+        go.Scatter(
+            x=strategy_equity.index,
+            y=strategy_equity.values,
+            name="Strategy",
+            line={"color": "blue"},
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=bh_equity.index,
+            y=bh_equity.values,
+            name="Buy & Hold",
+            line={"color": "gray", "dash": "dash"},
+        ),
+        row=1,
+        col=1,
+    )
+
+    # Bottom: Price and MAs
+    fig.add_trace(
+        go.Scatter(
+            x=prices.index,
+            y=prices.values,
+            name="SPY",
+            line={"color": "black", "width": 1},
+        ),
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=fast_ma.index,
+            y=fast_ma.values,
+            name=f"Fast MA ({fast_window})",
+            line={"color": "green"},
+        ),
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=slow_ma.index,
+            y=slow_ma.values,
+            name=f"Slow MA ({slow_window})",
+            line={"color": "red"},
+        ),
+        row=2,
+        col=1,
+    )
+
+    # Add vertical line at train/test split
+    for row in [1, 2]:
+        fig.add_vline(
+            x=str(split_date),
+            line={"color": "orange", "dash": "dot", "width": 2},
+            row=row,
+            col=1,
+        )
+
+    fig.update_layout(
+        title="MA Crossover Strategy Backtest",
+        hovermode="x unified",
+        height=700,
+        legend={"yanchor": "top", "y": 0.99, "xanchor": "left", "x": 0.01},
+    )
+    fig.update_yaxes(title_text="Equity", row=1, col=1)
+    fig.update_yaxes(title_text="Price", row=2, col=1)
+
+    return fig
+
+
 def main() -> None:
     """Run MA crossover backtest with optimization."""
     # Load data from Yahoo Finance
@@ -104,6 +202,22 @@ def main() -> None:
     print("\nBuy & Hold Comparison:")
     print(f"  Train - Sharpe: {bh_train.sharpe:.2f}, CAGR: {bh_train.cagr * 100:.1f}%")
     print(f"  Test  - Sharpe: {bh_test.sharpe:.2f}, CAGR: {bh_test.cagr * 100:.1f}%")
+
+    # Full period backtest for charting
+    full_weights = ma_crossover_weights(prices["SPY"], fast, slow)
+    full_result = backtest(prices, full_weights, cost_bps=5)
+    bh_full = backtest(prices, pd.DataFrame({"SPY": 1.0}, index=prices.index))
+
+    # Plot
+    fig = plot_backtest(
+        prices=prices["SPY"],
+        strategy_equity=full_result.equity,
+        bh_equity=bh_full.equity,
+        fast_window=fast,
+        slow_window=slow,
+        split_date=split.test_start,
+    )
+    fig.show()
 
 
 if __name__ == "__main__":

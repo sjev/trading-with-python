@@ -19,9 +19,9 @@ def clean(ctx):
 @task
 def lint(ctx):
     """Lint/format/typecheck the modernized code path (twp package)."""
-    ctx.run("ruff check twp", pty=True)
-    ctx.run("ruff format --check twp", pty=True)
-    ctx.run("mypy twp", pty=True)
+    ctx.run("ruff check src/twp", pty=True)
+    ctx.run("ruff format --check src/twp", pty=True)
+    ctx.run("mypy src/twp", pty=True)
 
 
 @task

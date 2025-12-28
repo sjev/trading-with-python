@@ -22,6 +22,7 @@ include = ["twp*"]
 
 [dependency-groups]
 dev = [
+    "invoke>=2.2.0",
     "pytest>=8.4.1",
     "ruff>=0.12.8",
     "mypy>=1.17.1",

@@ -5,34 +5,57 @@ This example shows a simple MA crossover strategy with parameter optimization
 on the training period and out-of-sample testing.
 
 Usage:
-    python examples/02_backtest_ma_crossover.py
+    python examples/04_backtest_optimisation.py
 """
 
 from datetime import date
 from itertools import product
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from twp.backtest import Split, backtest
+from twp.backtest import Backtest, Split
 from twp.data import YahooSource
 
 
-def ma_crossover_weights(
-    prices: pd.Series, fast_window: int = 10, slow_window: int = 30
+def ma_crossover_signal(prices: pd.Series, fast: int = 10, slow: int = 30) -> pd.Series:
+    """Generate binary signal from MA crossover (1=long, 0=out)."""
+    fast_ma = prices.rolling(fast).mean()
+    slow_ma = prices.rolling(slow).mean()
+    return (fast_ma > slow_ma).fillna(0).astype(int)
+
+
+def signal_to_shares(
+    signal: pd.Series, prices: pd.Series, capital: float
 ) -> pd.DataFrame:
-    """Generate weights based on MA crossover."""
-    fast_ma = prices.rolling(fast_window).mean()
-    slow_ma = prices.rolling(slow_window).mean()
-    signal = (fast_ma > slow_ma).astype(float)
-    weights = pd.DataFrame({prices.name: signal}, index=prices.index)
-    return weights.fillna(0)
+    """Convert signal to share positions based on available capital."""
+    shares = np.floor(capital * signal / prices).fillna(0).astype(int)
+    return pd.DataFrame({prices.name: shares}, index=prices.index)
+
+
+def run_backtest(
+    prices: pd.DataFrame,
+    signal: pd.Series,
+    initial_capital: float,
+    cost_pct: float = 0.0,
+) -> Backtest:
+    """Run backtest from signal."""
+    ticker = prices.columns[0]
+    shares = signal_to_shares(signal, prices[ticker], initial_capital)
+    return Backtest(
+        prices=prices,
+        shares=shares,
+        initial_capital=initial_capital,
+        cost_pct=cost_pct,
+    )
 
 
 def optimize_ma_params(
     prices: pd.DataFrame,
     ticker: str,
+    initial_capital: float,
     fast_range: range = range(5, 31, 5),
     slow_range: range = range(20, 101, 10),
 ) -> tuple[int, int, float]:
@@ -43,58 +66,30 @@ def optimize_ma_params(
     for fast, slow in product(fast_range, slow_range):
         if fast >= slow:
             continue
-        weights = ma_crossover_weights(prices[ticker], fast, slow)
-        result = backtest(prices, weights)
-        if result.sharpe > best_sharpe:
-            best_sharpe = result.sharpe
+        signal = ma_crossover_signal(prices[ticker], fast, slow)
+        bt = run_backtest(prices, signal, initial_capital)
+        if bt.metrics["sharpe"] > best_sharpe:
+            best_sharpe = bt.metrics["sharpe"]
             best_fast, best_slow = fast, slow
 
     return best_fast, best_slow, best_sharpe
 
 
-def print_results(name: str, result) -> None:
+def print_results(name: str, bt: Backtest) -> None:
     """Print backtest results."""
+    m = bt.metrics
     print(f"\n{name}:")
-    print(f"  Sharpe Ratio: {result.sharpe:.2f}")
-    print(f"  CAGR: {result.cagr * 100:.1f}%")
-    print(f"  Volatility: {result.volatility * 100:.1f}%")
-    print(f"  Max Drawdown: {result.max_drawdown * 100:.1f}%")
-    print(f"  Turnover: {result.turnover:.2f}")
-    print(f"  Final Equity: {result.equity.iloc[-1]:.2f}")
-
-
-def compute_rebalanced_equity(
-    returns: pd.Series, weights: pd.Series, bh_equity: pd.Series
-) -> pd.Series:
-    """Compute equity that rebalances to B&H level on each entry.
-
-    When strategy re-enters (weight 0->1), equity is rebased to match B&H,
-    so returns during active periods track B&H exactly.
-    """
-    equity = pd.Series(index=returns.index, dtype=float)
-    equity.iloc[0] = bh_equity.iloc[0]
-
-    prev_weight = 0.0
-    for i in range(1, len(returns)):
-        curr_weight = weights.iloc[i - 1]  # weight used for this return (lagged)
-
-        # Detect re-entry: was out, now in
-        if prev_weight == 0 and curr_weight > 0:
-            # Rebase to B&H level at entry
-            equity.iloc[i] = bh_equity.iloc[i]
-        else:
-            # Normal compounding
-            equity.iloc[i] = equity.iloc[i - 1] * (1 + returns.iloc[i])
-
-        prev_weight = curr_weight
-
-    return equity
+    print(f"  Sharpe Ratio: {m['sharpe']:.2f}")
+    print(f"  CAGR: {m['cagr']:.1%}")
+    print(f"  Volatility: {m['volatility']:.1%}")
+    print(f"  Max Drawdown: {m['max_drawdown']:.1%}")
+    print(f"  Turnover: {m['turnover']:.2%}")
+    print(f"  Final Equity: ${bt.equity.iloc[-1]:,.0f}")
 
 
 def plot_backtest(
     prices: pd.Series,
-    strategy_returns: pd.Series,
-    strategy_weights: pd.Series,
+    strategy_equity: pd.Series,
     bh_equity: pd.Series,
     fast_window: int,
     slow_window: int,
@@ -104,15 +99,9 @@ def plot_backtest(
     fast_ma = prices.rolling(fast_window).mean()
     slow_ma = prices.rolling(slow_window).mean()
 
-    # Compute rebalanced equity that tracks B&H during active periods
-    strategy_equity = compute_rebalanced_equity(
-        strategy_returns, strategy_weights["SPY"], bh_equity
-    )
-
-    # Normalize both to start at 1.0 after warm-up
-    first_active = (strategy_weights["SPY"] > 0).idxmax()
-    norm_strategy = strategy_equity / strategy_equity.loc[first_active]
-    norm_bh = bh_equity / bh_equity.loc[first_active]
+    # Normalize both to start at 1.0
+    norm_strategy = strategy_equity / strategy_equity.iloc[0]
+    norm_bh = bh_equity / bh_equity.iloc[0]
 
     fig = make_subplots(
         rows=2,
@@ -200,6 +189,10 @@ def plot_backtest(
 
 def main() -> None:
     """Run MA crossover backtest with optimization."""
+    # Configuration
+    initial_capital = 100_000
+    cost_pct = 0.0005  # 5 bps
+
     # Load data from Yahoo Finance
     source = YahooSource()
     spy = source.get("SPY", start=date(2010, 1, 1))
@@ -220,38 +213,42 @@ def main() -> None:
 
     # Optimize on training data
     print("\nOptimizing MA parameters on training data...")
-    fast, slow, train_sharpe = optimize_ma_params(train_prices, "SPY")
+    fast, slow, train_sharpe = optimize_ma_params(train_prices, "SPY", initial_capital)
     print(f"Best params: fast={fast}, slow={slow} (train Sharpe={train_sharpe:.2f})")
 
     # Backtest on train period with optimized params
-    train_weights = ma_crossover_weights(train_prices["SPY"], fast, slow)
-    train_result = backtest(train_prices, train_weights, cost_bps=5)
-    print_results("Train Period Results", train_result)
+    train_signal = ma_crossover_signal(train_prices["SPY"], fast, slow)
+    train_bt = run_backtest(train_prices, train_signal, initial_capital, cost_pct)
+    print_results("Train Period Results", train_bt)
 
     # Backtest on test period (out-of-sample)
-    test_weights = ma_crossover_weights(test_prices["SPY"], fast, slow)
-    test_result = backtest(test_prices, test_weights, cost_bps=5)
-    print_results("Test Period Results (Out-of-Sample)", test_result)
+    test_signal = ma_crossover_signal(test_prices["SPY"], fast, slow)
+    test_bt = run_backtest(test_prices, test_signal, initial_capital, cost_pct)
+    print_results("Test Period Results (Out-of-Sample)", test_bt)
 
     # Buy & hold comparison
-    bh_train = backtest(
-        train_prices, pd.DataFrame({"SPY": 1.0}, index=train_prices.index)
-    )
-    bh_test = backtest(test_prices, pd.DataFrame({"SPY": 1.0}, index=test_prices.index))
+    bh_train_signal = pd.Series(1, index=train_prices.index)
+    bh_test_signal = pd.Series(1, index=test_prices.index)
+    bh_train = run_backtest(train_prices, bh_train_signal, initial_capital)
+    bh_test = run_backtest(test_prices, bh_test_signal, initial_capital)
     print("\nBuy & Hold Comparison:")
-    print(f"  Train - Sharpe: {bh_train.sharpe:.2f}, CAGR: {bh_train.cagr * 100:.1f}%")
-    print(f"  Test  - Sharpe: {bh_test.sharpe:.2f}, CAGR: {bh_test.cagr * 100:.1f}%")
+    print(
+        f"  Train - Sharpe: {bh_train.metrics['sharpe']:.2f}, CAGR: {bh_train.metrics['cagr']:.1%}"
+    )
+    print(
+        f"  Test  - Sharpe: {bh_test.metrics['sharpe']:.2f}, CAGR: {bh_test.metrics['cagr']:.1%}"
+    )
 
     # Full period backtest for charting
-    full_weights = ma_crossover_weights(prices["SPY"], fast, slow)
-    full_result = backtest(prices, full_weights, cost_bps=5)
-    bh_full = backtest(prices, pd.DataFrame({"SPY": 1.0}, index=prices.index))
+    full_signal = ma_crossover_signal(prices["SPY"], fast, slow)
+    full_bt = run_backtest(prices, full_signal, initial_capital, cost_pct)
+    bh_full_signal = pd.Series(1, index=prices.index)
+    bh_full = run_backtest(prices, bh_full_signal, initial_capital)
 
     # Plot
     fig = plot_backtest(
         prices=prices["SPY"],
-        strategy_returns=full_result.returns,
-        strategy_weights=full_weights,
+        strategy_equity=full_bt.equity,
         bh_equity=bh_full.equity,
         fast_window=fast,
         slow_window=slow,

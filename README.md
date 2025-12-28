@@ -18,22 +18,24 @@ pip install "twp[all]"       # All extras
 
 ```python
 from datetime import date
+import numpy as np
+import pandas as pd
 from twp.data import YahooSource
-from twp.indicators import MomentumIndicator
-from twp.backtest import backtest, train_test_split
+from twp.backtest import Backtest
 
 # Download data
 source = YahooSource()
-prices = source.get("SPY", date(2020, 1, 1))
+spy = source.get("SPY", date(2020, 1, 1))
+prices = pd.DataFrame({"SPY": spy["Close"]})
 
-# Calculate indicators
-momentum = MomentumIndicator(source, ticker="SPY")
-print(f"Current momentum: {momentum.value():.2f}")
+# Generate signal and convert to shares
+signal = (prices["SPY"].rolling(10).mean() > prices["SPY"].rolling(30).mean()).astype(int)
+initial_capital = 100_000
+shares = pd.DataFrame({"SPY": np.floor(initial_capital * signal / prices["SPY"]).fillna(0).astype(int)})
 
 # Run backtest
-weights = ...  # your strategy weights
-result = backtest(prices, weights, cost_bps=5)
-print(f"Sharpe: {result.sharpe:.2f}, CAGR: {result.cagr*100:.1f}%")
+bt = Backtest(prices=prices, shares=shares, initial_capital=initial_capital, cost_pct=0.0005)
+print(f"Sharpe: {bt.metrics['sharpe']:.2f}, CAGR: {bt.metrics['cagr']:.1%}")
 ```
 
 ## Modules
@@ -50,8 +52,8 @@ print(f"Sharpe: {result.sharpe:.2f}, CAGR: {result.cagr*100:.1f}%")
 - `MarketRegimeIndicator` - Combined regime indicator
 
 ### Backtesting (`twp.backtest`)
-- `train_test_split()` - Split data by date
-- `backtest()` - Run backtest with weights
+- `Backtest` - Run backtest with shares-based positions
+- `Split` / `train_test_split()` - Split data by date
 - Metrics: `sharpe`, `max_drawdown`, `cagr`, `volatility`, `turnover`
 
 ### Plotting (`twp.plotting`)
@@ -64,8 +66,9 @@ print(f"Sharpe: {result.sharpe:.2f}, CAGR: {result.cagr*100:.1f}%")
 See the `examples/` directory:
 - `00_download_data.py` - Data download demo
 - `01_indicators.py` - Indicator usage
-- `02_backtest_ma_crossover.py` - MA crossover strategy
+- `02_backtest_example.py` - MA crossover strategy
 - `03_backtest_regime_filter.py` - Regime-filtered strategy
+- `04_backtest_optimisation.py` - Parameter optimization
 
 ## Development
 

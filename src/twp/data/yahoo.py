@@ -5,13 +5,14 @@ from pathlib import Path
 
 import pandas as pd
 import yfinance as yf
+from platformdirs import user_cache_dir
 
 
 class YahooSource:
     """Yahoo Finance data source with file-based caching."""
 
     def __init__(self, cache_dir: Path | None = None):
-        self._cache_dir = cache_dir or Path.home() / ".twp" / "cache" / "yahoo"
+        self._cache_dir = cache_dir or Path(user_cache_dir("twp")) / "yahoo"
         self._cache_dir.mkdir(parents=True, exist_ok=True)
 
     @property

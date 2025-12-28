@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 from fredapi import Fred
+from platformdirs import user_cache_dir
 
 
 class FredSource:
@@ -16,7 +17,7 @@ class FredSource:
         if not self.api_key:
             raise ValueError("FRED_API_KEY not found in environment")
 
-        self._cache_dir = cache_dir or Path.home() / ".twp" / "cache" / "fred"
+        self._cache_dir = cache_dir or Path(user_cache_dir("twp")) / "fred"
         self._cache_dir.mkdir(parents=True, exist_ok=True)
         self._client: Fred | None = None
 

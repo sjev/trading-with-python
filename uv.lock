@@ -636,6 +636,7 @@ source = { editable = "." }
 dependencies = [
     { name = "numpy" },
     { name = "pandas" },
+    { name = "platformdirs" },
     { name = "plotly" },
     { name = "yfinance" },
 ]
@@ -659,6 +660,7 @@ requires-dist = [
     { name = "fredapi", marker = "extra == 'fred'", specifier = ">=0.5.2" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "pandas", specifier = ">=2.0" },
+    { name = "platformdirs", specifier = ">=4.0" },
     { name = "plotly", specifier = ">=5.18" },
     { name = "yfinance", specifier = ">=0.2.40" },
 ]

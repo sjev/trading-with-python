@@ -12,7 +12,7 @@ from twp.data import YahooSource
 
 def main() -> None:
     """Download sample market data."""
-    # Create Yahoo source (caches to ~/.twp/cache/yahoo/)
+    # Create Yahoo source (caches to ~/.cache/twp/yahoo/)
     source = YahooSource()
 
     # Download SPY data
@@ -35,7 +35,7 @@ def main() -> None:
         data = source.get(ticker, start=date(2020, 1, 1))
         print(f"  {ticker}: {len(data)} days")
 
-    print("\nData cached to ~/.twp/cache/yahoo/")
+    print("\nData cached to ~/.cache/twp/yahoo/")
 
 
 if __name__ == "__main__":

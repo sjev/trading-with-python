@@ -8,8 +8,9 @@ requires-python = ">=3.13"
 dependencies = [
     "numpy>=2.0",
     "pandas>=2.0",
-    "yfinance>=0.2.40",
+    "platformdirs>=4.0",
     "plotly>=5.18",
+    "yfinance>=0.2.40",
 ]
 
 [project.optional-dependencies]

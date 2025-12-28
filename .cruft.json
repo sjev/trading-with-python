@@ -1,0 +1,21 @@
+{
+  "template": "https://gitlab.com/roxautomation/templates/python-lib-template",
+  "commit": "27bb46e039c0cdc2d6315489d6084b8cca2a0f80",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "Trading With Python",
+      "project_slug": "trading-with-python",
+      "package_name": "twp",
+      "description": "Open-source toolbox for quantitative trading strategy development",
+      "author_name": "Jev Kuznetsov",
+      "author_email": "jev.kuznetsov@gmail.com",
+      "version": "4.0.0",
+      "python_version": "3.13",
+      "year": "2025",
+      "_template": "https://gitlab.com/roxautomation/templates/python-lib-template",
+      "_commit": "27bb46e039c0cdc2d6315489d6084b8cca2a0f80"
+    }
+  },
+  "directory": null
+}

@@ -1,0 +1,39 @@
+[project]
+name = "twp"
+version = "4.0.0"
+description = "Open-source toolbox for quantitative trading strategy development"
+readme = "README.md"
+authors = [
+    { name = "Jev Kuznetsov", email = "jev.kuznetsov@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["twp*"]
+
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "ruff>=0.12.8",
+    "mypy>=1.17.1",
+]
+
+
+[tool.ruff.lint]
+extend-select = ["B", "I", "C4", "SIM", "PLE", "RUF"]
+ignore = [
+    "D100", "D101", "D102", "D103",
+]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

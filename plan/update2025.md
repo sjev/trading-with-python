@@ -188,6 +188,12 @@ If/when adding notebooks:
 
 Run `inv lint` and `inv test` after each step.
 
+### Phase 0 — Cleanup
+- [ ] 0.1 Remove or archive legacy IB examples from `examples/`
+- [ ] 0.2 Clean up `tools/` (keep useful, remove rest)
+- [ ] 0.3 Clean up `scratch/` (remove or archive)
+- [ ] 0.4 Review `lib/` — document what to port vs delete
+
 ### Phase 1 — Data + Indicators
 - [ ] 1.1 Create `src/twp/data/` package (protocol.py, __init__.py)
 - [ ] 1.2 Port yahoo.py

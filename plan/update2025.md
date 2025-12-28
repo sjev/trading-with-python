@@ -200,16 +200,16 @@ Run `inv lint` and `inv test` after each step.
   - Will delete lib/ after Phase 1-3 complete
 
 ### Phase 1 — Data + Indicators
-- [ ] 1.1 Create `src/twp/data/` package (protocol.py, __init__.py)
-- [ ] 1.2 Port yahoo.py
-- [ ] 1.3 Port fred.py
-- [ ] 1.4 Port local_csv.py
-- [ ] 1.5 Create `src/twp/indicators/` package (protocol.py, __init__.py)
-- [ ] 1.6 Port normalization.py
-- [ ] 1.7 Port vix.py
-- [ ] 1.8 Port momentum.py
-- [ ] 1.9 Port absorption_ratio.py
-- [ ] 1.10 Port mri.py
+- [x] 1.1 Create `src/twp/data/` package (protocol.py, __init__.py)
+- [x] 1.2 Port yahoo.py — removed Config coupling, uses ~/.twp/cache/yahoo
+- [x] 1.3 Port fred.py — removed Config coupling, uses ~/.twp/cache/fred
+- [x] 1.4 Port local_csv.py
+- [x] 1.5 Create `src/twp/indicators/` package (protocol.py, __init__.py)
+- [x] 1.6 Port normalization.py — added log_returns helper
+- [x] 1.7 Port vix.py — requires explicit DataSourceProtocol
+- [x] 1.8 Port momentum.py
+- [x] 1.9 Port absorption_ratio.py
+- [x] 1.10 Port mri.py
 
 ### Phase 2 — Tests
 - [ ] 2.1 Create `tests/` with CSV fixtures

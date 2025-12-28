@@ -1,73 +1,215 @@
-"""Minimal backtesting engine."""
+"""Backtest engine with shares-based position tracking."""
 
-from dataclasses import dataclass
+from functools import cached_property
+from pathlib import Path
 
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
-from .metrics import cagr, max_drawdown, sharpe, turnover, volatility
-
-
-@dataclass
-class BacktestResult:
-    """Results from a backtest."""
-
-    returns: pd.Series
-    equity: pd.Series
-    sharpe: float
-    cagr: float
-    volatility: float
-    max_drawdown: float
-    turnover: float
+from .metrics import cagr, max_drawdown, sharpe, volatility
 
 
-def backtest(
-    prices: pd.DataFrame,
-    weights: pd.DataFrame,
-    cost_bps: float = 0.0,
-) -> BacktestResult:
-    """Run a simple backtest.
+class Backtest:
+    """Backtest with shares-based positions and cash tracking."""
 
-    Args:
-        prices: DataFrame of asset prices (columns = tickers)
-        weights: DataFrame of portfolio weights (columns = tickers)
-                 Weights should sum to 1.0 (or less for cash allocation)
-        cost_bps: Transaction cost in basis points (default 0)
+    def __init__(
+        self,
+        prices: pd.DataFrame,
+        shares: pd.DataFrame,
+        initial_capital: float,
+        cost_per_share: float = 0.0,
+        cost_pct: float = 0.0,
+    ) -> None:
+        """Initialize backtest.
 
-    Returns:
-        BacktestResult with returns, equity curve, and metrics
-    """
-    # Align prices and weights
-    common_cols = prices.columns.intersection(weights.columns)
-    prices = prices[common_cols]
-    weights = weights[common_cols]
+        Args:
+            prices: DataFrame of asset prices (index=dates, columns=assets)
+            shares: DataFrame of position sizes (same shape as prices)
+            initial_capital: Starting cash amount
+            cost_per_share: Fixed cost per share traded (e.g., $0.005)
+            cost_pct: Cost as fraction of trade value (e.g., 0.0005 for 5bps)
+        """
+        # Align prices and shares
+        common_cols = prices.columns.intersection(shares.columns)
+        common_idx = prices.index.intersection(shares.index)
 
-    # Align dates
-    common_idx = prices.index.intersection(weights.index)
-    prices = prices.loc[common_idx]
-    weights = weights.loc[common_idx]
+        self._prices = prices.loc[common_idx, common_cols]
+        self._shares = shares.loc[common_idx, common_cols]
+        self._initial_capital = initial_capital
+        self._cost_per_share = cost_per_share
+        self._cost_pct = cost_pct
 
-    # Calculate asset returns
-    asset_returns = prices.pct_change().fillna(0)
+    @cached_property
+    def _delta_shares(self) -> pd.DataFrame:
+        """Position changes (first row is initial buy)."""
+        delta = self._shares.diff()
+        delta.iloc[0] = self._shares.iloc[0]
+        return delta
 
-    # Calculate portfolio returns (weighted sum of asset returns)
-    portfolio_returns = (asset_returns * weights.shift(1)).sum(axis=1)
+    @cached_property
+    def _trade_value(self) -> pd.DataFrame:
+        """Value of trades (shares * price)."""
+        return self._delta_shares * self._prices
 
-    # Apply transaction costs
-    if cost_bps > 0:
-        weight_changes = weights.diff().abs().sum(axis=1)
-        costs = weight_changes * cost_bps / 10000
-        portfolio_returns = portfolio_returns - costs
+    @cached_property
+    def _costs(self) -> pd.Series:
+        """Transaction costs per day."""
+        per_share_cost = self._delta_shares.abs() * self._cost_per_share
+        pct_cost = self._trade_value.abs() * self._cost_pct
+        return (per_share_cost + pct_cost).sum(axis=1)
 
-    # Calculate equity curve (starting at 1.0)
-    equity = (1 + portfolio_returns).cumprod()
+    @cached_property
+    def _cash_flow(self) -> pd.Series:
+        """Cash flow per day (negative when buying)."""
+        return -self._trade_value.sum(axis=1) - self._costs
 
-    # Calculate metrics
-    return BacktestResult(
-        returns=portfolio_returns,
-        equity=equity,
-        sharpe=sharpe(portfolio_returns),
-        cagr=cagr(equity),
-        volatility=volatility(portfolio_returns),
-        max_drawdown=max_drawdown(equity),
-        turnover=turnover(weights),
-    )
+    @cached_property
+    def cash(self) -> pd.Series:
+        """Cash balance over time."""
+        return self._initial_capital + self._cash_flow.cumsum()
+
+    @cached_property
+    def position_value(self) -> pd.Series:
+        """Total position value (shares * prices summed across assets)."""
+        return (self._shares * self._prices).sum(axis=1)
+
+    @cached_property
+    def equity(self) -> pd.Series:
+        """Total equity (cash + position value)."""
+        return self.cash + self.position_value
+
+    @cached_property
+    def pnl(self) -> pd.Series:
+        """Daily profit/loss."""
+        pnl = self.equity.diff()
+        pnl.iloc[0] = self.equity.iloc[0] - self._initial_capital
+        return pnl
+
+    @cached_property
+    def _returns(self) -> pd.Series:
+        """Daily returns (for metrics calculation)."""
+        return self.equity.pct_change().fillna(0)
+
+    @cached_property
+    def metrics(self) -> dict[str, float]:
+        """Performance metrics."""
+        # Turnover: average daily absolute share changes relative to position
+        total_shares = self._shares.abs().sum(axis=1)
+        daily_turnover = self._delta_shares.abs().sum(axis=1)
+        avg_turnover = (daily_turnover / total_shares.replace(0, 1)).mean()
+
+        return {
+            "sharpe": sharpe(self._returns),
+            "cagr": cagr(self.equity),
+            "volatility": volatility(self._returns),
+            "max_drawdown": max_drawdown(self.equity),
+            "turnover": float(avg_turnover),
+        }
+
+    def report(
+        self,
+        benchmark: pd.Series | None = None,
+        output_path: Path | str | None = None,
+    ) -> Path:
+        """Generate HTML report.
+
+        Args:
+            benchmark: Optional benchmark prices to overlay on equity chart
+            output_path: Output file path (default: backtest_report.html)
+
+        Returns:
+            Path to generated report
+        """
+        if output_path is None:
+            output_path = Path("backtest_report.html")
+        else:
+            output_path = Path(output_path)
+
+        # Normalize equity to start at 100
+        equity_normalized = self.equity / self.equity.iloc[0] * 100
+
+        # Create figure
+        fig = make_subplots(
+            rows=2,
+            cols=1,
+            row_heights=[0.7, 0.3],
+            subplot_titles=["Equity Curve", "Positions"],
+            vertical_spacing=0.1,
+        )
+
+        # Equity curve
+        fig.add_trace(
+            go.Scatter(
+                x=equity_normalized.index,
+                y=equity_normalized.values,
+                name="Strategy",
+                line={"color": "blue"},
+            ),
+            row=1,
+            col=1,
+        )
+
+        # Benchmark if provided
+        if benchmark is not None:
+            bench_normalized = benchmark / benchmark.iloc[0] * 100
+            fig.add_trace(
+                go.Scatter(
+                    x=bench_normalized.index,
+                    y=bench_normalized.values,
+                    name="Benchmark",
+                    line={"color": "gray", "dash": "dash"},
+                ),
+                row=1,
+                col=1,
+            )
+
+        # Positions (stacked area)
+        position_values = self._shares * self._prices
+        for col in position_values.columns:
+            fig.add_trace(
+                go.Scatter(
+                    x=position_values.index,
+                    y=position_values[col].values,
+                    name=col,
+                    stackgroup="positions",
+                ),
+                row=2,
+                col=1,
+            )
+
+        # Layout
+        fig.update_layout(
+            title="Backtest Report",
+            hovermode="x unified",
+            showlegend=True,
+            height=700,
+        )
+
+        # Metrics table as annotation
+        m = self.metrics
+        metrics_text = (
+            f"<b>Metrics</b><br>"
+            f"Sharpe: {m['sharpe']:.2f}<br>"
+            f"CAGR: {m['cagr']:.1%}<br>"
+            f"Volatility: {m['volatility']:.1%}<br>"
+            f"Max DD: {m['max_drawdown']:.1%}<br>"
+            f"Turnover: {m['turnover']:.2%}"
+        )
+
+        fig.add_annotation(
+            text=metrics_text,
+            xref="paper",
+            yref="paper",
+            x=0.02,
+            y=0.98,
+            showarrow=False,
+            font={"size": 12},
+            align="left",
+            bgcolor="rgba(255,255,255,0.8)",
+            bordercolor="gray",
+            borderwidth=1,
+        )
+
+        fig.write_html(output_path)
+        return output_path

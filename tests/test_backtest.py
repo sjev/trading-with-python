@@ -1,14 +1,15 @@
 """Tests for backtest module."""
 
 from datetime import date
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from twp.backtest import (
+    Backtest,
     Split,
-    backtest,
     cagr,
     max_drawdown,
     sharpe,
@@ -26,15 +27,6 @@ def sample_prices() -> pd.DataFrame:
     spy = 100 * (1 + np.random.randn(100).cumsum() * 0.01)
     qqq = 100 * (1 + np.random.randn(100).cumsum() * 0.015)
     return pd.DataFrame({"SPY": spy, "QQQ": qqq}, index=dates)
-
-
-@pytest.fixture
-def sample_weights(sample_prices: pd.DataFrame) -> pd.DataFrame:
-    """Sample weights for testing."""
-    return pd.DataFrame(
-        {"SPY": 0.6, "QQQ": 0.4},
-        index=sample_prices.index,
-    )
 
 
 class TestSplit:
@@ -132,141 +124,291 @@ class TestMetrics:
         assert t > 0
 
 
-class TestBacktestReturns:
-    """Tests to verify return calculation correctness."""
-
-    def test_buy_hold_matches_price_ratio(self) -> None:
-        """Buy & hold equity should match price ratio exactly."""
-        dates = pd.date_range("2024-01-01", periods=5, freq="D")
-        prices = pd.DataFrame({"SPY": [100.0, 102.0, 101.0, 105.0, 103.0]}, index=dates)
-        weights = pd.DataFrame({"SPY": 1.0}, index=dates)
-
-        result = backtest(prices, weights, cost_bps=0)
-
-        # Final equity should equal final_price / initial_price
-        expected_equity = 103.0 / 100.0
-        assert abs(result.equity.iloc[-1] - expected_equity) < 1e-10
-
-    def test_daily_returns_match_price_changes(self) -> None:
-        """Daily returns should match price percentage changes."""
-        dates = pd.date_range("2024-01-01", periods=4, freq="D")
-        prices = pd.DataFrame({"SPY": [100.0, 110.0, 99.0, 108.9]}, index=dates)
-        weights = pd.DataFrame({"SPY": 1.0}, index=dates)
-
-        result = backtest(prices, weights, cost_bps=0)
-
-        # Day 0: return = 0 (no prior weight due to shift)
-        # Day 1: return = (110-100)/100 = 10%
-        # Day 2: return = (99-110)/110 = -10%
-        # Day 3: return = (108.9-99)/99 = 10%
-        expected_returns = [0.0, 0.10, -0.10, 0.10]
-
-        for i, expected in enumerate(expected_returns):
-            assert abs(result.returns.iloc[i] - expected) < 1e-10, f"Day {i} mismatch"
-
-    def test_zero_weight_means_zero_return(self) -> None:
-        """When weight is 0, return should be 0 regardless of price move."""
-        dates = pd.date_range("2024-01-01", periods=4, freq="D")
-        prices = pd.DataFrame({"SPY": [100.0, 150.0, 200.0, 50.0]}, index=dates)
-        weights = pd.DataFrame({"SPY": 0.0}, index=dates)
-
-        result = backtest(prices, weights, cost_bps=0)
-
-        # All returns should be 0
-        assert (result.returns == 0).all()
-        assert result.equity.iloc[-1] == 1.0
-
-    def test_partial_weight_scales_returns(self) -> None:
-        """50% weight should give 50% of the return."""
-        dates = pd.date_range("2024-01-01", periods=3, freq="D")
-        prices = pd.DataFrame({"SPY": [100.0, 110.0, 121.0]}, index=dates)
-
-        full_weights = pd.DataFrame({"SPY": 1.0}, index=dates)
-        half_weights = pd.DataFrame({"SPY": 0.5}, index=dates)
-
-        full_result = backtest(prices, full_weights, cost_bps=0)
-        half_result = backtest(prices, half_weights, cost_bps=0)
-
-        # Half weight returns should be half of full weight returns (after day 0)
-        for i in range(1, len(dates)):
-            expected = full_result.returns.iloc[i] * 0.5
-            assert abs(half_result.returns.iloc[i] - expected) < 1e-10
-
-    def test_weight_applied_with_one_day_lag(self) -> None:
-        """Weight change should affect next day's return, not same day."""
-        dates = pd.date_range("2024-01-01", periods=4, freq="D")
-        prices = pd.DataFrame({"SPY": [100.0, 110.0, 121.0, 133.1]}, index=dates)
-        # Start out, then go in on day 1
-        weights = pd.DataFrame({"SPY": [0.0, 1.0, 1.0, 1.0]}, index=dates)
-
-        result = backtest(prices, weights, cost_bps=0)
-
-        # Day 0: return = 0 (shift gives NaN weight)
-        # Day 1: return = 10% * weight[0]=0 = 0  (weight lagged!)
-        # Day 2: return = 10% * weight[1]=1 = 10%
-        # Day 3: return = 10% * weight[2]=1 = 10%
-        expected_returns = [0.0, 0.0, 0.10, 0.10]
-
-        for i, expected in enumerate(expected_returns):
-            assert abs(result.returns.iloc[i] - expected) < 1e-10, f"Day {i} mismatch"
-
-    def test_equity_compounds_correctly(self) -> None:
-        """Equity should compound: (1+r1)*(1+r2)*..."""
-        dates = pd.date_range("2024-01-01", periods=4, freq="D")
-        prices = pd.DataFrame({"SPY": [100.0, 110.0, 121.0, 108.9]}, index=dates)
-        weights = pd.DataFrame({"SPY": 1.0}, index=dates)
-
-        result = backtest(prices, weights, cost_bps=0)
-
-        # Manual calculation:
-        # Day 0: equity = 1.0
-        # Day 1: equity = 1.0 * 1.10 = 1.10
-        # Day 2: equity = 1.10 * 1.10 = 1.21
-        # Day 3: equity = 1.21 * 0.90 = 1.089
-        expected_equity = [1.0, 1.10, 1.21, 1.089]
-
-        for i, expected in enumerate(expected_equity):
-            assert abs(result.equity.iloc[i] - expected) < 1e-10, f"Day {i} mismatch"
-
-
 class TestBacktest:
-    """Tests for backtest engine."""
+    """Tests for Backtest class with cash tracking."""
 
-    def test_backtest_returns_result(
-        self, sample_prices: pd.DataFrame, sample_weights: pd.DataFrame
-    ) -> None:
-        """Test that backtest returns a BacktestResult."""
-        result = backtest(sample_prices, sample_weights)
+    # --- Cash tracking tests ---
 
-        assert hasattr(result, "returns")
-        assert hasattr(result, "equity")
-        assert hasattr(result, "sharpe")
-        assert hasattr(result, "cagr")
-        assert hasattr(result, "max_drawdown")
+    def test_cash_after_initial_buy(self) -> None:
+        """Cash should decrease by cost of initial purchase."""
+        dates = pd.date_range("2024-01-01", periods=3, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 100.0, 100.0]}, index=dates)
+        shares = pd.DataFrame(
+            {"SPY": [10, 10, 10]}, index=dates
+        )  # Buy 10 shares at $100
 
-    def test_backtest_equity_starts_at_one(
-        self, sample_prices: pd.DataFrame, sample_weights: pd.DataFrame
-    ) -> None:
-        """Test that equity curve starts at 1.0."""
-        result = backtest(sample_prices, sample_weights)
+        bt = Backtest(prices, shares, initial_capital=10000)
 
-        assert result.equity.iloc[0] == 1.0
+        # Bought 10 shares at $100 = $1000 spent
+        assert bt.cash.iloc[0] == 10000 - 1000
 
-    def test_backtest_with_costs(
-        self, sample_prices: pd.DataFrame, sample_weights: pd.DataFrame
-    ) -> None:
-        """Test that transaction costs reduce returns."""
-        result_no_cost = backtest(sample_prices, sample_weights, cost_bps=0)
-        result_with_cost = backtest(sample_prices, sample_weights, cost_bps=10)
+    def test_cash_decreases_on_buy(self) -> None:
+        """Buying more shares should decrease cash."""
+        dates = pd.date_range("2024-01-01", periods=3, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 100.0, 100.0]}, index=dates)
+        shares = pd.DataFrame(
+            {"SPY": [10, 20, 20]}, index=dates
+        )  # Buy 10 more on day 2
 
-        # Equity with costs should be lower
-        assert result_with_cost.equity.iloc[-1] <= result_no_cost.equity.iloc[-1]
+        bt = Backtest(prices, shares, initial_capital=10000)
 
-    def test_backtest_lengths_match(
-        self, sample_prices: pd.DataFrame, sample_weights: pd.DataFrame
-    ) -> None:
-        """Test that returns and equity have same length as input."""
-        result = backtest(sample_prices, sample_weights)
+        # Day 0: bought 10 @ $100 = cash = 10000 - 1000 = 9000
+        # Day 1: bought 10 more @ $100 = cash = 9000 - 1000 = 8000
+        assert bt.cash.iloc[0] == 9000
+        assert bt.cash.iloc[1] == 8000
+        assert bt.cash.iloc[2] == 8000  # No change
 
-        assert len(result.returns) == len(sample_prices)
-        assert len(result.equity) == len(sample_prices)
+    def test_cash_increases_on_sell(self) -> None:
+        """Selling shares should increase cash."""
+        dates = pd.date_range("2024-01-01", periods=3, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 100.0, 100.0]}, index=dates)
+        shares = pd.DataFrame({"SPY": [20, 10, 10]}, index=dates)  # Sell 10 on day 2
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+
+        # Day 0: bought 20 @ $100 = cash = 10000 - 2000 = 8000
+        # Day 1: sold 10 @ $100 = cash = 8000 + 1000 = 9000
+        assert bt.cash.iloc[0] == 8000
+        assert bt.cash.iloc[1] == 9000
+
+    def test_cash_with_transaction_costs_per_share(self) -> None:
+        """Transaction costs should reduce cash."""
+        dates = pd.date_range("2024-01-01", periods=2, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 100.0]}, index=dates)
+        shares = pd.DataFrame({"SPY": [100, 100]}, index=dates)  # Buy 100 shares
+
+        bt = Backtest(prices, shares, initial_capital=20000, cost_per_share=0.01)
+
+        # Bought 100 shares @ $100 = $10000
+        # Cost: 100 * $0.01 = $1
+        # Cash = 20000 - 10000 - 1 = 9999
+        assert bt.cash.iloc[0] == 9999
+
+    def test_cash_with_transaction_costs_pct(self) -> None:
+        """Percentage transaction costs should reduce cash."""
+        dates = pd.date_range("2024-01-01", periods=2, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 100.0]}, index=dates)
+        shares = pd.DataFrame({"SPY": [100, 100]}, index=dates)  # Buy 100 shares
+
+        bt = Backtest(prices, shares, initial_capital=20000, cost_pct=0.001)  # 10 bps
+
+        # Bought 100 shares @ $100 = $10000
+        # Cost: 10000 * 0.001 = $10
+        # Cash = 20000 - 10000 - 10 = 9990
+        assert bt.cash.iloc[0] == 9990
+
+    # --- Position value tests ---
+
+    def test_position_value_single_asset(self) -> None:
+        """Position value should equal shares * price."""
+        dates = pd.date_range("2024-01-01", periods=3, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 110.0, 105.0]}, index=dates)
+        shares = pd.DataFrame({"SPY": [10, 10, 10]}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+
+        assert bt.position_value.iloc[0] == 10 * 100
+        assert bt.position_value.iloc[1] == 10 * 110
+        assert bt.position_value.iloc[2] == 10 * 105
+
+    def test_position_value_multiple_assets(self) -> None:
+        """Position value should sum across assets."""
+        dates = pd.date_range("2024-01-01", periods=2, freq="D")
+        prices = pd.DataFrame(
+            {"SPY": [100.0, 100.0], "QQQ": [200.0, 200.0]}, index=dates
+        )
+        shares = pd.DataFrame({"SPY": [10, 10], "QQQ": [5, 5]}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=20000)
+
+        # Position value = 10*100 + 5*200 = 1000 + 1000 = 2000
+        assert bt.position_value.iloc[0] == 2000
+
+    # --- Equity tests ---
+
+    def test_equity_equals_cash_plus_position(self) -> None:
+        """Equity should equal cash + position value."""
+        dates = pd.date_range("2024-01-01", periods=3, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 110.0, 105.0]}, index=dates)
+        shares = pd.DataFrame({"SPY": [10, 10, 10]}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+
+        for i in range(len(dates)):
+            assert bt.equity.iloc[i] == bt.cash.iloc[i] + bt.position_value.iloc[i]
+
+    def test_equity_starts_at_initial_capital(self) -> None:
+        """Equity should start at initial capital (before price changes)."""
+        dates = pd.date_range("2024-01-01", periods=3, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 100.0, 100.0]}, index=dates)
+        shares = pd.DataFrame({"SPY": [10, 10, 10]}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+
+        # Day 0: cash = 10000 - 1000 = 9000, position = 1000, equity = 10000
+        assert bt.equity.iloc[0] == 10000
+
+    def test_equity_grows_with_price_increase(self) -> None:
+        """Equity should grow when price increases."""
+        dates = pd.date_range("2024-01-01", periods=3, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 110.0, 120.0]}, index=dates)
+        shares = pd.DataFrame({"SPY": [10, 10, 10]}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+
+        # Day 0: equity = 10000
+        # Day 1: equity = 9000 + 10*110 = 10100
+        # Day 2: equity = 9000 + 10*120 = 10200
+        assert bt.equity.iloc[0] == 10000
+        assert bt.equity.iloc[1] == 10100
+        assert bt.equity.iloc[2] == 10200
+
+    # --- PnL tests ---
+
+    def test_pnl_from_price_change(self) -> None:
+        """PnL should reflect gains from price changes."""
+        dates = pd.date_range("2024-01-01", periods=3, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 110.0, 105.0]}, index=dates)
+        shares = pd.DataFrame({"SPY": [10, 10, 10]}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+
+        # Day 0: pnl = equity[0] - initial_capital = 0
+        # Day 1: pnl = equity[1] - equity[0] = 10100 - 10000 = 100
+        # Day 2: pnl = equity[2] - equity[1] = 10050 - 10100 = -50
+        assert bt.pnl.iloc[0] == 0
+        assert bt.pnl.iloc[1] == 100
+        assert bt.pnl.iloc[2] == -50
+
+    def test_pnl_includes_costs(self) -> None:
+        """PnL should include transaction costs on trade days."""
+        dates = pd.date_range("2024-01-01", periods=3, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 100.0, 100.0]}, index=dates)
+        shares = pd.DataFrame(
+            {"SPY": [100, 200, 200]}, index=dates
+        )  # Buy 100 more on day 2
+
+        bt = Backtest(prices, shares, initial_capital=50000, cost_per_share=1.0)
+
+        # Day 0: buy 100 shares, cost = $100, pnl = -100
+        # Day 1: buy 100 more shares, cost = $100, pnl = -100
+        # Day 2: no trade, pnl = 0
+        assert bt.pnl.iloc[0] == -100
+        assert bt.pnl.iloc[1] == -100
+        assert bt.pnl.iloc[2] == 0
+
+    def test_pnl_sums_to_equity_change(self) -> None:
+        """Total PnL should equal final equity minus initial capital."""
+        dates = pd.date_range("2024-01-01", periods=5, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 110.0, 105.0, 115.0, 120.0]}, index=dates)
+        shares = pd.DataFrame({"SPY": [10, 10, 20, 20, 10]}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000, cost_per_share=0.01)
+
+        total_pnl = bt.pnl.sum()
+        equity_change = bt.equity.iloc[-1] - 10000
+        assert abs(total_pnl - equity_change) < 0.01
+
+    # --- Negative cash tests ---
+
+    def test_allows_negative_cash(self) -> None:
+        """Backtest should allow negative cash (margin)."""
+        dates = pd.date_range("2024-01-01", periods=2, freq="D")
+        prices = pd.DataFrame({"SPY": [100.0, 100.0]}, index=dates)
+        shares = pd.DataFrame({"SPY": [200, 200]}, index=dates)  # $20000 position
+
+        bt = Backtest(prices, shares, initial_capital=10000)  # Only $10000 capital
+
+        # Cash = 10000 - 20000 = -10000
+        assert bt.cash.iloc[0] == -10000
+        # Equity still = cash + position = -10000 + 20000 = 10000
+        assert bt.equity.iloc[0] == 10000
+
+
+class TestBacktestMetrics:
+    """Tests for Backtest.metrics property."""
+
+    def test_metrics_returns_dict(self) -> None:
+        """Metrics should return a dictionary."""
+        dates = pd.date_range("2024-01-01", periods=100, freq="D")
+        np.random.seed(42)
+        prices = pd.DataFrame({"SPY": 100 + np.random.randn(100).cumsum()}, index=dates)
+        shares = pd.DataFrame({"SPY": [10] * 100}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+        m = bt.metrics
+
+        assert isinstance(m, dict)
+        assert "sharpe" in m
+        assert "cagr" in m
+        assert "volatility" in m
+        assert "max_drawdown" in m
+        assert "turnover" in m
+
+    def test_metrics_sharpe_is_float(self) -> None:
+        """Sharpe ratio should be a float."""
+        dates = pd.date_range("2024-01-01", periods=100, freq="D")
+        np.random.seed(42)
+        prices = pd.DataFrame({"SPY": 100 + np.random.randn(100).cumsum()}, index=dates)
+        shares = pd.DataFrame({"SPY": [10] * 100}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+
+        assert isinstance(bt.metrics["sharpe"], float)
+
+    def test_metrics_with_profitable_strategy(self) -> None:
+        """Metrics should be positive for profitable strategy."""
+        dates = pd.date_range("2024-01-01", periods=100, freq="D")
+        # Steadily rising prices
+        prices = pd.DataFrame({"SPY": [100 + i * 0.5 for i in range(100)]}, index=dates)
+        shares = pd.DataFrame({"SPY": [10] * 100}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+
+        assert bt.metrics["cagr"] > 0
+        assert bt.metrics["sharpe"] > 0
+
+
+class TestBacktestReport:
+    """Tests for Backtest.report() method."""
+
+    def test_report_creates_html_file(self, tmp_path: Path) -> None:
+        """Report should create an HTML file."""
+        dates = pd.date_range("2024-01-01", periods=10, freq="D")
+        prices = pd.DataFrame({"SPY": [100 + i for i in range(10)]}, index=dates)
+        shares = pd.DataFrame({"SPY": [10] * 10}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+        output_path = tmp_path / "test_report.html"
+        result = bt.report(output_path=output_path)
+
+        assert output_path.exists()
+        assert result == output_path
+
+    def test_report_with_benchmark(self, tmp_path: Path) -> None:
+        """Report should include benchmark when provided."""
+        dates = pd.date_range("2024-01-01", periods=10, freq="D")
+        prices = pd.DataFrame({"SPY": [100 + i for i in range(10)]}, index=dates)
+        shares = pd.DataFrame({"SPY": [10] * 10}, index=dates)
+        benchmark = pd.Series([100 + i * 0.5 for i in range(10)], index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+        output_path = tmp_path / "test_report_bench.html"
+        bt.report(benchmark=benchmark, output_path=output_path)
+
+        content = output_path.read_text()
+        assert "Benchmark" in content or "benchmark" in content
+
+    def test_report_default_path(self) -> None:
+        """Report should default to backtest_report.html."""
+        dates = pd.date_range("2024-01-01", periods=10, freq="D")
+        prices = pd.DataFrame({"SPY": [100 + i for i in range(10)]}, index=dates)
+        shares = pd.DataFrame({"SPY": [10] * 10}, index=dates)
+
+        bt = Backtest(prices, shares, initial_capital=10000)
+        result = bt.report()
+
+        assert result.name == "backtest_report.html"
+        # Cleanup
+        if result.exists():
+            result.unlink()

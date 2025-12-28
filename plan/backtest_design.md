@@ -2,15 +2,17 @@
 
 ## Overview
 
-`Backtest` class: simple backtesting with shares-based positions.
+`Backtest` class: simple backtesting with shares-based positions and cash tracking.
 
 ## Interface
 
 ```python
-bt = Backtest(prices, shares, cost_per_share=0.005, cost_pct=0.0)
-bt.pnl          # Series: daily pnl
-bt.equity       # Series: cumulative equity curve
-bt.metrics      # dict: sharpe, cagr, volatility, max_drawdown, turnover
+bt = Backtest(prices, shares, initial_capital=100000, cost_per_share=0.005, cost_pct=0.0)
+bt.pnl            # Series: daily pnl
+bt.equity         # Series: cash + position_value
+bt.cash           # Series: cash balance over time
+bt.position_value # Series: shares * prices summed across assets
+bt.metrics        # dict: sharpe, cagr, volatility, max_drawdown, turnover
 bt.report(benchmark=spy_prices)  # generate standalone HTML report
 ```
 
@@ -18,17 +20,20 @@ bt.report(benchmark=spy_prices)  # generate standalone HTML report
 
 - `prices`: DataFrame with asset prices (index=dates, columns=assets)
 - `shares`: DataFrame with position sizes (same shape as prices)
+- `initial_capital`: starting cash amount
 - `cost_per_share`: fixed cost per share traded, e.g. $0.005 (default 0)
 - `cost_pct`: cost as fraction of trade value, e.g. 0.0005 for 5bps (default 0)
 
 ## Calculation
 
-1. `delta_shares = shares.diff()` — position changes
-2. `delta_prices = prices.diff()` — price changes
-3. `pnl = (shares.shift(1) * delta_prices).sum(axis=1)` — mark-to-market pnl
-4. `trade_value = delta_shares.abs() * prices` — value of trades
-5. `costs = (delta_shares.abs() * cost_per_share + trade_value * cost_pct).sum(axis=1)`
-6. `net_pnl = pnl - costs`
+1. `delta_shares = shares.diff().fillna(shares.iloc[0])` — position changes
+2. `trade_value = delta_shares * prices` — cost/proceeds of trades
+3. `costs = abs(delta_shares) * cost_per_share + abs(trade_value) * cost_pct`
+4. `cash_flow = -trade_value.sum(axis=1) - costs.sum(axis=1)` — negative when buying
+5. `cash = initial_capital + cash_flow.cumsum()`
+6. `position_value = (shares * prices).sum(axis=1)`
+7. `equity = cash + position_value`
+8. `pnl = equity.diff()` (first value = equity[0] - initial_capital)
 
 ## Metrics
 

@@ -72,7 +72,11 @@ def plot_equity(
 
     fig.add_trace(
         go.Scatter(
-            x=equity.index, y=equity.values, name="Strategy", mode="lines", line={"color": "blue"}
+            x=equity.index,
+            y=equity.values,
+            name="Strategy",
+            mode="lines",
+            line={"color": "blue"},
         )
     )
 

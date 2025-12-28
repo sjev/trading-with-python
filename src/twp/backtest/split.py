@@ -17,11 +17,11 @@ class Split:
 
     def slice_train(self, data: pd.DataFrame | pd.Series) -> pd.DataFrame | pd.Series:
         """Slice data to training period."""
-        return data.loc[str(self.train_start) : str(self.train_end)]
+        return data.loc[str(self.train_start) : str(self.train_end)]  # type: ignore[misc]
 
     def slice_test(self, data: pd.DataFrame | pd.Series) -> pd.DataFrame | pd.Series:
         """Slice data to test period."""
-        return data.loc[str(self.test_start) : str(self.test_end)]
+        return data.loc[str(self.test_start) : str(self.test_end)]  # type: ignore[misc]
 
 
 def train_test_split(

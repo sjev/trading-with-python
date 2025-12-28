@@ -26,5 +26,5 @@ def lint(ctx):
 
 @task
 def test(ctx):
-    """Run tests."""
-    ctx.run("pytest", pty=True)
+    """Run tests with coverage."""
+    ctx.run("pytest --cov=src --cov-report=term-missing", pty=True)

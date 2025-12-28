@@ -228,6 +228,6 @@ Run `inv lint` and `inv test` after each step.
 - [x] 3.9 Example: 03_backtest_regime_filter.py — regime-filtered strategy
 
 ### Phase 4 — Polish
-- [ ] 4.1 Update pyproject.toml with new deps
-- [ ] 4.2 Update src/twp/__init__.py exports
-- [ ] 4.3 Update README
+- [x] 4.1 Update pyproject.toml — optional deps: yahoo, fred, plotting, all
+- [x] 4.2 Update src/twp/__init__.py — exports backtest, data, indicators, plotting
+- [x] 4.3 Update README — installation, quick start, module docs

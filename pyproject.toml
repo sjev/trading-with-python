@@ -10,7 +10,16 @@ requires-python = ">=3.13"
 dependencies = [
     "numpy>=2.0",
     "pandas>=2.0",
-    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+yahoo = ["yfinance>=0.2.40"]
+fred = ["fredapi>=0.5.2"]
+plotting = ["plotly>=5.18"]
+all = [
+    "yfinance>=0.2.40",
+    "fredapi>=0.5.2",
+    "plotly>=5.18",
 ]
 
 

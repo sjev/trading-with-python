@@ -1,12 +1,7 @@
-# tradingWithPython
+# trading-with-python
 
+Open-source toolbox for quantitative trading strategy development.
 
-This library contains code that is (re)usable in in daily tasks involving development of quantitative trading strategies.
-It is used as my personal toobox as well as boiler-plate code for the [tradingWithPython](https://github.com/sjev/twp)
-course.
+## Status
 
-Some parts of the library are [documented ](http://sjev.github.io/trading-with-python), for the missing parts the code itself should be readable enough.
-
-**2021 update** I've open sourced the entire TWP course, enjoy! :tada: 
-
-
+This repository is being modernized (v4). Legacy course-related materials and old documentation have been removed; new docs and packaging will be added back as the API stabilizes.

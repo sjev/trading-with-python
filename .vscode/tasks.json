@@ -1,0 +1,52 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "clean (dry-run)",
+      "type": "shell",
+      "command": "git clean -nfdx",
+      "problemMatcher": []
+    },
+    {
+      "label": "clean (force)",
+      "type": "shell",
+      "command": "git clean -fdx",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "lint: ruff check",
+      "type": "shell",
+      "command": "ruff check .",
+      "problemMatcher": []
+    },
+    {
+      "label": "lint: ruff format (check)",
+      "type": "shell",
+      "command": "ruff format --check .",
+      "problemMatcher": []
+    },
+    {
+      "label": "lint: mypy",
+      "type": "shell",
+      "command": "mypy .",
+      "problemMatcher": []
+    },
+    {
+      "label": "lint",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "lint: ruff check",
+        "lint: ruff format (check)",
+        "lint: mypy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "pytest",
+      "problemMatcher": []
+    }
+  ]
+}

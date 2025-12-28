@@ -6,6 +6,8 @@
 # Hidden files
 .*
 !.cruft.json
+!.vscode/
+!.vscode/tasks.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -6,7 +6,7 @@ twp support functions
 Licence: GPL v2
 """
 
-from scipy import polyfit, polyval
+from numpy import polyfit, polyval
 import datetime as dt
 
 # from datetime import datetime, date

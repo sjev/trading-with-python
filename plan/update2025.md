@@ -212,9 +212,9 @@ Run `inv lint` and `inv test` after each step.
 - [x] 1.10 Port mri.py
 
 ### Phase 2 — Tests
-- [ ] 2.1 Create `tests/` with CSV fixtures
-- [ ] 2.2 Add test_data_sources.py
-- [ ] 2.3 Add test_indicators.py
+- [x] 2.1 Create `tests/` with CSV fixtures — copied SPY, VIX, sector ETFs from investing
+- [x] 2.2 Add test_data_sources.py — 7 tests for LocalCsvSource
+- [x] 2.3 Add test_indicators.py — 17 tests for VIX, Momentum, AR, MRI
 
 ### Phase 3 — Backtest + Examples
 - [ ] 3.1 Create `src/twp/backtest/` with split.py

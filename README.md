@@ -21,7 +21,8 @@ from datetime import date
 import numpy as np
 import pandas as pd
 from twp.data import YahooSource
-from twp.backtest import Backtest
+from twp.backtest import backtest, metrics, summary
+from twp.plotting import plot_equity
 
 # Download data
 source = YahooSource()
@@ -34,8 +35,12 @@ initial_capital = 100_000
 shares = pd.DataFrame({"SPY": np.floor(initial_capital * signal / prices["SPY"]).fillna(0).astype(int)})
 
 # Run backtest
-bt = Backtest(prices=prices, shares=shares, initial_capital=initial_capital, cost_pct=0.0005)
-print(f"Sharpe: {bt.metrics['sharpe']:.2f}, CAGR: {bt.metrics['cagr']:.1%}")
+result = backtest(prices, shares, initial_capital, cost_pct=0.0005)
+
+# Show metrics and plot
+m = metrics(result["equity"])
+summary(m, title="MA Crossover")
+plot_equity(result["equity"], benchmark=prices["SPY"]).show()
 ```
 
 ## Modules
@@ -52,13 +57,15 @@ print(f"Sharpe: {bt.metrics['sharpe']:.2f}, CAGR: {bt.metrics['cagr']:.1%}")
 - `MarketRegimeIndicator` - Combined regime indicator
 
 ### Backtesting (`twp.backtest`)
-- `Backtest` - Run backtest with shares-based positions
+- `backtest()` - Run backtest, returns dict with equity/pnl/cash/positions
+- `metrics()` - Compute metrics from equity curve
+- `summary()` - Print formatted metrics
 - `Split` / `train_test_split()` - Split data by date
-- Metrics: `sharpe`, `max_drawdown`, `cagr`, `volatility`, `turnover`
+- Individual metrics: `sharpe`, `max_drawdown`, `cagr`, `volatility`
 
 ### Plotting (`twp.plotting`)
 - `plot_prices()` - Price chart
-- `plot_equity()` - Equity curve
+- `plot_equity()` - Equity curve with optional benchmark
 - `plot_indicator()` - Indicator visualization
 
 ## Examples

@@ -1,261 +1,106 @@
-#!/usr/bin/env python
-"""Example: Moving Average Crossover Backtest with Optimization.
-
-This example shows a simple MA crossover strategy with parameter optimization
-on the training period and out-of-sample testing.
-
-Usage:
-    python examples/04_backtest_optimisation.py
-"""
+# %% Imports
+"""MA Crossover with Parameter Optimization Example."""
 
 from datetime import date
 from itertools import product
 
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
-from twp.backtest import Backtest, Split
+from twp.backtest import Split, backtest, metrics, summary
 from twp.data import YahooSource
+from twp.plotting import plot_equity
+
+# %% Configuration
+initial_capital = 100_000
+cost_pct = 0.0005  # 5 bps
+
+# %% Load data
+source = YahooSource()
+spy = source.get("SPY", start=date(2010, 1, 1))
+prices = pd.DataFrame({"SPY": spy["Close"]})
+
+# %% Define train/test split
+split = Split(
+    train_start=prices.index[0].date(),
+    train_end=date(2021, 12, 31),
+    test_start=date(2022, 1, 1),
+    test_end=prices.index[-1].date(),
+)
+print(f"Train: {split.train_start} to {split.train_end}")
+print(f"Test:  {split.test_start} to {split.test_end}")
+
+train_prices = pd.DataFrame(split.slice_train(prices))
+test_prices = pd.DataFrame(split.slice_test(prices))
 
 
-def ma_crossover_signal(prices: pd.Series, fast: int = 10, slow: int = 30) -> pd.Series:
-    """Generate binary signal from MA crossover (1=long, 0=out)."""
-    fast_ma = prices.rolling(fast).mean()
-    slow_ma = prices.rolling(slow).mean()
-    return (fast_ma > slow_ma).fillna(0).astype(int)
-
-
-def signal_to_shares(
-    signal: pd.Series, prices: pd.Series, capital: float
-) -> pd.DataFrame:
-    """Convert signal to share positions based on available capital."""
-    shares = np.floor(capital * signal / prices).fillna(0).astype(int)
-    return pd.DataFrame({prices.name: shares}, index=prices.index)
-
-
-def run_backtest(
-    prices: pd.DataFrame,
-    signal: pd.Series,
-    initial_capital: float,
-    cost_pct: float = 0.0,
-) -> Backtest:
-    """Run backtest from signal."""
-    ticker = prices.columns[0]
-    shares = signal_to_shares(signal, prices[ticker], initial_capital)
-    return Backtest(
-        prices=prices,
-        shares=shares,
-        initial_capital=initial_capital,
-        cost_pct=cost_pct,
+# %% Helper: generate MA crossover signal
+def ma_signal(price: pd.Series, fast: int, slow: int) -> pd.Series:
+    """Generate MA crossover signal (1=long, 0=out)."""
+    return (
+        (price.rolling(fast).mean() > price.rolling(slow).mean()).fillna(0).astype(int)
     )
 
 
-def optimize_ma_params(
-    prices: pd.DataFrame,
-    ticker: str,
-    initial_capital: float,
-    fast_range: range = range(5, 31, 5),
-    slow_range: range = range(20, 101, 10),
-) -> tuple[int, int, float]:
-    """Find MA params that maximize Sharpe on training data."""
-    best_sharpe = float("-inf")
-    best_fast, best_slow = 10, 30
-
-    for fast, slow in product(fast_range, slow_range):
-        if fast >= slow:
-            continue
-        signal = ma_crossover_signal(prices[ticker], fast, slow)
-        bt = run_backtest(prices, signal, initial_capital)
-        if bt.metrics["sharpe"] > best_sharpe:
-            best_sharpe = bt.metrics["sharpe"]
-            best_fast, best_slow = fast, slow
-
-    return best_fast, best_slow, best_sharpe
+# %% Helper: signal to shares
+def to_shares(signal: pd.Series, price: pd.Series, capital: float) -> pd.DataFrame:
+    """Convert signal to share positions."""
+    shares = np.floor(capital * signal / price).fillna(0).astype(int)
+    return pd.DataFrame({price.name: shares}, index=price.index)
 
 
-def print_results(name: str, bt: Backtest) -> None:
-    """Print backtest results."""
-    m = bt.metrics
-    print(f"\n{name}:")
-    print(f"  Sharpe Ratio: {m['sharpe']:.2f}")
-    print(f"  CAGR: {m['cagr']:.1%}")
-    print(f"  Volatility: {m['volatility']:.1%}")
-    print(f"  Max Drawdown: {m['max_drawdown']:.1%}")
-    print(f"  Turnover: {m['turnover']:.2%}")
-    print(f"  Final Equity: ${bt.equity.iloc[-1]:,.0f}")
+# %% Optimize on training data
+print("\nOptimizing MA parameters...")
+best_sharpe = float("-inf")
+best_fast, best_slow = 10, 30
 
+for fast, slow in product(range(5, 31, 5), range(20, 101, 10)):
+    if fast >= slow:
+        continue
+    signal = ma_signal(train_prices["SPY"], fast, slow)
+    shares = to_shares(signal, train_prices["SPY"], initial_capital)
+    result = backtest(train_prices, shares, initial_capital)
+    m = metrics(result["equity"])
+    if m["sharpe"] > best_sharpe:
+        best_sharpe = m["sharpe"]
+        best_fast, best_slow = fast, slow
 
-def plot_backtest(
-    prices: pd.Series,
-    strategy_equity: pd.Series,
-    bh_equity: pd.Series,
-    fast_window: int,
-    slow_window: int,
-    split_date: date,
-) -> go.Figure:
-    """Create backtest chart with equity curves and MA signals."""
-    fast_ma = prices.rolling(fast_window).mean()
-    slow_ma = prices.rolling(slow_window).mean()
+print(
+    f"Best params: fast={best_fast}, slow={best_slow} (train Sharpe={best_sharpe:.2f})"
+)
 
-    # Normalize both to start at 1.0
-    norm_strategy = strategy_equity / strategy_equity.iloc[0]
-    norm_bh = bh_equity / bh_equity.iloc[0]
+# %% Train period results
+train_signal = ma_signal(train_prices["SPY"], best_fast, best_slow)
+train_shares = to_shares(train_signal, train_prices["SPY"], initial_capital)
+train_result = backtest(train_prices, train_shares, initial_capital, cost_pct=cost_pct)
+summary(metrics(train_result["equity"]), title="Train Period")
 
-    fig = make_subplots(
-        rows=2,
-        cols=1,
-        shared_xaxes=True,
-        vertical_spacing=0.08,
-        row_heights=[0.5, 0.5],
-        subplot_titles=("Equity (Normalized)", "Price & Moving Averages"),
-    )
+# %% Test period results (out-of-sample)
+test_signal = ma_signal(test_prices["SPY"], best_fast, best_slow)
+test_shares = to_shares(test_signal, test_prices["SPY"], initial_capital)
+test_result = backtest(test_prices, test_shares, initial_capital, cost_pct=cost_pct)
+summary(metrics(test_result["equity"]), title="Test Period (Out-of-Sample)")
 
-    # Top: Equity curves (normalized)
-    fig.add_trace(
-        go.Scatter(
-            x=norm_strategy.index,
-            y=norm_strategy.values,
-            name="Strategy",
-            line={"color": "blue"},
-        ),
-        row=1,
-        col=1,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=norm_bh.index,
-            y=norm_bh.values,
-            name="Buy & Hold",
-            line={"color": "gray", "dash": "dash"},
-        ),
-        row=1,
-        col=1,
-    )
+# %% Buy & hold comparison
+print("\nBuy & Hold Comparison:")
+for name, p in [("Train", train_prices), ("Test", test_prices)]:
+    bh_shares = to_shares(pd.Series(1, index=p.index), p["SPY"], initial_capital)
+    bh_result = backtest(p, bh_shares, initial_capital)
+    bh_m = metrics(bh_result["equity"])
+    print(f"  {name} - Sharpe: {bh_m['sharpe']:.2f}, CAGR: {bh_m['cagr']:.1%}")
 
-    # Bottom: Price and MAs
-    fig.add_trace(
-        go.Scatter(
-            x=prices.index,
-            y=prices.values,
-            name="SPY",
-            line={"color": "black", "width": 1},
-        ),
-        row=2,
-        col=1,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=fast_ma.index,
-            y=fast_ma.values,
-            name=f"Fast MA ({fast_window})",
-            line={"color": "green"},
-        ),
-        row=2,
-        col=1,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=slow_ma.index,
-            y=slow_ma.values,
-            name=f"Slow MA ({slow_window})",
-            line={"color": "red"},
-        ),
-        row=2,
-        col=1,
-    )
+# %% Plot full period
+full_signal = ma_signal(prices["SPY"], best_fast, best_slow)
+full_shares = to_shares(full_signal, prices["SPY"], initial_capital)
+full_result = backtest(prices, full_shares, initial_capital, cost_pct=cost_pct)
 
-    # Add vertical line at train/test split
-    for row in [1, 2]:
-        fig.add_vline(
-            x=str(split_date),
-            line={"color": "orange", "dash": "dot", "width": 2},
-            row=row,
-            col=1,
-        )
+bh_full_shares = to_shares(
+    pd.Series(1, index=prices.index), prices["SPY"], initial_capital
+)
+bh_full_result = backtest(prices, bh_full_shares, initial_capital)
 
-    fig.update_layout(
-        title="MA Crossover Strategy Backtest",
-        hovermode="x unified",
-        height=700,
-        legend={"yanchor": "top", "y": 0.99, "xanchor": "left", "x": 0.01},
-    )
-    fig.update_yaxes(title_text="Equity (Normalized)", row=1, col=1)
-    fig.update_yaxes(title_text="Price", row=2, col=1)
-
-    return fig
-
-
-def main() -> None:
-    """Run MA crossover backtest with optimization."""
-    # Configuration
-    initial_capital = 100_000
-    cost_pct = 0.0005  # 5 bps
-
-    # Load data from Yahoo Finance
-    source = YahooSource()
-    spy = source.get("SPY", start=date(2010, 1, 1))
-    prices = pd.DataFrame({"SPY": spy["Close"]})
-
-    # Split at 2022-01-01
-    split = Split(
-        train_start=prices.index[0].date(),
-        train_end=date(2021, 12, 31),
-        test_start=date(2022, 1, 1),
-        test_end=prices.index[-1].date(),
-    )
-    print(f"Train period: {split.train_start} to {split.train_end}")
-    print(f"Test period: {split.test_start} to {split.test_end}")
-
-    train_prices = pd.DataFrame(split.slice_train(prices))
-    test_prices = pd.DataFrame(split.slice_test(prices))
-
-    # Optimize on training data
-    print("\nOptimizing MA parameters on training data...")
-    fast, slow, train_sharpe = optimize_ma_params(train_prices, "SPY", initial_capital)
-    print(f"Best params: fast={fast}, slow={slow} (train Sharpe={train_sharpe:.2f})")
-
-    # Backtest on train period with optimized params
-    train_signal = ma_crossover_signal(train_prices["SPY"], fast, slow)
-    train_bt = run_backtest(train_prices, train_signal, initial_capital, cost_pct)
-    print_results("Train Period Results", train_bt)
-
-    # Backtest on test period (out-of-sample)
-    test_signal = ma_crossover_signal(test_prices["SPY"], fast, slow)
-    test_bt = run_backtest(test_prices, test_signal, initial_capital, cost_pct)
-    print_results("Test Period Results (Out-of-Sample)", test_bt)
-
-    # Buy & hold comparison
-    bh_train_signal = pd.Series(1, index=train_prices.index)
-    bh_test_signal = pd.Series(1, index=test_prices.index)
-    bh_train = run_backtest(train_prices, bh_train_signal, initial_capital)
-    bh_test = run_backtest(test_prices, bh_test_signal, initial_capital)
-    print("\nBuy & Hold Comparison:")
-    print(
-        f"  Train - Sharpe: {bh_train.metrics['sharpe']:.2f}, CAGR: {bh_train.metrics['cagr']:.1%}"
-    )
-    print(
-        f"  Test  - Sharpe: {bh_test.metrics['sharpe']:.2f}, CAGR: {bh_test.metrics['cagr']:.1%}"
-    )
-
-    # Full period backtest for charting
-    full_signal = ma_crossover_signal(prices["SPY"], fast, slow)
-    full_bt = run_backtest(prices, full_signal, initial_capital, cost_pct)
-    bh_full_signal = pd.Series(1, index=prices.index)
-    bh_full = run_backtest(prices, bh_full_signal, initial_capital)
-
-    # Plot
-    fig = plot_backtest(
-        prices=prices["SPY"],
-        strategy_equity=full_bt.equity,
-        bh_equity=bh_full.equity,
-        fast_window=fast,
-        slow_window=slow,
-        split_date=split.test_start,
-    )
-    fig.show()
-
-
-if __name__ == "__main__":
-    main()
+plot_equity(
+    full_result["equity"],
+    benchmark=bh_full_result["equity"],
+    title=f"MA Crossover ({best_fast}/{best_slow}) vs Buy & Hold",
+).show()

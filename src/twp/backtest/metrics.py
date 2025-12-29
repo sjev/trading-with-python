@@ -1,7 +1,40 @@
 """Performance metrics for backtesting."""
 
+from typing import TypedDict
+
 import numpy as np
 import pandas as pd
+
+
+class Metrics(TypedDict):
+    """Performance metrics."""
+
+    sharpe: float
+    cagr: float
+    volatility: float
+    max_drawdown: float
+
+
+def metrics(equity: pd.Series) -> Metrics:
+    """Compute all performance metrics from equity curve."""
+    returns = equity.pct_change().fillna(0)
+    return {
+        "sharpe": sharpe(returns),
+        "cagr": cagr(equity),
+        "volatility": volatility(returns),
+        "max_drawdown": max_drawdown(equity),
+    }
+
+
+def summary(m: Metrics, title: str = "Backtest") -> None:
+    """Print formatted performance summary."""
+    print(f"\n{'=' * 40}")
+    print(title)
+    print(f"{'=' * 40}")
+    print(f"Sharpe Ratio:  {m['sharpe']:.2f}")
+    print(f"CAGR:          {m['cagr']:.1%}")
+    print(f"Volatility:    {m['volatility']:.1%}")
+    print(f"Max Drawdown:  {m['max_drawdown']:.1%}")
 
 
 def sharpe(returns: pd.Series, risk_free: float = 0.0, periods: int = 252) -> float:

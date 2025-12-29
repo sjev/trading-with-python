@@ -1,4 +1,4 @@
-# %% Imports and setup
+# %% Imports
 """Simple Moving Average Crossover Backtest Example."""
 
 from datetime import date
@@ -6,8 +6,9 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from twp.backtest import Backtest
+from twp.backtest import backtest, metrics, summary
 from twp.data import YahooSource
+from twp.plotting import plot_equity
 
 # %% Configuration
 initial_capital = 100_000
@@ -29,8 +30,11 @@ shares = np.floor(initial_capital * signal / prices["SPY"]).fillna(0).astype(int
 shares = pd.DataFrame({"SPY": shares}, index=prices.index)
 
 # %% Run backtest
-bt = Backtest(prices=prices, shares=shares, initial_capital=initial_capital)
-bt.summary(f"MA Crossover (fast={fast_window}, slow={slow_window})")
+result = backtest(prices, shares, initial_capital)
 
-# %% Plot results
-bt.plot(benchmark=prices["SPY"])
+# %% Show metrics
+m = metrics(result["equity"])
+summary(m, title=f"MA Crossover (fast={fast_window}, slow={slow_window})")
+
+# %% Plot
+plot_equity(result["equity"], benchmark=prices["SPY"]).show()

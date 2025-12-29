@@ -55,13 +55,15 @@ def plot_equity(
     equity: pd.Series,
     title: str = "Equity Curve",
     benchmark: pd.Series | None = None,
+    normalize: bool = True,
 ) -> go.Figure:
     """Plot equity curve with optional benchmark.
 
     Args:
         equity: Equity curve series
         title: Chart title
-        benchmark: Optional benchmark equity curve
+        benchmark: Optional benchmark series (prices or equity)
+        normalize: If True, normalize both to start at 100
 
     Returns:
         Plotly Figure object
@@ -70,10 +72,11 @@ def plot_equity(
 
     fig = go.Figure()
 
+    y = equity / equity.iloc[0] * 100 if normalize else equity
     fig.add_trace(
         go.Scatter(
             x=equity.index,
-            y=equity.values,
+            y=y.values,
             name="Strategy",
             mode="lines",
             line={"color": "blue"},
@@ -81,10 +84,11 @@ def plot_equity(
     )
 
     if benchmark is not None:
+        y_bench = benchmark / benchmark.iloc[0] * 100 if normalize else benchmark
         fig.add_trace(
             go.Scatter(
                 x=benchmark.index,
-                y=benchmark.values,
+                y=y_bench.values,
                 name="Benchmark",
                 mode="lines",
                 line={"color": "gray", "dash": "dash"},
@@ -94,7 +98,7 @@ def plot_equity(
     fig.update_layout(
         title=title,
         xaxis_title="Date",
-        yaxis_title="Equity",
+        yaxis_title="Normalized (100 = start)" if normalize else "Equity",
         hovermode="x unified",
     )
 

@@ -87,4 +87,4 @@ inv test   # pytest
 
 ## License
 
-BSD
+MIT

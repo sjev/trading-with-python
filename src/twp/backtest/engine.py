@@ -107,29 +107,35 @@ class Backtest:
             "turnover": float(avg_turnover),
         }
 
-    def report(
-        self,
-        benchmark: pd.Series | None = None,
-        output_path: Path | str | None = None,
-    ) -> Path:
-        """Generate HTML report.
+    def summary(self, title: str = "Backtest") -> None:
+        """Print performance summary."""
+        m = self.metrics
+        print(f"\n{'=' * 50}")
+        print(title)
+        print(f"{'=' * 50}")
+        print(
+            f"Period: {self._prices.index[0].date()} to {self._prices.index[-1].date()}"
+        )
+        print(f"Initial Capital: ${self._initial_capital:,.0f}")
+        print(f"\nSharpe Ratio:  {m['sharpe']:.2f}")
+        print(f"CAGR:          {m['cagr']:.1%}")
+        print(f"Volatility:    {m['volatility']:.1%}")
+        print(f"Max Drawdown:  {m['max_drawdown']:.1%}")
+        print(f"Turnover:      {m['turnover']:.2%}")
+        print(f"\nFinal Equity:  ${self.equity.iloc[-1]:,.0f}")
+        print(f"Total PnL:     ${self.pnl.sum():,.0f}")
+        if self.cash.min() < 0:
+            print(f"\nWarning: Used margin (min cash: ${self.cash.min():,.0f})")
 
-        Args:
-            benchmark: Optional benchmark prices to overlay on equity chart
-            output_path: Output file path (default: backtest_report.html)
+    def plot(self, benchmark: pd.Series | None = None) -> None:
+        """Show interactive plotly charts."""
+        fig = self._create_figure(benchmark)
+        fig.show()
 
-        Returns:
-            Path to generated report
-        """
-        if output_path is None:
-            output_path = Path("backtest_report.html")
-        else:
-            output_path = Path(output_path)
-
-        # Normalize equity to start at 100
+    def _create_figure(self, benchmark: pd.Series | None = None) -> go.Figure:
+        """Create plotly figure with equity curve and positions."""
         equity_normalized = self.equity / self.equity.iloc[0] * 100
 
-        # Create figure
         fig = make_subplots(
             rows=2,
             cols=1,
@@ -138,7 +144,6 @@ class Backtest:
             vertical_spacing=0.1,
         )
 
-        # Equity curve
         fig.add_trace(
             go.Scatter(
                 x=equity_normalized.index,
@@ -150,7 +155,6 @@ class Backtest:
             col=1,
         )
 
-        # Benchmark if provided
         if benchmark is not None:
             bench_normalized = benchmark / benchmark.iloc[0] * 100
             fig.add_trace(
@@ -164,7 +168,6 @@ class Backtest:
                 col=1,
             )
 
-        # Positions (stacked area)
         position_values = self._shares * self._prices
         for col in position_values.columns:
             fig.add_trace(
@@ -178,15 +181,6 @@ class Backtest:
                 col=1,
             )
 
-        # Layout
-        fig.update_layout(
-            title="Backtest Report",
-            hovermode="x unified",
-            showlegend=True,
-            height=700,
-        )
-
-        # Metrics table as annotation
         m = self.metrics
         metrics_text = (
             f"<b>Metrics</b><br>"
@@ -211,5 +205,26 @@ class Backtest:
             borderwidth=1,
         )
 
+        fig.update_layout(
+            title="Backtest Report",
+            hovermode="x unified",
+            showlegend=True,
+            height=700,
+        )
+
+        return fig
+
+    def report(
+        self,
+        benchmark: pd.Series | None = None,
+        output_path: Path | str | None = None,
+    ) -> Path:
+        """Generate HTML report."""
+        if output_path is None:
+            output_path = Path("backtest_report.html")
+        else:
+            output_path = Path(output_path)
+
+        fig = self._create_figure(benchmark)
         fig.write_html(output_path)
         return output_path

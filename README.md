@@ -6,12 +6,6 @@ Open-source toolbox for quantitative trading strategy development.
 
 ```bash
 pip install twp
-
-# With optional dependencies
-pip install "twp[yahoo]"     # Yahoo Finance data
-pip install "twp[fred]"      # FRED economic data
-pip install "twp[plotting]"  # Plotly charts
-pip install "twp[all]"       # All extras
 ```
 
 ## Quick Start
